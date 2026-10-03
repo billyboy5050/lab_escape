@@ -6,6 +6,7 @@ export const DAMAGE_TYPES: readonly DamageType[] = ['kinetic', 'explosive', 'fir
 export type Team = 'player' | 'enemy';
 export type UnitKind = 'player' | 'minion' | 'enemy';
 export type StatusId = 'poison' | 'parasite' | 'corrode' | 'pinned' | 'slowed';
+export const STATUS_IDS: readonly StatusId[] = ['poison', 'parasite', 'corrode', 'pinned', 'slowed'];
 
 export interface RulesDef {
   turn: { ap: number; movement: number };

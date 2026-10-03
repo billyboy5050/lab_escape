@@ -455,12 +455,23 @@ export class World {
     this.checkWin();
   }
 
+  /**
+   * Ends the fight in a win once every wave is in and no enemy is left. The last enemy's death hooks have
+   * only queued their effects by now, so those play first. They can add an enemy or kill the player, so the
+   * win is checked again afterwards. The player's death still ends the fight at once, in flushDeaths.
+   */
   checkWin(): void {
-    if (this.s.outcome) return;
-    const inPlay = Math.min(this.s.settings.maxWaves ?? this.c.waves.length, this.c.waves.length);
-    if (this.s.wavesSpawned >= inPlay && !this.s.units.some((u) => u.team === 'enemy' && !u.dead)) {
-      this.endFight({ result: 'win', cause: 'All enemies are dead', round: this.s.round });
+    if (this.s.outcome || !this.allEnemiesDown()) return;
+    if (this.chain?.queue.length) {
+      this.runQueue();
+      if (!this.allEnemiesDown()) return;
     }
+    this.endFight({ result: 'win', cause: 'All enemies are dead', round: this.s.round });
+  }
+
+  private allEnemiesDown(): boolean {
+    const inPlay = Math.min(this.s.settings.maxWaves ?? this.c.waves.length, this.c.waves.length);
+    return this.s.wavesSpawned >= inPlay && !this.s.units.some((u) => u.team === 'enemy' && !u.dead);
   }
 
   endFight(outcome: Outcome): never {

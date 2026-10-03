@@ -71,6 +71,7 @@ The spec says to update it when implementation forces a rule change. Nothing her
   - the shield segment, for a reflection;
   - the player, for Grapple Pin.
 - **Simultaneous win and loss.** The player's death ends the fight at once, even mid-chain, and a loss beats a simultaneous win. Killing every enemy before the last wave has spawned is not a win.
+- **The last enemy's death effects.** A win is declared only after the chain's queued death effects have played, so the last enemy's Spore Burst, Acid Brood, Parasite Jump or Parasite hatchling still happens and is in the event log. If one of them adds an enemy, the fight goes on; if one kills the player, the fight is lost.
 - **Corpses.** A new corpse replaces an older one on the same tile.
 - **The loop test.** The rules as written cannot loop: Spore Burst and Acid Brood never deal damage directly. The test for the M6 criterion "the once-per-chain rule suppresses a loop built from Spore Burst and Acid Brood" therefore adds a test-only hook that re-raises the same deaths, and checks that the repeats are suppressed. A second test checks the depth cap of 20.
 

@@ -168,6 +168,16 @@ describe('Parasite', () => {
     expect(spawn.unit.team).toBe('player');
   });
 
+  it('the last enemy of the final wave still hatches its hatchling before the win is declared', () => {
+    const s = scenario({ player: 'B8', wavesSpawned: 3, units: [{ def: 'guard', at: 'B5', hp: 2, statuses: { parasite: { remaining: 3, src } } }] });
+    const r = run(s, { type: 'ability', ability: 'sidearm', target: 'B5' });
+    expect(r.state.outcome).toMatchObject({ result: 'win' });
+    expect(eventsOf(r.events, 'UnitSpawned').map((e) => e.unit.def)).toEqual(['hatchling']);
+    const t = r.events.map((e) => e.t);
+    expect(t.indexOf('UnitSpawned')).toBeGreaterThan(t.indexOf('UnitDied'));
+    expect(t.indexOf('UnitSpawned')).toBeLessThan(t.indexOf('FightEnded'));
+  });
+
   it('a Parasite tick that kills spawns the hatchling after the tick step', () => {
     let s = scenario({ player: 'A8', units: [{ def: 'medic', at: 'H1', hp: 2, statuses: { parasite: { remaining: 3, src } } }] });
     const r = run(s, { type: 'endTurn' });

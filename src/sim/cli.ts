@@ -106,7 +106,7 @@ function main(): Promise<void> | void {
             fs.writeFileSync(file, JSON.stringify(win.record, null, 2));
             lines.push(`${p.name}: winning line found (seed ${win.seed}, ${win.rounds} rounds) -> ${file}`);
           } else lines.push(`${p.name}: no winning line in ${seeds.length} seeds`);
-          writeOutputs({ outDir, csv: undefined, name: `preset-${p.id}-${bot}`, rows, text, stats });
+          writeOutputs({ outDir: dir, csv: undefined, name: `preset-${p.id}-${bot}`, rows, text, stats });
         }
         console.log(`\nPaper check (does each preset have a winning line?)\n  ${lines.join('\n  ')}`);
       })();

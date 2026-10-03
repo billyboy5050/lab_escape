@@ -1,4 +1,4 @@
-import { DAMAGE_TYPES, type Content, type ContentFiles, type DamageType } from './types';
+import { DAMAGE_TYPES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
 import { hashJson } from '../util/hash';
 import { isTileName, parseTile } from '../util/tiles';
 
@@ -44,6 +44,16 @@ export function validateContent(f: ContentFiles): string[] {
   };
   const dtype = (v: unknown, where: string) => {
     if (!DAMAGE_TYPES.includes(v as DamageType)) p.push(`${where} has unknown damage type ${JSON.stringify(v)}`);
+  };
+  /** An ability or upgrade `status` block. Required where the rules code reads it without a fallback. */
+  const status = (v: unknown, where: string, required: boolean) => {
+    if (v === undefined) {
+      if (required) p.push(`${where}.status is missing`);
+      return;
+    }
+    const s = (typeof v === 'object' && v !== null ? v : {}) as { id?: unknown; duration?: unknown };
+    if (!STATUS_IDS.includes(s.id as StatusId)) p.push(`${where}.status has unknown status ${JSON.stringify(s.id)}`);
+    int(s.duration, `${where}.status.duration`, 1);
   };
 
   // Rules
@@ -124,6 +134,7 @@ export function validateContent(f: ContentFiles): string[] {
     if (a.damage !== undefined) int(a.damage, `${w}.damage`);
     if (a.damageType !== undefined) dtype(a.damageType, w);
     if (a.targeting?.range !== undefined) int(a.targeting.range, `${w}.targeting.range`, 1);
+    status(a.status, w, a.id === 'spore_pod' || a.id === 'parasite');
     if (a.summon && !unitIds.has(a.summon)) p.push(`${w}.summon "${a.summon}" is not a unit`);
     if (a.blast) {
       int(a.blast.damage, `${w}.blast.damage`);
@@ -142,6 +153,7 @@ export function validateContent(f: ContentFiles): string[] {
   const upgradeIds = new Set<string>();
   for (const u of f.upgrades ?? []) {
     upgradeIds.add(u.id);
+    status(u.status, `upgrades.${u.id}`, u.id === 'A1_spore_burst' || u.id === 'H1_spore_mines' || u.id === 'H2_plague_drone');
     for (const a of [...(u.requires?.all ?? []), ...(u.requires?.any ?? [])]) {
       if (!abilityIds.has(a)) p.push(`upgrades.${u.id} requires unknown ability "${a}"`);
     }

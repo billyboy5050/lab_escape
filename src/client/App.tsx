@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadoutProblems } from '../engine/step';
 import type { FightSettings, Loadout } from '../state/types';
-import type { FightRecord } from '../telemetry/record';
+import { checkCompatible, type FightRecord } from '../telemetry/record';
 import type { FightSession } from '../telemetry/session';
 import { useContent } from './contentHot';
 import { FightScreen } from './screens/FightScreen';
@@ -63,7 +63,7 @@ export function App() {
     void fetch(path.startsWith('/') ? path : `/${path}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
       .then((rec: FightRecord) => {
-        if (rec.contentHash !== c.hash) throw new Error(`recorded with content ${rec.contentHash}, current content is ${c.hash}`);
+        checkCompatible(c, rec);
         setReplay(rec);
         setDebugOpen(true);
         setRestartKey((k) => k + 1);

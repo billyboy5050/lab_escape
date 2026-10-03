@@ -98,6 +98,30 @@ describe('Alien and hybrid upgrades', () => {
     expect(unitById(r.state, 2)!.statuses.poison?.remaining).toBe(3);
   });
 
+  it('A1 Spore Burst still fires when the poisoned unit was the last enemy, before the win is declared', () => {
+    const s = scenario({ player: 'E8', wavesSpawned: 3, upgrades: [UP.A1], units: [{ def: 'guard', at: 'E3', hp: 2, statuses: { poison: { remaining: 3, src } } }, { def: 'hatchling', at: 'F3' }] });
+    const r = run(s, { type: 'ability', ability: 'sidearm', target: 'E3' });
+    expect(r.state.outcome).toMatchObject({ result: 'win' });
+    expect(eventsOf(r.events, 'AreaEffect').some((e) => e.kind === 'burst')).toBe(true);
+    expect(unitById(r.state, 2)!.statuses.poison?.remaining).toBe(3);
+    const t = r.events.map((e) => e.t);
+    expect(t.lastIndexOf('AreaEffect')).toBeLessThan(t.indexOf('FightEnded'));
+  });
+
+  it('a queued death effect that kills the player still loses the fight, even after the last enemy fell', () => {
+    // A death hook of the last enemy queues damage that kills a one-HP player. Loss takes priority over the win.
+    const s = scenario({ player: 'E4', playerHp: 1, wavesSpawned: 3, units: [{ def: 'guard', at: 'E3', hp: 1 }] });
+    const w = inWorld(s, (world) => {
+      const guard = world.s.units.find((u) => u.def === 'guard')!;
+      world.deathHooks.push((ww, dead) => {
+        if (dead.id !== guard.id) return;
+        ww.enqueue('test_blast', `u${dead.id}`, () => ww.damageUnit(ww.s.units[0]!, 5, 'kinetic', ww.playerEffect('test', 'unit', dead.id, dead.def)));
+      });
+      world.damageUnit(guard, 5, 'kinetic', world.playerEffect('test', 'unit', 0, 'player'));
+    });
+    expect(w.s.outcome).toMatchObject({ result: 'lose' });
+  });
+
   it('A2 Acid Brood: when any hatchling dies, adjacent units gain 2 Corrode', () => {
     const s = scenario({ player: 'A8', upgrades: [UP.A2], units: [{ def: 'hatchling', at: 'E4', hp: 1 }, { def: 'warden', at: 'F4' }] });
     const { s: after } = inWorld(s, (w) => w.damageUnit(w.unit(1)!, 1, 'kinetic', w.unitSource(w.unit(2)!, 'melee')));

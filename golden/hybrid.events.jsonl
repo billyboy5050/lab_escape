@@ -479,5 +479,6 @@
 {"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":3,"y":6},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"damageType":"parasite","raw":2,"absorbed":0,"amount":2,"hpLost":1,"hpAfter":0,"killed":true}
 {"t":"UnitDied","id":14,"def":"warden","team":"enemy","kind":"enemy","pos":{"x":3,"y":6},"killer":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"}}
 {"t":"ObjectPlaced","object":{"id":23,"kind":"corpse","pos":{"x":3,"y":6},"createdRound":11,"of":"warden","decay":2,"team":"enemy"},"source":null}
+{"t":"UnitSpawned","unit":{"id":22,"def":"hatchling","team":"player","kind":"minion","pos":{"x":3,"y":6},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":11},"cause":"parasite"}
 {"t":"FightEnded","result":"win","cause":"All enemies are dead","round":11}
 {"t":"IntercomLine","line":"wardenDies","text":"Warden is down. The armory is compromised."}

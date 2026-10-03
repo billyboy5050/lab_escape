@@ -548,5 +548,7 @@
 {"t":"DamageDealt","target":{"kind":"unit","id":15},"targetDef":"warden","targetSide":"enemy","pos":{"x":6,"y":6},"source":{"side":"player","category":"minion","kind":"unit","id":22,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":0,"killed":true}
 {"t":"UnitDied","id":15,"def":"warden","team":"enemy","kind":"enemy","pos":{"x":6,"y":6},"killer":{"side":"player","category":"minion","kind":"unit","id":22,"def":"hatchling","via":"bite"}}
 {"t":"ObjectPlaced","object":{"id":18,"kind":"corpse","pos":{"x":6,"y":6},"createdRound":12,"of":"warden","decay":2,"team":"enemy"},"source":null}
+{"t":"AreaEffect","kind":"burst","tiles":[{"x":5,"y":5},{"x":6,"y":5},{"x":7,"y":5},{"x":5,"y":6},{"x":6,"y":6},{"x":7,"y":6},{"x":5,"y":7},{"x":6,"y":7},{"x":7,"y":7}],"source":{"side":"player","category":"player","kind":"unit","id":15,"def":"warden","via":"A1_spore_burst"}}
+{"t":"StatusApplied","target":22,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"unit","id":15,"def":"warden","via":"A1_spore_burst"},"refreshed":true,"spread":false}
 {"t":"FightEnded","result":"win","cause":"All enemies are dead","round":12}
 {"t":"IntercomLine","line":"wardenDies","text":"Warden is down. The armory is compromised."}

@@ -256,9 +256,9 @@
       "label": "golden alien"
     }
   },
-  "eventCount": 552,
-  "eventsHash": "014c5174c240ed",
-  "finalStateHash": "028b0af42612e6",
+  "eventCount": 554,
+  "eventsHash": "028da2dac0a638",
+  "finalStateHash": "1ed3cbca3d1010",
   "outcome": "win",
   "rounds": 12
 }

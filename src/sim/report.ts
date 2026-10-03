@@ -146,8 +146,8 @@ function metricChecks(s: BatchStats, lossCount: number): MetricCheck[] {
       status: s.roundsWin.median > 16 ? 'alarm' : s.roundsWin.median < 8 || s.roundsWin.median > 12 ? 'warn' : 'ok',
     });
   }
-  const taken = s.meanPlayerDamage.player + s.meanPlayerDamage.minion + s.meanPlayerDamage.enemy + s.meanPlayerDamage.hazard;
-  const own = taken > 0 ? (s.meanPlayerDamage.player + s.meanPlayerDamage.minion) / taken : 0;
+  // The same per-fight mean the report prints as its friendly-fire headline, so the two never disagree.
+  const own = s.meanFriendlyFireShare;
   out.push({
     metric: 'Share of player damage from own effects',
     value: pct(own),

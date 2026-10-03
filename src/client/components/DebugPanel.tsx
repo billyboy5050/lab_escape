@@ -3,7 +3,7 @@ import type { Content } from '../../content/types';
 import type { IntentReport } from '../../preview/preview';
 import { ENGINE_VERSION } from '../../state/state';
 import type { AIOption, Command, GameEvent, GameState } from '../../state/types';
-import type { FightRecord } from '../../telemetry/record';
+import { checkCompatible, type FightRecord } from '../../telemetry/record';
 import { tileName, isTileName } from '../../util/tiles';
 import { hazardName, unitName } from '../format';
 
@@ -195,7 +195,7 @@ export function DebugPanel(props: {
                 if (!f) return;
                 try {
                   const rec = JSON.parse(await f.text()) as FightRecord;
-                  if (rec.contentHash !== c.hash) throw new Error(`Recorded with content ${rec.contentHash}; current content is ${c.hash}`);
+                  checkCompatible(c, rec);
                   setLoadError(null);
                   props.onLoadReplay(rec);
                 } catch (err) {
