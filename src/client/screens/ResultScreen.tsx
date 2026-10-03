@@ -3,6 +3,7 @@ import type { Content } from '../../content/types';
 import type { Category } from '../../telemetry/summary';
 import type { FightSession } from '../../telemetry/session';
 import { eventsToJsonl } from '../../telemetry/record';
+import { median } from '../../util/stats';
 import { download } from '../telemetry';
 
 const CAT_LABEL: Record<Category, string> = { enemy: 'Enemies', hazard: 'Lab hazards', player: 'Your own abilities', minion: 'Your own minions' };
@@ -35,7 +36,7 @@ export function ResultScreen(props: { c: Content; session: FightSession; saved: 
   const playerTotal = ORDER.reduce((a, k) => a + s.playerDamageTaken[k], 0);
   const ffShare = playerTotal ? (s.friendlyFireToPlayer / playerTotal) * 100 : 0;
   const turnTimes = session.record.meta?.turnTimesMs ?? [];
-  const medianTurn = turnTimes.length ? [...turnTimes].sort((a, b) => a - b)[Math.floor(turnTimes.length / 2)]! / 1000 : null;
+  const medianTurn = turnTimes.length ? median(turnTimes) / 1000 : null;
   const name = (id: string) => c.abilities[id]?.name ?? c.upgrades[id]?.name ?? c.utilities[id]?.name ?? id;
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   return (

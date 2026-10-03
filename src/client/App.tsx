@@ -4,6 +4,7 @@ import type { FightSettings, Loadout } from '../state/types';
 import { checkCompatible, type FightRecord } from '../telemetry/record';
 import type { FightSession } from '../telemetry/session';
 import { useContent } from './contentHot';
+import { syncPresetLoadout } from './loadoutSync';
 import { FightScreen } from './screens/FightScreen';
 import { LoadoutScreen } from './screens/LoadoutScreen';
 import { ResultScreen } from './screens/ResultScreen';
@@ -44,13 +45,18 @@ export function App() {
   useEffect(() => {
     if (c.hash === lastHash.current) return;
     lastHash.current = c.hash;
-    if (loadoutProblems(c, loadout).length) {
+    // A selected preset follows its edited picks, so the fight and its telemetry label match what was played.
+    const synced = syncPresetLoadout(c, loadout, presetId);
+    if (synced.presetId !== presetId) setPresetId(synced.presetId);
+    if (synced.loadout !== loadout) setLoadout(synced.loadout);
+    if (loadoutProblems(c, synced.loadout).length) {
       setScreen('loadout');
       toast('Content reloaded. The loadout is no longer valid; pick again.');
-    } else if (screen === 'fight') toast('Content reloaded: the fight restarted with the new values.');
+    } else if (synced.loadout !== loadout) toast('Content reloaded: the selected preset changed, so its new picks are loaded.');
+    else if (screen === 'fight') toast('Content reloaded: the fight restarted with the new values.');
     else toast('Content reloaded.');
     setReplay(null);
-  }, [c, loadout, screen, toast]);
+  }, [c, loadout, presetId, screen, toast]);
 
   useEffect(() => {
     if (error) toast(`Content error, keeping the old values: ${error.split('\n')[0]}`);
@@ -108,7 +114,7 @@ export function App() {
       {screen === 'fight' && (
         <div className="screen">
           <FightScreen
-            key={`${restartKey}-${c.hash}`}
+            key={`${restartKey}-${c.hash}-${loadout.abilities.join()}|${loadout.upgrades.join()}`}
             c={c}
             loadout={replay ? replay.loadout : loadout}
             settings={replay ? replay.settings : settings}

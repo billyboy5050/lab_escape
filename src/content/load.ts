@@ -1,3 +1,4 @@
+import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from './required';
 import { DAMAGE_TYPES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
 import { hashJson } from '../util/hash';
 import { isTileName, parseTile } from '../util/tiles';
@@ -45,12 +46,16 @@ export function validateContent(f: ContentFiles): string[] {
   const dtype = (v: unknown, where: string) => {
     if (!DAMAGE_TYPES.includes(v as DamageType)) p.push(`${where} has unknown damage type ${JSON.stringify(v)}`);
   };
-  /** An ability or upgrade `status` block. Required where the rules code reads it without a fallback. */
-  const status = (v: unknown, where: string, required: boolean) => {
-    if (v === undefined) {
-      if (required) p.push(`${where}.status is missing`);
-      return;
+  /** Pushes a problem for each dotted path that is absent from an object, for fields the rules code needs. */
+  const requireFields = (o: unknown, where: string, paths: readonly string[] = []) => {
+    for (const path of paths) {
+      const v = path.split('.').reduce<unknown>((n, k) => (n !== null && typeof n === 'object' ? (n as Record<string, unknown>)[k] : undefined), o);
+      if (v === undefined || v === null) p.push(`${where}.${path} is missing`);
     }
+  };
+  /** The shape of an ability or upgrade `status` block, when there is one. */
+  const status = (v: unknown, where: string) => {
+    if (v === undefined) return;
     const s = (typeof v === 'object' && v !== null ? v : {}) as { id?: unknown; duration?: unknown };
     if (!STATUS_IDS.includes(s.id as StatusId)) p.push(`${where}.status has unknown status ${JSON.stringify(s.id)}`);
     int(s.duration, `${where}.status.duration`, 1);
@@ -114,6 +119,16 @@ export function validateContent(f: ContentFiles): string[] {
       int(u.charge.minDistance, `${w}.charge.minDistance`, 2);
       int(u.charge.maxMove, `${w}.charge.maxMove`, 1);
     }
+    if (u.heal) {
+      int(u.heal.amount, `${w}.heal.amount`, 1);
+      int(u.heal.range, `${w}.heal.range`, 1);
+    }
+    if (u.sweep) int(u.sweep.length, `${w}.sweep.length`, 1);
+    if (u.blast) int(u.blast.radius, `${w}.blast.radius`);
+    if (u.purge) int(u.purge.cooldown, `${w}.purge.cooldown`, 1);
+    if (u.ammo !== undefined) int(u.ammo, `${w}.ammo`);
+    if (u.charges !== undefined) int(u.charges, `${w}.charges`, 1);
+    requireFields(u, w, REQUIRED_UNIT_FIELDS[u.id]);
   }
   for (const req of ['player', 'guard', 'medic', 'flamer', 'warden', 'turret', 'drone', 'hatchling', 'spitter', 'burster']) {
     if (!unitIds.has(req)) p.push(`units.json is missing "${req}"`);
@@ -134,15 +149,29 @@ export function validateContent(f: ContentFiles): string[] {
     if (a.damage !== undefined) int(a.damage, `${w}.damage`);
     if (a.damageType !== undefined) dtype(a.damageType, w);
     if (a.targeting?.range !== undefined) int(a.targeting.range, `${w}.targeting.range`, 1);
-    status(a.status, w, a.id === 'spore_pod' || a.id === 'parasite');
+    requireFields(a, w, REQUIRED_ABILITY_FIELDS[a.id]);
+    status(a.status, w);
     if (a.summon && !unitIds.has(a.summon)) p.push(`${w}.summon "${a.summon}" is not a unit`);
+    if (a.segmentHp !== undefined) int(a.segmentHp, `${w}.segmentHp`, 1);
+    if (a.area) int(a.area.radius, `${w}.area.radius`);
     if (a.blast) {
+      int(a.blast.radius, `${w}.blast.radius`);
       int(a.blast.damage, `${w}.blast.damage`);
       dtype(a.blast.damageType, `${w}.blast`);
     }
   }
   for (const req of ['sidearm', 'grapple_hook', 'proximity_mine', 'auto_turret', 'scout_drone', 'barrier_shield', 'acid_spit', 'lunge', 'spore_pod', 'brood_egg', 'parasite']) {
     if (!abilityIds.has(req)) p.push(`abilities.json is missing "${req}"`);
+  }
+  const utilityIds = new Set((f.abilities?.utilities ?? []).map((u) => u.id));
+  for (const req of REQUIRED_UTILITIES) {
+    if (!utilityIds.has(req)) p.push(`abilities.json is missing utility "${req}"`);
+  }
+  // Sprint is defined twice: the engine charges rules.sprint, while the action list shows the utility entry.
+  const sprint = (f.abilities?.utilities ?? []).find((u) => u.id === 'sprint');
+  if (sprint && r.sprint) {
+    if (sprint.ap !== r.sprint.ap) p.push(`utilities.sprint.ap (${sprint.ap}) must equal rules.sprint.ap (${r.sprint.ap})`);
+    if (sprint.movement !== undefined && sprint.movement !== r.sprint.movement) p.push(`utilities.sprint.movement (${sprint.movement}) must equal rules.sprint.movement (${r.sprint.movement})`);
   }
   for (const u of f.abilities?.utilities ?? []) {
     int(u.ap, `utilities.${u.id}.ap`);
@@ -153,7 +182,8 @@ export function validateContent(f: ContentFiles): string[] {
   const upgradeIds = new Set<string>();
   for (const u of f.upgrades ?? []) {
     upgradeIds.add(u.id);
-    status(u.status, `upgrades.${u.id}`, u.id === 'A1_spore_burst' || u.id === 'H1_spore_mines' || u.id === 'H2_plague_drone');
+    requireFields(u, `upgrades.${u.id}`, REQUIRED_UPGRADE_FIELDS[u.id]);
+    status(u.status, `upgrades.${u.id}`);
     for (const a of [...(u.requires?.all ?? []), ...(u.requires?.any ?? [])]) {
       if (!abilityIds.has(a)) p.push(`upgrades.${u.id} requires unknown ability "${a}"`);
     }

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buildContent, defaultContentFiles, ContentError } from '../src/content';
-import type { ContentFiles } from '../src/content/types';
 import { validateContent } from '../src/content/load';
+import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from '../src/content/required';
+import type { ContentFiles } from '../src/content/types';
+import { actionStatuses } from '../src/engine/commands';
+import { contentWith, run, scenario } from './helpers';
 
 function edited(fn: (f: ContentFiles) => void): ContentFiles {
   const f = structuredClone(defaultContentFiles());
@@ -49,5 +52,69 @@ describe('content validation of status blocks', () => {
   it('does not throw on a non-object status', () => {
     const f = edited((x) => (ability(x, 'spore_pod').status = null as never));
     expect(validateContent(f).length).toBeGreaterThan(0);
+  });
+});
+
+const drop = (o: object, path: string) => {
+  const keys = path.split('.');
+  const last = keys.pop()!;
+  delete (keys.reduce((n, k) => (n as Record<string, unknown>)[k], o as unknown) as Record<string, unknown>)[last];
+};
+const pairs = (table: Record<string, readonly string[]>) => Object.entries(table).flatMap(([id, paths]) => paths.map((path) => [id, path] as const));
+
+describe('content validation of required fields', () => {
+  it.each(pairs(REQUIRED_ABILITY_FIELDS))('rejects abilities.%s without %s', (id, path) => {
+    const f = edited((x) => drop(ability(x, id), path));
+    expect(validateContent(f)).toContain(`abilities.${id}.${path} is missing`);
+    expect(() => buildContent(f)).toThrow(ContentError);
+  });
+
+  it.each(pairs(REQUIRED_UNIT_FIELDS))('rejects units.%s without %s', (id, path) => {
+    const f = edited((x) => drop(x.units.find((u) => u.id === id)!, path));
+    expect(validateContent(f)).toContain(`units.${id}.${path} is missing`);
+  });
+
+  it.each(pairs(REQUIRED_UPGRADE_FIELDS))('rejects upgrades.%s without %s', (id, path) => {
+    const f = edited((x) => drop(upgrade(x, id), path));
+    expect(validateContent(f)).toContain(`upgrades.${id}.${path} is missing`);
+  });
+
+  it('rejects a proximity mine with no blast, a null blast, or a bad blast radius', () => {
+    expect(validateContent(edited((x) => delete ability(x, 'proximity_mine').blast))).toEqual(['abilities.proximity_mine.blast is missing']);
+    expect(validateContent(edited((x) => (ability(x, 'proximity_mine').blast = null as never)))).toContain('abilities.proximity_mine.blast is missing');
+    const bad = validateContent(edited((x) => (ability(x, 'proximity_mine').blast!.radius = -1)));
+    expect(bad).toEqual([expect.stringContaining('abilities.proximity_mine.blast.radius must be an integer >= 0')]);
+  });
+
+  it.each(REQUIRED_UTILITIES)('rejects content without the %s utility', (id) => {
+    const f = edited((x) => (x.abilities.utilities = x.abilities.utilities.filter((u) => u.id !== id)));
+    expect(validateContent(f)).toContain(`abilities.json is missing utility "${id}"`);
+  });
+
+  it('checks the numbers the AI does arithmetic on', () => {
+    const f = edited((x) => {
+      x.units.find((u) => u.id === 'flamer')!.sweep!.length = Number.NaN;
+      x.units.find((u) => u.id === 'medic')!.heal!.amount = 0;
+      x.units.find((u) => u.id === 'burster')!.blast!.radius = 1.5;
+    });
+    expect(validateContent(f)).toHaveLength(3);
+  });
+});
+
+describe('sprint has one definition', () => {
+  it('rejects content where the utility entry and rules.sprint disagree', () => {
+    const ap = edited((x) => (x.rules.sprint.ap = 2));
+    expect(validateContent(ap)).toEqual(['utilities.sprint.ap (1) must equal rules.sprint.ap (2)']);
+    const mv = edited((x) => (x.rules.sprint.movement = 3));
+    expect(validateContent(mv)).toEqual(['utilities.sprint.movement (2) must equal rules.sprint.movement (3)']);
+  });
+
+  it('offers, charges and shows the same cost when both are tuned together', () => {
+    const c = contentWith({ 'rules.sprint.ap': 2, 'abilities.utilities.sprint.ap': 2 });
+    const sprint = (ap: number) => actionStatuses(c, scenario({ ap, content: c })).find((a) => a.id === 'sprint')!;
+    expect(sprint(1)).toMatchObject({ ap: 2, usable: false });
+    expect(sprint(2)).toMatchObject({ ap: 2, usable: true });
+    const s = scenario({ ap: 2, content: c });
+    expect(run(s, { type: 'sprint' }, c).state.ap).toBe(0);
   });
 });

@@ -45,10 +45,12 @@ export function actionStatuses(c: Content, s: GameState): ActionStatus[] {
   const util = (id: 'sprint' | 'reload' | 'pick_up_mine' | 'redeploy') => c.utilities[id]!;
   // Sprint
   {
+    // The AP cost is rules.sprint, the value the engine charges; validation keeps the utility entry equal to it.
     const u = util('sprint');
-    const st: ActionStatus = { id: 'sprint', name: u.name, ap: u.ap, kind: 'utility', usable: false, options: [] };
+    const ap = c.rules.sprint.ap;
+    const st: ActionStatus = { id: 'sprint', name: u.name, ap, kind: 'utility', usable: false, options: [] };
     if (!phaseOk) st.reason = 'Not your turn';
-    else if (s.ap < u.ap) st.reason = `Not enough AP (needs ${u.ap})`;
+    else if (s.ap < ap) st.reason = `Not enough AP (needs ${ap})`;
     else st.usable = true;
     out.push(st);
   }

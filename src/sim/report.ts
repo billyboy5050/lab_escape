@@ -1,5 +1,6 @@
 import type { Content } from '../content/types';
 import type { Category } from '../telemetry/summary';
+import { median } from '../util/stats';
 import type { FightRow } from './batch';
 
 const CATS: Category[] = ['player', 'minion', 'enemy', 'hazard'];
@@ -48,12 +49,6 @@ export interface BatchStats {
   checks: MetricCheck[];
 }
 
-const median = (xs: number[]) => {
-  if (!xs.length) return 0;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
-};
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
 /** Wilson score interval for a proportion (95%). */
