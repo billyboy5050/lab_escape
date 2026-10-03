@@ -1,0 +1,243 @@
+{
+  "preset": "tech",
+  "note": "Scripted regression fight. Re-record on purpose when content values or rules change: npm run golden:record",
+  "record": {
+    "format": "lab-escape/replay@1",
+    "engineVersion": "0.1.0",
+    "contentHash": "08a289f83c157f",
+    "loadout": {
+      "abilities": [
+        "sidearm",
+        "grapple_hook",
+        "proximity_mine",
+        "auto_turret",
+        "scout_drone",
+        "barrier_shield"
+      ],
+      "upgrades": [
+        "T1_piercing_rounds",
+        "T2_shot_triggered_mines",
+        "T6_overcharged_drone"
+      ]
+    },
+    "settings": {},
+    "commands": [
+      {
+        "type": "ability",
+        "ability": "auto_turret",
+        "target": "A6"
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "C3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B7",
+          "B6"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "auto_turret",
+        "target": "D4"
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "E2"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B5",
+          "C5",
+          "D5"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "auto_turret",
+        "target": "E3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "C5",
+          "B5",
+          "B6"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "F1"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "auto_turret",
+        "target": "C4"
+      },
+      {
+        "type": "ability",
+        "ability": "grapple_hook",
+        "target": "C5",
+        "mode": "self"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B5",
+          "A5"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "barrier_shield",
+        "target": "C5",
+        "target2": "B6"
+      },
+      {
+        "type": "ability",
+        "ability": "auto_turret",
+        "target": "B5"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "grapple_hook",
+        "target": "C4",
+        "mode": "unit"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "C4"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "D3"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "B5"
+      },
+      {
+        "type": "move",
+        "path": [
+          "A6",
+          "A7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "barrier_shield",
+        "target": "A5",
+        "target2": "A6"
+      },
+      {
+        "type": "move",
+        "path": [
+          "A8"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "auto_turret",
+        "target": "C8"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "B8"
+      },
+      {
+        "type": "move",
+        "path": [
+          "A7",
+          "B7"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "A7",
+          "A8"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "B8"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "B5"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "barrier_shield",
+        "target": "B6",
+        "target2": "A7"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "D8"
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "B7"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "endTurn"
+      }
+    ],
+    "meta": {
+      "bot": "greedy",
+      "seed": 1,
+      "preset": "tech",
+      "label": "golden tech"
+    }
+  },
+  "eventCount": 367,
+  "eventsHash": "0d7ef14cc8098b",
+  "finalStateHash": "1250552a89cf3d",
+  "outcome": "lose",
+  "rounds": 11
+}

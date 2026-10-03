@@ -1,0 +1,359 @@
+{
+  "fights": 1000,
+  "errors": 0,
+  "wins": 763,
+  "winRate": 0.763,
+  "winRateCI": [
+    0.7356679698590534,
+    0.7883190814845054
+  ],
+  "roundsWin": {
+    "median": 13,
+    "mean": 13.682830930537353,
+    "min": 9,
+    "max": 29
+  },
+  "roundsLoss": {
+    "median": 9,
+    "mean": 10.354430379746836
+  },
+  "lossesReachingWave2": 227,
+  "causesByCategory": {
+    "player": 40,
+    "enemy": 176,
+    "round cap": 13,
+    "hazard": 3,
+    "minion": 5
+  },
+  "topCauses": [
+    [
+      "guard/shot",
+      115
+    ],
+    [
+      "warden/melee",
+      44
+    ],
+    [
+      "flamer/sweep",
+      12
+    ],
+    [
+      "player/poison",
+      10
+    ],
+    [
+      "mine/proximity_mine",
+      7
+    ],
+    [
+      "drone/poison",
+      6
+    ]
+  ],
+  "meanPlayerDamage": {
+    "player": 1.209,
+    "minion": 0.283,
+    "enemy": 1.877,
+    "hazard": 0.132
+  },
+  "meanFriendlyFireShare": 0.5375531914893616,
+  "meanHazardFires": 4.396,
+  "fightsWithTwoHazardFires": 881,
+  "meanPeakMinions": 4.25,
+  "maxPeakMinions": 5,
+  "wardenReachedShare": 0.12393162393162394,
+  "wardenEarlyDeathShare": 0,
+  "abilityUse": {
+    "auto_turret": 6.243,
+    "spore_pod": 2.42,
+    "sidearm": 1.672,
+    "barrier_shield": 1.839,
+    "grapple_hook": 1.412,
+    "brood_egg": 2.876,
+    "proximity_mine": 2.398,
+    "acid_spit": 0.785,
+    "scout_drone": 1.637,
+    "reload": 0.593,
+    "parasite": 3.2,
+    "lunge": 0.619,
+    "sprint": 0.033,
+    "redeploy": 0.08
+  },
+  "lift": [
+    {
+      "pick": "auto_turret",
+      "name": "Auto-Turret",
+      "kind": "ability",
+      "withN": 735,
+      "withoutN": 265,
+      "withWinRate": 0.7959183673469388,
+      "withoutWinRate": 0.6716981132075471,
+      "lift": 12.422025413939163
+    },
+    {
+      "pick": "parasite",
+      "name": "Parasite",
+      "kind": "ability",
+      "withN": 725,
+      "withoutN": 275,
+      "withWinRate": 0.7958620689655173,
+      "withoutWinRate": 0.6763636363636364,
+      "lift": 11.949843260188086
+    },
+    {
+      "pick": "T5_reflective_shield",
+      "name": "Reflective Shield",
+      "kind": "upgrade",
+      "withN": 258,
+      "withoutN": 742,
+      "withWinRate": 0.8488372093023255,
+      "withoutWinRate": 0.7331536388140162,
+      "lift": 11.568357048830935
+    },
+    {
+      "pick": "A3_parasite_jump",
+      "name": "Parasite Jump",
+      "kind": "upgrade",
+      "withN": 269,
+      "withoutN": 731,
+      "withWinRate": 0.8438661710037175,
+      "withoutWinRate": 0.7332421340629275,
+      "lift": 11.062403694079004
+    },
+    {
+      "pick": "barrier_shield",
+      "name": "Barrier Shield",
+      "kind": "ability",
+      "withN": 725,
+      "withoutN": 275,
+      "withWinRate": 0.7903448275862069,
+      "withoutWinRate": 0.6909090909090909,
+      "lift": 9.943573667711602
+    },
+    {
+      "pick": "H2_plague_drone",
+      "name": "Plague Drone",
+      "kind": "upgrade",
+      "withN": 164,
+      "withoutN": 836,
+      "withWinRate": 0.8048780487804879,
+      "withoutWinRate": 0.7547846889952153,
+      "lift": 5.009335978527252
+    },
+    {
+      "pick": "T1_piercing_rounds",
+      "name": "Piercing Rounds",
+      "kind": "upgrade",
+      "withN": 373,
+      "withoutN": 627,
+      "withWinRate": 0.7908847184986595,
+      "withoutWinRate": 0.7464114832535885,
+      "lift": 4.447323524507096
+    },
+    {
+      "pick": "acid_spit",
+      "name": "Acid Spit",
+      "kind": "ability",
+      "withN": 730,
+      "withoutN": 270,
+      "withWinRate": 0.7698630136986301,
+      "withoutWinRate": 0.7444444444444445,
+      "lift": 2.541856925418562
+    },
+    {
+      "pick": "spore_pod",
+      "name": "Spore Pod",
+      "kind": "ability",
+      "withN": 720,
+      "withoutN": 280,
+      "withWinRate": 0.7666666666666667,
+      "withoutWinRate": 0.7535714285714286,
+      "lift": 1.309523809523816
+    },
+    {
+      "pick": "T3_suppressing_fire",
+      "name": "Suppressing Fire",
+      "kind": "upgrade",
+      "withN": 276,
+      "withoutN": 724,
+      "withWinRate": 0.7681159420289855,
+      "withoutWinRate": 0.761049723756906,
+      "lift": 0.7066218272079428
+    },
+    {
+      "pick": "T6_overcharged_drone",
+      "name": "Overcharged Drone",
+      "kind": "upgrade",
+      "withN": 279,
+      "withoutN": 721,
+      "withWinRate": 0.7670250896057348,
+      "withoutWinRate": 0.7614424410540915,
+      "lift": 0.5582648551643254
+    },
+    {
+      "pick": "A2_acid_brood",
+      "name": "Acid Brood",
+      "kind": "upgrade",
+      "withN": 248,
+      "withoutN": 752,
+      "withWinRate": 0.7580645161290323,
+      "withoutWinRate": 0.7646276595744681,
+      "lift": -0.6563143445435848
+    },
+    {
+      "pick": "proximity_mine",
+      "name": "Proximity Mine",
+      "kind": "ability",
+      "withN": 716,
+      "withoutN": 284,
+      "withWinRate": 0.7569832402234636,
+      "withoutWinRate": 0.778169014084507,
+      "lift": -2.1185773861043367
+    },
+    {
+      "pick": "scout_drone",
+      "name": "Scout Drone",
+      "kind": "ability",
+      "withN": 749,
+      "withoutN": 251,
+      "withWinRate": 0.7570093457943925,
+      "withoutWinRate": 0.7808764940239044,
+      "lift": -2.386714822951186
+    },
+    {
+      "pick": "A1_spore_burst",
+      "name": "Spore Burst",
+      "kind": "upgrade",
+      "withN": 238,
+      "withoutN": 762,
+      "withWinRate": 0.7352941176470589,
+      "withoutWinRate": 0.7716535433070866,
+      "lift": -3.63594256600277
+    },
+    {
+      "pick": "T2_shot_triggered_mines",
+      "name": "Shot-Triggered Mines",
+      "kind": "upgrade",
+      "withN": 182,
+      "withoutN": 818,
+      "withWinRate": 0.7252747252747253,
+      "withoutWinRate": 0.7713936430317848,
+      "lift": -4.611891775705956
+    },
+    {
+      "pick": "H1_spore_mines",
+      "name": "Spore Mines",
+      "kind": "upgrade",
+      "withN": 175,
+      "withoutN": 825,
+      "withWinRate": 0.72,
+      "withoutWinRate": 0.7721212121212121,
+      "lift": -5.212121212121213
+    },
+    {
+      "pick": "sidearm",
+      "name": "Sidearm",
+      "kind": "ability",
+      "withN": 730,
+      "withoutN": 270,
+      "withWinRate": 0.7465753424657534,
+      "withoutWinRate": 0.8074074074074075,
+      "lift": -6.083206494165405
+    },
+    {
+      "pick": "lunge",
+      "name": "Lunge",
+      "kind": "ability",
+      "withN": 727,
+      "withoutN": 273,
+      "withWinRate": 0.7455295735900963,
+      "withoutWinRate": 0.8095238095238095,
+      "lift": -6.399423593371322
+    },
+    {
+      "pick": "A4_fast_brood",
+      "name": "Fast Brood",
+      "kind": "upgrade",
+      "withN": 258,
+      "withoutN": 742,
+      "withWinRate": 0.6937984496124031,
+      "withoutWinRate": 0.7870619946091644,
+      "lift": -9.326354499676127
+    },
+    {
+      "pick": "brood_egg",
+      "name": "Brood Egg",
+      "kind": "ability",
+      "withN": 713,
+      "withoutN": 287,
+      "withWinRate": 0.7335203366058906,
+      "withoutWinRate": 0.8362369337979094,
+      "lift": -10.271659719201887
+    },
+    {
+      "pick": "grapple_hook",
+      "name": "Grapple Hook",
+      "kind": "ability",
+      "withN": 730,
+      "withoutN": 270,
+      "withWinRate": 0.7342465753424657,
+      "withoutWinRate": 0.8407407407407408,
+      "lift": -10.649416539827506
+    },
+    {
+      "pick": "T4_grapple_pin",
+      "name": "Grapple Pin",
+      "kind": "upgrade",
+      "withN": 280,
+      "withoutN": 720,
+      "withWinRate": 0.6785714285714286,
+      "withoutWinRate": 0.7958333333333333,
+      "lift": -11.726190476190467
+    }
+  ],
+  "checks": [
+    {
+      "metric": "Length of winning fights",
+      "value": "median 13, mean 13.7",
+      "target": "8 to 12",
+      "alarm": "over 16",
+      "status": "warn"
+    },
+    {
+      "metric": "Share of player damage from own effects",
+      "value": "42.6%",
+      "target": "5% to 30%",
+      "alarm": "over 35%, or under 3%",
+      "status": "alarm"
+    },
+    {
+      "metric": "Share of deaths from one source",
+      "value": "enemy 74.3%",
+      "target": "no source above 60%",
+      "alarm": "hazards above 60%",
+      "status": "warn"
+    },
+    {
+      "metric": "Hazard fires per fight",
+      "value": "4.40 (88.1% of fights at least 2)",
+      "target": "at least 2",
+      "alarm": "under 1 on average",
+      "status": "ok"
+    },
+    {
+      "metric": "Win-rate lift of each ability and upgrade",
+      "value": "max 12.4 points (Auto-Turret)",
+      "target": "under 25 points",
+      "alarm": "any above 40 points",
+      "status": "ok"
+    },
+    {
+      "metric": "Warden reaches the player",
+      "value": "12.4% of fights that reach round 7; dies before round 9 in 0.0%",
+      "target": "in most fights that reach round 7",
+      "alarm": "dies before round 9 in most fights",
+      "status": "warn"
+    }
+  ]
+}

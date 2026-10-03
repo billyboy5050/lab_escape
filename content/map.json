@@ -1,0 +1,42 @@
+{
+  "id": "armory_lockdown",
+  "name": "Armory Lockdown",
+  "width": 8,
+  "height": 8,
+  "rows": [
+    "...SS...",
+    ".......#",
+    "........",
+    "#P......",
+    ".v.zz..G",
+    "..P..Pv.",
+    "........",
+    ".@......"
+  ],
+  "legend": {
+    ".": "floor",
+    "#": "wall",
+    "P": "pillar",
+    "S": "shutter",
+    "z": "panel",
+    "v": "vent",
+    "G": "gun",
+    "@": "floor"
+  },
+  "terrain": {
+    "floor": { "name": "Floor", "blocksMove": false, "blocksSight": false, "blocksProjectile": false },
+    "wall": { "name": "Wall", "blocksMove": true, "blocksSight": true, "blocksProjectile": true },
+    "pillar": { "name": "Pillar", "blocksMove": true, "blocksSight": true, "blocksProjectile": true },
+    "shutter": { "name": "Shutter", "blocksMove": true, "blocksSight": false, "blocksProjectile": true },
+    "gun": { "name": "Wall gun", "blocksMove": true, "blocksSight": false, "blocksProjectile": true },
+    "panel": { "name": "Floor panel", "blocksMove": false, "blocksSight": false, "blocksProjectile": false },
+    "vent": { "name": "Gas vent", "blocksMove": false, "blocksSight": false, "blocksProjectile": false }
+  },
+  "playerStart": "B8",
+  "hazards": [
+    { "id": "gun", "def": "wall_gun", "tiles": ["H5"], "direction": "W" },
+    { "id": "panel", "def": "panel_grid", "tiles": ["D5", "E5"] },
+    { "id": "vent_b5", "def": "gas_vent", "tiles": ["B5"] },
+    { "id": "vent_g6", "def": "gas_vent", "tiles": ["G6"] }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "lexicon": [
+    { "code": "Sentry", "means": "guard" },
+    { "code": "Medic", "means": "medic" },
+    { "code": "Burner", "means": "flamer" },
+    { "code": "Warden", "means": "warden" }
+  ],
+  "lines": [
+    { "id": "round1", "trigger": { "type": "roundStart", "round": 1 }, "text": "Containment grade 2, armory floor. Sentries and a Medic to sector three." },
+    { "id": "round3", "trigger": { "type": "roundStart", "round": 3 }, "text": "Security, flank the intruder from the side corridors. Send a Burner." },
+    { "id": "round6", "trigger": { "type": "roundStart", "round": 6 }, "text": "Warden to the armory floor." },
+    { "id": "firstHazardPrimed", "trigger": { "type": "hazardPrimed" }, "text": "Defence systems are tracking the intruder." },
+    { "id": "firstHazardHitsPlayer", "trigger": { "type": "hazardHitsPlayer" }, "text": "Defences engaged." },
+    { "id": "hazardHitsSoldier", "trigger": { "type": "hazardHitsSoldier" }, "text": "Acceptable losses." },
+    { "id": "medicDies", "trigger": { "type": "unitDied", "def": "medic" }, "text": "Medic is down." },
+    { "id": "flamerDies", "trigger": { "type": "unitDied", "def": "flamer" }, "text": "Burner is down." },
+    { "id": "wardenLow", "trigger": { "type": "hpBelow", "def": "warden", "threshold": 10 }, "text": "Warden, report." },
+    { "id": "playerLow", "trigger": { "type": "hpBelow", "def": "player", "threshold": 4 }, "text": "The intruder is wounded. Keep the pressure on." },
+    { "id": "wardenDies", "trigger": { "type": "unitDied", "def": "warden" }, "text": "Warden is down. The armory is compromised." },
+    { "id": "playerDies", "trigger": { "type": "unitDied", "def": "player" }, "immediate": true, "text": "Intruder neutralised." }
+  ]
+}

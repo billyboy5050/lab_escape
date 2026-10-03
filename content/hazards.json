@@ -1,0 +1,34 @@
+[
+  {
+    "id": "wall_gun",
+    "name": "Wall gun",
+    "shape": "lane",
+    "damage": 2,
+    "damageType": "kinetic",
+    "cooldown": 3,
+    "cancelCooldown": 1,
+    "cue": "The gun barrel glows."
+  },
+  {
+    "id": "panel_grid",
+    "name": "Panel grid",
+    "shape": "adjacentToTiles",
+    "radius": 1,
+    "damage": 2,
+    "damageType": "electric",
+    "cooldown": 3,
+    "cancelCooldown": 1,
+    "cue": "The floor panels crackle."
+  },
+  {
+    "id": "gas_vent",
+    "name": "Gas vent",
+    "shape": "adjacentToTiles",
+    "radius": 1,
+    "damage": 1,
+    "damageType": "poison",
+    "cooldown": 3,
+    "cancelCooldown": 1,
+    "cue": "A wisp rises from the vent."
+  }
+]

@@ -1,0 +1,20 @@
+
+Preset Alien: greedy bot, 1000 seeds
+====================================
+Fights: 1000
+Win rate: 46.4%  (95% CI 43.3% to 49.5%), 464 wins
+Rounds, wins:   median 11, mean 11.2, range 10 to 13
+Rounds, losses: median 4, mean 5.3; 278 reached wave 2
+Causes of death: enemy 322, player 205, hazard 9
+Top killers: guard/shot 304, hatchling/poison 88, player/poison 84, guard/poison 30, warden/melee 12, flamer/sweep 5
+Mean damage to the player per fight: player 0.93, minion 0.00, enemy 5.04, hazard 0.69
+Mean friendly-fire share of the player's damage: 13.5%
+Hazard fires per fight: 1.91; peak minions: mean 3.46, max 5
+Uses per fight: brood_egg 5.9, parasite 4.3, spore_pod 3.4, acid_spit 2.0, lunge 0.6, sprint 0.0
+
+Spec metrics (bot proxy):
+  [OK   ] Length of winning fights: median 11, mean 11.2  (target 8 to 12; alarm over 16)
+  [OK   ] Share of player damage from own effects: 14.0%  (target 5% to 30%; alarm over 35%, or under 3%)
+  [WARN ] Share of deaths from one source: enemy 60.1%  (target no source above 60%; alarm hazards above 60%)
+  [WARN ] Hazard fires per fight: 1.91 (59.9% of fights at least 2)  (target at least 2; alarm under 1 on average)
+  [WARN ] Warden reaches the player: 3.3% of fights that reach round 7; dies before round 9 in 0.0%  (target in most fights that reach round 7; alarm dies before round 9 in most fights)

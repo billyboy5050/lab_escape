@@ -1,0 +1,284 @@
+{
+  "preset": "hybrid",
+  "note": "Scripted regression fight. Re-record on purpose when content values or rules change: npm run golden:record",
+  "record": {
+    "format": "lab-escape/replay@1",
+    "engineVersion": "0.1.0",
+    "contentHash": "08a289f83c157f",
+    "loadout": {
+      "abilities": [
+        "sidearm",
+        "proximity_mine",
+        "scout_drone",
+        "barrier_shield",
+        "acid_spit",
+        "spore_pod",
+        "brood_egg",
+        "parasite"
+      ],
+      "upgrades": [
+        "H1_spore_mines",
+        "H2_plague_drone",
+        "A3_parasite_jump"
+      ]
+    },
+    "settings": {},
+    "commands": [
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "B7"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "G3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "C8",
+          "C7",
+          "D7"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "barrier_shield",
+        "target": "E5",
+        "target2": "D6"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "D4"
+      },
+      {
+        "type": "move",
+        "path": [
+          "C7",
+          "B7",
+          "B8"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "C3"
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "C3"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "F3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B7",
+          "B6",
+          "B5"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "barrier_shield",
+        "target": "F1",
+        "target2": "E2"
+      },
+      {
+        "type": "ability",
+        "ability": "sidearm",
+        "target": "G3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "C5",
+          "C4",
+          "D4"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "G4"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "D3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "C4",
+          "C5",
+          "B5"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "E4"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B6",
+          "B7",
+          "C7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "C4"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "A2"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "C8"
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "B6"
+      },
+      {
+        "type": "move",
+        "path": [
+          "D7",
+          "E7",
+          "E6"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "E7",
+          "D7",
+          "C7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "C4"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "F4"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "D7"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "G2"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "F8"
+      },
+      {
+        "type": "move",
+        "path": [
+          "D7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "B6"
+      },
+      {
+        "type": "ability",
+        "ability": "acid_spit",
+        "target": "B6"
+      },
+      {
+        "type": "move",
+        "path": [
+          "E7",
+          "E8"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "E7",
+          "F7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "G6"
+      },
+      {
+        "type": "ability",
+        "ability": "proximity_mine",
+        "target": "C7"
+      },
+      {
+        "type": "endTurn"
+      }
+    ],
+    "meta": {
+      "bot": "greedy",
+      "seed": 1,
+      "preset": "hybrid",
+      "label": "golden hybrid"
+    }
+  },
+  "eventCount": 483,
+  "eventsHash": "0ed2b3bae17913",
+  "finalStateHash": "0044897d0832e8",
+  "outcome": "win",
+  "rounds": 11
+}
