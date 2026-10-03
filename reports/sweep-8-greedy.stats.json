@@ -60,7 +60,7 @@
   "meanFriendlyFireShare": 0.5375531914893616,
   "meanHazardFires": 4.396,
   "fightsWithTwoHazardFires": 881,
-  "meanPeakMinions": 4.25,
+  "meanPeakMinions": 4.272,
   "maxPeakMinions": 5,
   "wardenReachedShare": 0.12393162393162394,
   "wardenEarlyDeathShare": 0,
@@ -322,7 +322,7 @@
     },
     {
       "metric": "Share of player damage from own effects",
-      "value": "42.6%",
+      "value": "53.8%",
       "target": "5% to 30%",
       "alarm": "over 35%, or under 3%",
       "status": "alarm"

@@ -12,6 +12,6 @@ Hazard fires per fight: 0.47; peak minions: mean 0.66, max 3
 Uses per fight: grapple_hook 2.7, barrier_shield 2.0, proximity_mine 1.7, auto_turret 0.5, sidearm 0.3, scout_drone 0.3, sprint 0.1, reload 0.0
 
 Spec metrics (bot proxy):
-  [OK   ] Share of player damage from own effects: 14.3%  (target 5% to 30%; alarm over 35%, or under 3%)
+  [OK   ] Share of player damage from own effects: 14.2%  (target 5% to 30%; alarm over 35%, or under 3%)
   [WARN ] Share of deaths from one source: enemy 86.8%  (target no source above 60%; alarm hazards above 60%)
   [ALARM] Hazard fires per fight: 0.47 (5.5% of fights at least 2)  (target at least 2; alarm under 1 on average)

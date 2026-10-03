@@ -9,7 +9,7 @@ Causes of death: enemy 176, player 40, round cap 13, minion 5, hazard 3
 Top killers: guard/shot 115, warden/melee 44, flamer/sweep 12, player/poison 10, mine/proximity_mine 7, drone/poison 6
 Mean damage to the player per fight: player 1.21, minion 0.28, enemy 1.88, hazard 0.13
 Mean friendly-fire share of the player's damage: 53.8%
-Hazard fires per fight: 4.40; peak minions: mean 4.25, max 5
+Hazard fires per fight: 4.40; peak minions: mean 4.27, max 5
 Uses per fight: auto_turret 6.2, parasite 3.2, brood_egg 2.9, spore_pod 2.4, proximity_mine 2.4, barrier_shield 1.8, sidearm 1.7, scout_drone 1.6, grapple_hook 1.4, acid_spit 0.8, lunge 0.6, reload 0.6, redeploy 0.1, sprint 0.0
 
 Win-rate lift (with minus without, points):
@@ -39,7 +39,7 @@ Win-rate lift (with minus without, points):
 
 Spec metrics (bot proxy):
   [WARN ] Length of winning fights: median 13, mean 13.7  (target 8 to 12; alarm over 16)
-  [ALARM] Share of player damage from own effects: 42.6%  (target 5% to 30%; alarm over 35%, or under 3%)
+  [ALARM] Share of player damage from own effects: 53.8%  (target 5% to 30%; alarm over 35%, or under 3%)
   [WARN ] Share of deaths from one source: enemy 74.3%  (target no source above 60%; alarm hazards above 60%)
   [OK   ] Hazard fires per fight: 4.40 (88.1% of fights at least 2)  (target at least 2; alarm under 1 on average)
   [OK   ] Win-rate lift of each ability and upgrade: max 12.4 points (Auto-Turret)  (target under 25 points; alarm any above 40 points)

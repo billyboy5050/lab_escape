@@ -72,7 +72,7 @@
   "checks": [
     {
       "metric": "Share of player damage from own effects",
-      "value": "14.3%",
+      "value": "14.2%",
       "target": "5% to 30%",
       "alarm": "over 35%, or under 3%",
       "status": "ok"

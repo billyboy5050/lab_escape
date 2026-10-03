@@ -14,7 +14,7 @@ Uses per fight: auto_turret 10.5, sidearm 4.7, proximity_mine 3.9, barrier_shiel
 
 Spec metrics (bot proxy):
   [WARN ] Length of winning fights: median 14, mean 14.2  (target 8 to 12; alarm over 16)
-  [OK   ] Share of player damage from own effects: 10.7%  (target 5% to 30%; alarm over 35%, or under 3%)
+  [OK   ] Share of player damage from own effects: 14.0%  (target 5% to 30%; alarm over 35%, or under 3%)
   [WARN ] Share of deaths from one source: enemy 94.6%  (target no source above 60%; alarm hazards above 60%)
   [OK   ] Hazard fires per fight: 3.84 (90.5% of fights at least 2)  (target at least 2; alarm under 1 on average)
   [WARN ] Warden reaches the player: 28.1% of fights that reach round 7; dies before round 9 in 0.0%  (target in most fights that reach round 7; alarm dies before round 9 in most fights)
