@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTION_KEYS, actionIndexForKey, actionKeyLabel } from '../src/client/actionKeys';
+import { ACTION_KEYS, actionIndexForKey, actionKeyLabel, endsTurn } from '../src/client/actionKeys';
 import { actionStatuses } from '../src/engine/commands';
 import { C, scenario } from './helpers';
 
@@ -40,5 +40,28 @@ describe('action shortcuts', () => {
     const i = bar.findIndex((a) => a.id === 'redeploy');
     expect(i).toBe(10);
     expect(actionKeyLabel(i)).toBe('-');
+  });
+});
+
+describe('ending the turn from the keyboard', () => {
+  it('lets a focused button, link or summary keep Enter, so Enter operates it instead of ending the turn', () => {
+    for (const tagName of ['BUTTON', 'A', 'SUMMARY']) expect(endsTurn('Enter', { tagName })).toBe(false);
+  });
+
+  it('ends the turn on Enter when nothing, or something that is not operated by Enter, has focus', () => {
+    expect(endsTurn('Enter', null)).toBe(true);
+    expect(endsTurn('Enter', {})).toBe(true);
+    for (const tagName of ['BODY', 'DIV', 'svg', 'MAIN']) expect(endsTurn('Enter', { tagName })).toBe(true);
+  });
+
+  it('always ends the turn on E, wherever focus is', () => {
+    for (const k of ['e', 'E']) {
+      expect(endsTurn(k, { tagName: 'BUTTON' })).toBe(true);
+      expect(endsTurn(k, null)).toBe(true);
+    }
+  });
+
+  it('ends the turn on no other key', () => {
+    for (const k of [' ', 'Escape', 'z', 'Tab', '1', 'Shift']) expect(endsTurn(k, null)).toBe(false);
   });
 });

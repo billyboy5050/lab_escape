@@ -13,3 +13,11 @@ export function actionKeyLabel(index: number): string {
 export function actionIndexForKey(key: string): number {
   return ACTION_KEYS.indexOf(key);
 }
+
+/** True for the keys that end the turn: E, and Enter unless a button, link or summary has focus (Enter operates it then). */
+export function endsTurn(key: string, focus: { tagName?: string } | null): boolean {
+  if (key === 'e' || key === 'E') return true;
+  if (key !== 'Enter') return false;
+  const tag = focus?.tagName;
+  return tag !== 'BUTTON' && tag !== 'A' && tag !== 'SUMMARY';
+}

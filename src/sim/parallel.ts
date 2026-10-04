@@ -7,6 +7,8 @@ import { runBatch, type BatchSpec, type FightRow } from './batch';
  * rows are reassembled in seed order, so the result is identical to a single-threaded run.
  */
 export async function runBatchParallel(spec: BatchSpec, opts: { workers?: number; onProgress?: (done: number, total: number) => void } = {}): Promise<FightRow[]> {
+  // NaN here would size the pool and the chunks as NaN, start no workers, and leave the promise below waiting forever.
+  if (opts.workers !== undefined && !(Number.isInteger(opts.workers) && opts.workers >= 1)) throw new Error(`workers must be a whole number of at least 1 (got ${opts.workers})`);
   const workers = Math.max(1, Math.min(opts.workers ?? Math.max(1, os.cpus().length - 1), Math.ceil(spec.seeds.length / 4)));
   if (workers <= 1) {
     const rows = runBatch(spec);

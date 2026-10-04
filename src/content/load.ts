@@ -216,7 +216,9 @@ export function validateContent(f: ContentFiles): string[] {
   tileOk(m.playerStart, 'map.playerStart');
   for (const hz of m.hazards ?? []) {
     if (!hazardIds.has(hz.def)) p.push(`map hazard ${hz.id} uses unknown hazard def "${hz.def}"`);
-    hz.tiles.forEach((t) => tileOk(t, `map hazard ${hz.id} tile`));
+    // Every hazard is placed, drawn and (for a lane) fired from its first tile, so one with none would crash the board.
+    if (!Array.isArray(hz.tiles) || hz.tiles.length === 0) p.push(`map hazard ${hz.id} needs at least one tile`);
+    else hz.tiles.forEach((t) => tileOk(t, `map hazard ${hz.id} tile`));
     // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
     if (hz.direction && !DIRECTION_NAMES.includes(hz.direction)) p.push(`map hazard ${hz.id} has unknown direction ${JSON.stringify(hz.direction)} (use N, E, S or W)`);
     if (f.hazards.find((h) => h.id === hz.def)?.shape === 'lane' && !hz.direction) p.push(`map hazard ${hz.id} is a lane and needs a direction`);

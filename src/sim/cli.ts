@@ -8,6 +8,7 @@ import { replay, type FightRecord } from '../telemetry/record';
 import { summarize } from '../telemetry/summary';
 import { contentFor, seedRange, type BatchSpec, type BotKind, type FightRow } from './batch';
 import { recordGolden, verifyGolden, eventsToJsonl, type GoldenFile } from './golden';
+import { parseInteger } from './options';
 import { runBatchParallel } from './parallel';
 import { aggregate, formatReport, liftToCsv, rowsToCsv } from './report';
 
@@ -65,9 +66,9 @@ function main(): Promise<void> | void {
   const bot = values.bot as BotKind;
   if (!['random', 'greedy', 'greedy-naive'].includes(bot)) throw new Error(`Unknown bot "${bot}"`);
   const overrides = parseOverrides(values.set ?? []);
-  const seeds = seedRange(Number(values.from), Number(values.seeds ?? 1000));
+  const seeds = seedRange(parseInteger('from', values.from)!, parseInteger('seeds', values.seeds, { min: 1 }) ?? 1000);
   const settings = values['hold-wave3'] ? { maxWaves: 2 } : {};
-  const workers = values.workers ? Number(values.workers) : undefined;
+  const workers = parseInteger('workers', values.workers, { min: 1 });
   const outDir = values.out;
   const progress = (label: string) => (done: number, total: number) => {
     if (process.stderr.isTTY) process.stderr.write(`\r${label}: ${done}/${total}   `);
@@ -113,7 +114,7 @@ function main(): Promise<void> | void {
     case 'sweep':
       return (async () => {
         const c = contentFor(overrides);
-        const size = values.size ? Number(values.size) : c.rules.loadout.abilities;
+        const size = parseInteger('size', values.size, { min: 1 }) ?? c.rules.loadout.abilities;
         const rows = await runBatchParallel({ bot, loadout: { sweep: true, size }, seeds, overrides, settings }, { workers, onProgress: progress(`sweep ${size} of ${c.abilityOrder.length}`) });
         const stats = aggregate(rows, c);
         const text = formatReport(`Loadout sweep: ${size} of ${c.abilityOrder.length} abilities, ${bot} bot, ${seeds.length} random loadouts${describeOverrides(overrides)}`, stats);

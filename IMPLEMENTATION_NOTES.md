@@ -115,8 +115,9 @@ The spec says to update it when implementation forces a rule change. Nothing her
 - **Hover previews** also show the intents as they would be after the hovered action.
 - **Summaries count HP actually lost** (no overkill). Events carry both the hit size (`amount`) and HP lost (`hpLost`).
 - **Turn times** measure the player's own time. A turn's clock starts when the client has finished animating and the player can act (the opening, or the enemy and environment phases after End Turn), and stops at End Turn or at the action that ends the fight, so the last turn of a fight is counted. Without the client's `turnReady()` call (the simulator, tests) a turn is timed from the end of the previous one.
+- **The dev server's telemetry endpoint** writes only under `telemetry/`. The folder and file names come from the request, so each is cleaned and checked to stay inside that folder, and a request that cannot is refused with a 400.
 - **Pick Up Mine** is counted in `abilitiesUsed` as `pick_up_mine`, like Sprint, Reload and Redeploy.
-- **Action shortcuts** run 1 to 9, 0, then `-` and `=`, because a full loadout (8 abilities) plus the four utilities is 12 actions. Ctrl, Cmd and Alt combinations are left to the browser.
+- **Action shortcuts** run 1 to 9, 0, then `-` and `=`, because a full loadout (8 abilities) plus the four utilities is 12 actions. Ctrl, Cmd and Alt combinations are left to the browser. `E` always ends the turn; `Enter` does too unless a button or link has focus, when Enter operates that control instead (a focused button is focused after a mouse click as well, so Enter after clicking a button presses it again).
 - **Replays stop at a rejected command.** A replay command the engine refuses (a corrupted or edited file) pauses playback there and says which command it was, instead of playing the rest against a state it no longer matches.
 - **Incoming-damage badges** in the intent forecast sit on the unit's current tile, not on the tile where the forecast says it is hit. The badge belongs to the unit the player can see, and a minion's destination is already drawn as its dashed path; the hit tile is used only for things not on the board yet.
 
@@ -128,6 +129,7 @@ The spec says to update it when implementation forces a rule change. Nothing her
   - **Cues:** by default it treats a hazard showing its cue as a threat to the tiles that hazard covers, as a player who has learned the room would. `--bot greedy-naive` turns that off.
 - **Scripted bots.** The spec's scripted bots reproduce the hand simulations, but the design document has only their summaries, not move-by-move lines. The golden replays are therefore greedy-bot fights frozen into command scripts (`golden/`); replace them with transcribed hand lines when those exist.
 - **Search bot** (stretch): not built.
+- **Command-line numbers** (`--seeds`, `--from`, `--workers`, `--size`) must be whole numbers, and `--seeds`, `--workers` and `--size` at least 1. Anything else is an error that names the option. A `NaN` used to reach the worker pool, which then started no workers and let the run end silently with exit code 0.
 
 ## Known limitations
 

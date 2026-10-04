@@ -142,3 +142,27 @@ describe('content validation of lane hazards', () => {
     expect(validateContent(f)).toEqual([]);
   });
 });
+
+describe('content validation of hazard tiles', () => {
+  it.each(['gun', 'panel', 'vent_b5'])('rejects a hazard with no tiles (%s), which would crash the board', (id) => {
+    const f = edited((x) => {
+      x.map.hazards.find((h) => h.id === id)!.tiles = [];
+    });
+    expect(validateContent(f)).toEqual([`map hazard ${id} needs at least one tile`]);
+    expect(() => buildContent(f)).toThrow(ContentError);
+  });
+
+  it('rejects a hazard whose tiles are missing altogether, without throwing from the validator', () => {
+    const f = edited((x) => {
+      delete (x.map.hazards.find((h) => h.id === 'gun') as { tiles?: string[] }).tiles;
+    });
+    expect(validateContent(f)).toEqual(['map hazard gun needs at least one tile']);
+  });
+
+  it('still checks each tile that is there', () => {
+    const f = edited((x) => {
+      x.map.hazards.find((h) => h.id === 'panel')!.tiles = ['D5', 'Z9'];
+    });
+    expect(validateContent(f)).toEqual(['map hazard panel tile "Z9" is off the map']);
+  });
+});

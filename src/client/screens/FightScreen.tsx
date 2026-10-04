@@ -11,7 +11,7 @@ import { parseTile, tileName } from '../../util/tiles';
 import { Board, type Highlight } from '../components/Board';
 import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/DebugPanel';
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
-import { actionIndexForKey } from '../actionKeys';
+import { actionIndexForKey, endsTurn } from '../actionKeys';
 import { saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
 
@@ -254,7 +254,11 @@ export function FightScreen(props: {
         setGrappleMode((m) => (m === 'unit' ? 'self' : 'unit'));
         return e.preventDefault();
       }
-      if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && idle) return commit({ type: 'endTurn' });
+      if (idle && endsTurn(e.key, el)) {
+        commit({ type: 'endTurn' });
+        // Without this a focused button would also be clicked by the same Enter.
+        return e.preventDefault();
+      }
       // Modified keys are the browser's (Ctrl and Cmd with - and = zoom the page).
       const slot = e.ctrlKey || e.metaKey || e.altKey ? -1 : actionIndexForKey(e.key);
       if (slot >= 0) {
