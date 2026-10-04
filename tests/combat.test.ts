@@ -142,6 +142,36 @@ describe('death, corpses and the end of the fight', () => {
     expect(r.state.outcome?.result).toBe('win');
   });
 
+  describe('a win waits for the action that caused it to finish', () => {
+    // Row 7 is clear floor. The first mine's blast reaches the Guard on C8 and the player on B7; the second mine is on D7.
+    const crossTwoMines = (playerHp: number) =>
+      run(
+        scenario({
+          player: 'A7',
+          playerHp,
+          wavesSpawned: 3,
+          units: [{ def: 'guard', at: 'C8', hp: 3 }],
+          objects: [{ kind: 'mine', at: 'B7' }, { kind: 'mine', at: 'D7' }],
+        }),
+        { type: 'move', path: ['B7', 'C7', 'D7'] },
+      );
+
+    it('killing the last enemy on the first mine of a move does not skip the second mine', () => {
+      const r = crossTwoMines(8);
+      expect(eventsOf(r.events, 'ObjectTriggered')).toHaveLength(2);
+      expect(unitById(r.state, 0)!.pos).toEqual({ x: 3, y: 6 });
+      expect(r.state.outcome?.result).toBe('win');
+    });
+
+    it('the player dying on a later mine of the same move is a loss, not a win', () => {
+      // 4 HP survives the first blast with 1, and the second blast kills.
+      const r = crossTwoMines(4);
+      expect(eventsOf(r.events, 'ObjectTriggered')).toHaveLength(2);
+      expect(eventsOf(r.events, 'UnitDied').map((e) => e.id)).toEqual([1, 0]);
+      expect(r.state.outcome?.result).toBe('lose');
+    });
+  });
+
   it('killing everything before the last wave is not a win', () => {
     const s = scenario({ player: 'B8', wavesSpawned: 2, units: [{ def: 'guard', at: 'B6', hp: 2 }] });
     const r = run(s, { type: 'ability', ability: 'sidearm', target: 'B6' });

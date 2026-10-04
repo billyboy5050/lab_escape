@@ -103,7 +103,7 @@ export class World {
 
   /**
    * Runs a root action: a player command, one minion or enemy action, or one environment step.
-   * It opens a chain, applies the action, processes deaths, then drains the trigger queue.
+   * It opens a chain, applies the action, processes deaths, drains the trigger queue, then checks for a win.
    */
   root(label: string, actor: number | null, fn: () => void): void {
     if (this.chain) throw new Error(`Root action "${label}" started inside "${this.chain.label}"`);
@@ -112,6 +112,7 @@ export class World {
       fn();
       this.flushDeaths();
       this.runQueue();
+      this.checkWin();
     } finally {
       // Runs even when the fight ends mid-action (FightOver), so the deciding action keeps its frame
       // and a line queued by it (a win's "Warden is down") still plays.
@@ -431,7 +432,7 @@ export class World {
 
   /**
    * Removes every unit and object marked dead, in unit ID order, leaving enemy corpses and queueing
-   * death hooks. The player's death ends the fight at once.
+   * death hooks. The player's death ends the fight at once; the last enemy's death waits for checkWin.
    */
   flushDeaths(): void {
     const deadObjects = this.s.objects.filter((o) => o.destroyed);
@@ -452,20 +453,17 @@ export class World {
       intercomTrigger(this, 'unitDied', { def: u.def });
       for (const hook of this.deathHooks) hook(this, u);
     }
-    this.checkWin();
   }
 
   /**
-   * Ends the fight in a win once every wave is in and no enemy is left. The last enemy's death hooks have
-   * only queued their effects by now, so those play first. They can add an enemy or kill the player, so the
-   * win is checked again afterwards. The player's death still ends the fight at once, in flushDeaths.
+   * Ends the fight in a win once every wave is in and no enemy is left. Only root() calls it, after the action
+   * and the chain's queued effects have finished, so a win never cuts an action short: a move that kills the
+   * last enemy on one mine still steps on the next, and the last enemy's Spore Burst, Parasite hatch and other
+   * death effects still play (and can add an enemy, which continues the fight). The player's death is the
+   * opposite case: it ends the fight at once, in flushDeaths, so a loss beats a win from the same action.
    */
-  checkWin(): void {
+  private checkWin(): void {
     if (this.s.outcome || !this.allEnemiesDown()) return;
-    if (this.chain?.queue.length) {
-      this.runQueue();
-      if (!this.allEnemiesDown()) return;
-    }
     this.endFight({ result: 'win', cause: 'All enemies are dead', round: this.s.round });
   }
 
