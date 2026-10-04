@@ -114,6 +114,8 @@ The spec says to update it when implementation forces a rule change. Nothing her
 - **Intents** are the minion and enemy phases dry-run on a copy of the state, so each unit's intent already accounts for the units that act before it. The environment phase is not run, so hazards stay hidden.
 - **Hover previews** also show the intents as they would be after the hovered action.
 - **Summaries count HP actually lost** (no overkill). Events carry both the hit size (`amount`) and HP lost (`hpLost`).
+- **Turn times** measure the player's own time. A turn's clock starts when the client has finished animating and the player can act (the opening, or the enemy and environment phases after End Turn), and stops at End Turn or at the action that ends the fight, so the last turn of a fight is counted. Without the client's `turnReady()` call (the simulator, tests) a turn is timed from the end of the previous one.
+- **Pick Up Mine** is counted in `abilitiesUsed` as `pick_up_mine`, like Sprint, Reload and Redeploy.
 
 ### Simulator
 

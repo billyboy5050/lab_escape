@@ -22,6 +22,8 @@ export class FightSession {
   readonly startFrames: Frame[];
   private undoStack: UndoEntry[] = [];
   private turnStart: number;
+  /** True from the start of a player turn until turnReady() restarts the clock, once the client has finished animating. */
+  private clockPending = true;
 
   constructor(
     readonly c: Content,
@@ -48,14 +50,31 @@ export class FightSession {
     } else {
       this.undoStack = [];
     }
-    if (cmd.type === 'endTurn') {
+    // A turn ends when the player ends it, or when the fight does: the winning (or fatal) action closes the last turn.
+    if (cmd.type === 'endTurn' || r.state.outcome) {
       this.record.meta?.turnTimesMs?.push(Math.max(0, Math.round(this.now() - this.turnStart)));
+    }
+    if (cmd.type === 'endTurn') {
+      // Timed from here unless the client calls turnReady(), which is how it leaves out the enemy phase playing out.
       this.turnStart = this.now();
+      this.clockPending = true;
     }
     this.record.commands.push(cmd);
     this.events.push(...r.events);
     this.state = r.state;
     return r;
+  }
+
+  /**
+   * The client calls this once the animation has finished and the player can act. It starts the clock for the
+   * turn that has just begun (the first turn, or the one after an End Turn), so a turn time measures the player's
+   * own time and not the opening or the enemy and environment phases playing out. Later calls in the same turn do
+   * nothing. Callers that never call it (the simulator, tests) time a turn from the end of the previous one.
+   */
+  turnReady(): void {
+    if (!this.clockPending || this.state.outcome || this.state.phase !== 'player') return;
+    this.turnStart = this.now();
+    this.clockPending = false;
   }
 
   get canUndo(): boolean {

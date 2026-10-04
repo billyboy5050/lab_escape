@@ -95,6 +95,10 @@ export class SummaryBuilder {
         case 'DroneRedeployed':
           s.abilitiesUsed['redeploy'] = (s.abilitiesUsed['redeploy'] ?? 0) + 1;
           break;
+        case 'ObjectRemoved':
+          // Picking up a mine is the only action that removes an object for this reason.
+          if (e.reason === 'pickup') s.abilitiesUsed['pick_up_mine'] = (s.abilitiesUsed['pick_up_mine'] ?? 0) + 1;
+          break;
         case 'DamageDealt': {
           const cat = e.source.category as Category;
           // HP actually lost, so a killing blow's overkill does not inflate the totals.

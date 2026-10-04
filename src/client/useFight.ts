@@ -66,6 +66,8 @@ export function useFight(c: Content, loadout: Loadout, settings: FightSettings, 
   const finish = useCallback(() => {
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = null;
+    // The animation is over and the player can act: this is when a new turn's clock starts.
+    session.turnReady();
     setShown(session.state);
     setBusy(false);
     setBanner(null);
