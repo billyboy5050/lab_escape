@@ -1,5 +1,5 @@
 import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from './required';
-import { DAMAGE_TYPES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
+import { DAMAGE_TYPES, DIRECTION_NAMES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
 import { hashJson } from '../util/hash';
 import { isTileName, parseTile } from '../util/tiles';
 
@@ -217,6 +217,8 @@ export function validateContent(f: ContentFiles): string[] {
   for (const hz of m.hazards ?? []) {
     if (!hazardIds.has(hz.def)) p.push(`map hazard ${hz.id} uses unknown hazard def "${hz.def}"`);
     hz.tiles.forEach((t) => tileOk(t, `map hazard ${hz.id} tile`));
+    // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
+    if (hz.direction && !DIRECTION_NAMES.includes(hz.direction)) p.push(`map hazard ${hz.id} has unknown direction ${JSON.stringify(hz.direction)} (use N, E, S or W)`);
     if (f.hazards.find((h) => h.id === hz.def)?.shape === 'lane' && !hz.direction) p.push(`map hazard ${hz.id} is a lane and needs a direction`);
   }
 

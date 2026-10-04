@@ -118,3 +118,27 @@ describe('sprint has one definition', () => {
     expect(run(s, { type: 'sprint' }, c).state.ap).toBe(0);
   });
 });
+
+describe('content validation of lane hazards', () => {
+  const gun = (f: ContentFiles) => f.map.hazards.find((h) => h.id === 'gun')!;
+
+  it.each(['Q', 'w', 'north', 5])('rejects a lane direction of %j, which would crash the first shot', (dir) => {
+    const f = edited((x) => {
+      (gun(x) as { direction?: unknown }).direction = dir;
+    });
+    expect(validateContent(f)).toEqual([`map hazard gun has unknown direction ${JSON.stringify(dir)} (use N, E, S or W)`]);
+    expect(() => buildContent(f)).toThrow(ContentError);
+  });
+
+  it('still requires a direction on a lane', () => {
+    const f = edited((x) => delete gun(x).direction);
+    expect(validateContent(f)).toEqual(['map hazard gun is a lane and needs a direction']);
+  });
+
+  it.each(['N', 'E', 'S', 'W'] as const)('accepts %s', (dir) => {
+    const f = edited((x) => {
+      gun(x).direction = dir;
+    });
+    expect(validateContent(f)).toEqual([]);
+  });
+});

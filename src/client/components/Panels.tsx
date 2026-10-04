@@ -4,7 +4,8 @@ import type { ActionStatus } from '../../engine/commands';
 import type { CommandPreview, Intent, IntentReport } from '../../preview/preview';
 import type { GameObject, GameState, Unit } from '../../state/types';
 import { tileName } from '../../util/tiles';
-import { describeObject, unitName, type LogLine } from '../format';
+import { actionKeyLabel } from '../actionKeys';
+import { describeObject, describeUnit, unitName, type LogLine } from '../format';
 
 export function Pips({ n, max, cls, round }: { n: number; max: number; cls: string; round?: boolean }) {
   return (
@@ -71,7 +72,7 @@ export function ActionBar(props: {
   return (
     <div className="action-row" role="toolbar" aria-label="Actions">
       {props.statuses.map((st, i) => {
-        const keyLabel = i < 9 ? String(i + 1) : i === 9 ? '0' : '';
+        const keyLabel = actionKeyLabel(i);
         const showModes = st.id === 'grapple_hook' && props.selected === st.id;
         return (
           <Fragment key={st.id}>
@@ -102,21 +103,6 @@ export function ActionBar(props: {
       })}
     </div>
   );
-}
-
-function describeUnit(c: Content, u: Unit): string {
-  const parts = [`${u.hp}/${u.maxHp} HP`];
-  const armor = Math.max(0, u.armor - (u.statuses.corrode?.stacks ?? 0));
-  if (u.armor || u.statuses.corrode) parts.push(`armor ${armor}${u.statuses.corrode ? ` (${u.armor} − ${u.statuses.corrode.stacks} Corrode)` : ''}`);
-  if (u.ammo !== undefined) parts.push(`${u.ammo}/${u.maxAmmo} ammo`);
-  if (u.charges !== undefined) parts.push(`${u.charges}/${u.maxCharges} charges, ${u.droneState}`);
-  if (u.statuses.poison) parts.push(`poisoned ${u.statuses.poison.remaining}`);
-  if (u.statuses.parasite) parts.push(`Parasite ${u.statuses.parasite.remaining}`);
-  if (u.statuses.pinned) parts.push('Pinned');
-  if (u.statuses.slowed) parts.push('Slowed');
-  if (u.arrivalRound !== undefined) parts.push('just arrived');
-  void c;
-  return parts.join(' · ');
 }
 
 export function InfoPanel(props: {
@@ -183,7 +169,7 @@ export function InfoPanel(props: {
             <div style={{ fontWeight: 600 }}>
               {unitName(c, props.hoverUnit.def, props.hoverUnit.id)} <span className="faint mono">{tileName(props.hoverUnit.pos)}</span>
             </div>
-            <div className="muted">{describeUnit(c, props.hoverUnit)}</div>
+            <div className="muted">{describeUnit(c, props.hoverUnit, props.s.round)}</div>
             {props.intent && <div>Intent: {props.intent.label}</div>}
           </>
         )}

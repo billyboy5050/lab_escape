@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FightSession } from '../src/telemetry/session';
 import { summarize } from '../src/telemetry/summary';
-import type { GameState } from '../src/state/types';
+import type { Command, GameState } from '../src/state/types';
 import { C, run, scenario } from './helpers';
 
 const LOADOUT = { abilities: ['sidearm', 'proximity_mine'], upgrades: [] };
@@ -73,6 +73,50 @@ describe('turn times', () => {
     f.apply({ type: 'ability', ability: 'sidearm', target: 'B6' });
     expect(f.state.outcome).toBeNull();
     expect(times()).toEqual([]);
+  });
+});
+
+describe('undo', () => {
+  // In Sidearm range of B8 and B7, so a shot is accepted and commits the turn.
+  const guard = { def: 'guard', at: 'B5' };
+  const play = (f: FightSession, cmd: Command) => {
+    const r = f.apply(cmd);
+    expect(r.ok, `${JSON.stringify(cmd)} was rejected`).toBe(true);
+  };
+
+  it('works for free movement', () => {
+    const { f } = sessionOn(scenario({ player: 'B8', units: [guard] }));
+    play(f, { type: 'move', path: ['B7'] });
+    expect(f.canUndo).toBe(true);
+    expect(f.undo()).toBe(true);
+    expect(f.state.units[0]!.pos).toEqual({ x: 1, y: 7 });
+    expect(f.record.commands).toEqual([]);
+  });
+
+  it('is lost once AP is spent', () => {
+    const { f } = sessionOn(scenario({ player: 'B8', units: [guard] }));
+    play(f, { type: 'move', path: ['B7'] });
+    play(f, { type: 'ability', ability: 'sidearm', target: 'B5' });
+    expect(f.canUndo).toBe(false);
+  });
+
+  it('is not offered for a move made after AP was spent, though that move triggers nothing', () => {
+    const { f } = sessionOn(scenario({ player: 'B8', units: [guard] }));
+    play(f, { type: 'ability', ability: 'sidearm', target: 'B5' });
+    expect(f.state.committed).toBe(true);
+    play(f, { type: 'move', path: ['B7'] });
+    expect(f.canUndo).toBe(false);
+    expect(f.undo()).toBe(false);
+    expect(f.state.units[0]!.pos).toEqual({ x: 1, y: 6 });
+  });
+
+  it('comes back on the next turn', () => {
+    const { f } = sessionOn(scenario({ player: 'B8', units: [guard] }));
+    play(f, { type: 'ability', ability: 'sidearm', target: 'B5' });
+    play(f, { type: 'endTurn' });
+    expect(f.state.committed).toBe(false);
+    play(f, { type: 'move', path: ['B7'] });
+    expect(f.canUndo).toBe(true);
   });
 });
 

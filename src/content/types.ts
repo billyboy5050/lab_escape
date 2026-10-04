@@ -8,6 +8,9 @@ export type UnitKind = 'player' | 'minion' | 'enemy';
 export type StatusId = 'poison' | 'parasite' | 'corrode' | 'pinned' | 'slowed';
 export const STATUS_IDS: readonly StatusId[] = ['poison', 'parasite', 'corrode', 'pinned', 'slowed'];
 
+export type DirectionName = 'N' | 'E' | 'S' | 'W';
+export const DIRECTION_NAMES: readonly DirectionName[] = ['N', 'E', 'S', 'W'];
+
 export interface RulesDef {
   turn: { ap: number; movement: number };
   sprint: { ap: number; movement: number };
@@ -143,7 +146,7 @@ export interface MapFile {
   legend: Record<string, string>;
   terrain: Record<string, TerrainDef>;
   playerStart: string;
-  hazards: { id: string; def: string; tiles: string[]; direction?: 'N' | 'E' | 'S' | 'W' }[];
+  hazards: { id: string; def: string; tiles: string[]; direction?: DirectionName }[];
 }
 
 export interface WaveDef { round: number; units: { def: string; tile: string }[] }

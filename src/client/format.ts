@@ -1,5 +1,5 @@
 import type { Content } from '../content/types';
-import type { GameEvent, GameObject, GameState, SourceRef, StatusId } from '../state/types';
+import type { GameEvent, GameObject, GameState, SourceRef, StatusId, Unit } from '../state/types';
 import { tileName } from '../util/tiles';
 
 export type LogKind = 'round' | 'phase' | 'ev' | 'ff' | 'hazard' | 'intercom' | 'debug' | 'end';
@@ -168,6 +168,23 @@ export class EventFormatter {
 }
 
 /** Plain-language description of an object on the board, for the info panel. */
+/** The hover summary of a unit: HP, armor, ammo, statuses, and whether it arrived this round (`round` is the current one). */
+export function describeUnit(c: Content, u: Unit, round: number): string {
+  const parts = [`${u.hp}/${u.maxHp} HP`];
+  const armor = Math.max(0, u.armor - (u.statuses.corrode?.stacks ?? 0));
+  if (u.armor || u.statuses.corrode) parts.push(`armor ${armor}${u.statuses.corrode ? ` (${u.armor} − ${u.statuses.corrode.stacks} Corrode)` : ''}`);
+  if (u.ammo !== undefined) parts.push(`${u.ammo}/${u.maxAmmo} ammo`);
+  if (u.charges !== undefined) parts.push(`${u.charges}/${u.maxCharges} charges, ${u.droneState}`);
+  if (u.statuses.poison) parts.push(`poisoned ${u.statuses.poison.remaining}`);
+  if (u.statuses.parasite) parts.push(`Parasite ${u.statuses.parasite.remaining}`);
+  if (u.statuses.pinned) parts.push('Pinned');
+  if (u.statuses.slowed) parts.push('Slowed');
+  // arrivalRound stays on a wave unit for good; only the round it arrived in is "just arrived".
+  if (u.arrivalRound === round) parts.push('just arrived');
+  void c;
+  return parts.join(' · ');
+}
+
 export function describeObject(c: Content, o: GameObject, placing = false): string {
   const eggs = c.rules.eggs;
   switch (o.kind) {

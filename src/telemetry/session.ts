@@ -45,7 +45,8 @@ export class FightSession {
     const before = this.state;
     const r = step(this.c, before, cmd, opts);
     if (!r.ok) return r;
-    if (cmd.type === 'move' && !r.commits) {
+    // Free movement is undoable until AP is spent or something is set off: a move made after the turn is committed is not.
+    if (cmd.type === 'move' && !r.commits && !before.committed) {
       this.undoStack.push({ state: before, commands: this.record.commands.length, events: this.events.length });
     } else {
       this.undoStack = [];

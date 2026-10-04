@@ -11,6 +11,7 @@ import { parseTile, tileName } from '../../util/tiles';
 import { Board, type Highlight } from '../components/Board';
 import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/DebugPanel';
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
+import { actionIndexForKey } from '../actionKeys';
 import { saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
 
@@ -184,6 +185,19 @@ export function FightScreen(props: {
     [hover, idle, st, moves, twoStep, candidateFor, mode, firstTiles, options, commit],
   );
 
+  // Applies the next recorded command. A command the engine rejects (a corrupted or hand-edited file) stops playback
+  // there and says so: carrying on would show a fight that never happened, built from the commands that still apply.
+  const playReplayCommand = () => {
+    if (!props.replay) return;
+    const r = fight.apply(props.replay.commands[cursor]!);
+    if (!r.ok) {
+      setReplayPlaying(false);
+      props.toast(`Replay stopped: command ${cursor + 1} of ${props.replay.commands.length} was rejected (${r.error ?? 'not allowed'})`);
+      return;
+    }
+    setCursor((x) => x + 1);
+  };
+
   // Replay playback: feed recorded commands one at a time once each animation finishes.
   useEffect(() => {
     if (!props.replay || !replayPlaying || fight.busy) return;
@@ -191,11 +205,10 @@ export function FightScreen(props: {
       setReplayPlaying(false);
       return;
     }
-    const t = window.setTimeout(() => {
-      fight.apply(props.replay!.commands[cursor]!);
-      setCursor((x) => x + 1);
-    }, 120);
+    const t = window.setTimeout(playReplayCommand, 120);
     return () => window.clearTimeout(t);
+    // playReplayCommand is rebuilt every render and reads the same props, fight and cursor as these dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.replay, replayPlaying, fight, cursor]);
 
   // Save telemetry once the fight is over and the last animation has played.
@@ -242,9 +255,10 @@ export function FightScreen(props: {
         return e.preventDefault();
       }
       if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && idle) return commit({ type: 'endTurn' });
-      if (/^[0-9]$/.test(e.key)) {
-        const i = e.key === '0' ? 9 : Number(e.key) - 1;
-        const a = statuses[i];
+      // Modified keys are the browser's (Ctrl and Cmd with - and = zoom the page).
+      const slot = e.ctrlKey || e.metaKey || e.altKey ? -1 : actionIndexForKey(e.key);
+      if (slot >= 0) {
+        const a = statuses[slot];
         if (a) selectAction(a.id);
       }
     };
@@ -388,8 +402,7 @@ export function FightScreen(props: {
             setReplayPlaying={setReplayPlaying}
             stepReplay={() => {
               if (!props.replay || fight.busy || cursor >= props.replay.commands.length) return;
-              fight.apply(props.replay.commands[cursor]!);
-              setCursor((x) => x + 1);
+              playReplayCommand();
             }}
             close={() => props.setDebugOpen(false)}
           />
