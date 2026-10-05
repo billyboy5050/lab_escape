@@ -1,6 +1,6 @@
 # Implementation notes
 
-What the implementation had to decide where the rev2 spec is silent or ambiguous, the defaults it took for the spec's open decisions, and what the simulator found. Each interpretation is a call to confirm. If one is wrong, it is a small code change; numbers are already data in `content/`.
+What the implementation had to decide where the [spec](spec.md) (revision 2) is silent or ambiguous, the defaults it took for the spec's open decisions, and what the simulator found. Each interpretation is a call to confirm. If one is wrong, it is a small code change; numbers are already data in `content/`.
 
 The spec says to update it when implementation forces a rule change. Nothing here contradicts the spec, so it is untouched; the items under Interpretations are candidates to fold into it as clarifications.
 
@@ -9,7 +9,7 @@ The spec says to update it when implementation forces a rule change. Nothing her
 | Open decision | Implemented as | Where to change it |
 | --- | --- | --- |
 | Engine, language, platform | TypeScript rules core (runs headless in Node), React web client built with Vite | n/a |
-| Input scheme | Mouse first, a keyboard shortcut for every control (see README); touch is tap to preview, tap again to commit | `src/client/screens/FightScreen.tsx` |
+| Input scheme | Mouse first, a keyboard shortcut for every control (see [Playing](../README.md#playing) in the README); touch is tap to preview, tap again to commit | `src/client/screens/FightScreen.tsx` |
 | Art direction | Flat shapes; units are told apart by shape and letter as well as colour (circles and squares are yours, diamonds and the hexagon are enemies); Okabe-Ito palette; light and dark themes | `src/client/components/Board.tsx`, `styles.css` |
 | Empty room brings the next wave early | Off (fixed schedule) | `rules.earlyWaveWhenEmpty` |
 | Show hazard cooldowns | Hidden | `rules.ui.showHazardCooldowns` |
@@ -140,6 +140,8 @@ The spec says to update it when implementation forces a rule change. Nothing her
 - The client was checked by hand in Chrome at desktop sizes, in light and dark themes. The narrow-layout (phone) breakpoint exists but was not playtested.
 
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
+
+From `npm run sim -- presets --seeds 1000` and `npm run sim -- sweep --seeds 1000`; the full reports are in `reports/`. Rerun them after any rule or content change and update this section with the new figures.
 
 | Preset | Win rate | Median rounds (wins) | Notes |
 | --- | --- | --- | --- |
