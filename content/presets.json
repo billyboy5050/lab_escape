@@ -1,0 +1,23 @@
+[
+  {
+    "id": "tech",
+    "name": "Tech",
+    "abilities": ["sidearm", "grapple_hook", "proximity_mine", "auto_turret", "scout_drone", "barrier_shield"],
+    "upgrades": ["T1_piercing_rounds", "T2_shot_triggered_mines", "T6_overcharged_drone"],
+    "expected": "Lost to armor 3 in the hand simulations. At armor 2, Piercing Rounds restores full Sidearm and turret damage. Untested."
+  },
+  {
+    "id": "alien",
+    "name": "Alien",
+    "abilities": ["acid_spit", "lunge", "spore_pod", "brood_egg", "parasite"],
+    "upgrades": ["A1_spore_burst", "A3_parasite_jump", "A2_acid_brood"],
+    "expected": "Strong early, short of burst."
+  },
+  {
+    "id": "hybrid",
+    "name": "Hybrid",
+    "abilities": ["sidearm", "proximity_mine", "scout_drone", "barrier_shield", "acid_spit", "spore_pod", "brood_egg", "parasite"],
+    "upgrades": ["H1_spore_mines", "H2_plague_drone", "A3_parasite_jump"],
+    "expected": "Unknown. The nearest hand-simulated build, Plague Engine, lost."
+  }
+]

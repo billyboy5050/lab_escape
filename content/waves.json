@@ -1,0 +1,27 @@
+[
+  {
+    "round": 1,
+    "units": [
+      { "def": "guard", "tile": "C3" },
+      { "def": "guard", "tile": "G3" },
+      { "def": "guard", "tile": "B2" },
+      { "def": "medic", "tile": "E2" }
+    ]
+  },
+  {
+    "round": 4,
+    "units": [
+      { "def": "guard", "tile": "A3" },
+      { "def": "guard", "tile": "A2" },
+      { "def": "flamer", "tile": "H3" }
+    ]
+  },
+  {
+    "round": 7,
+    "units": [
+      { "def": "warden", "tile": "D2" },
+      { "def": "guard", "tile": "C2" },
+      { "def": "guard", "tile": "E2" }
+    ]
+  }
+]

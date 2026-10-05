@@ -1,0 +1,264 @@
+{
+  "preset": "alien",
+  "note": "Scripted regression fight. Re-record on purpose when content values or rules change: npm run golden:record",
+  "record": {
+    "format": "lab-escape/replay@1",
+    "engineVersion": "0.1.0",
+    "contentHash": "08a289f83c157f",
+    "loadout": {
+      "abilities": [
+        "acid_spit",
+        "lunge",
+        "spore_pod",
+        "brood_egg",
+        "parasite"
+      ],
+      "upgrades": [
+        "A1_spore_burst",
+        "A3_parasite_jump",
+        "A2_acid_brood"
+      ]
+    },
+    "settings": {},
+    "commands": [
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "C3"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "G3"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "B3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B7",
+          "B6"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "C4"
+      },
+      {
+        "type": "move",
+        "path": [
+          "A6"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "F3"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "acid_spit",
+        "target": "F3"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "B5"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "acid_spit",
+        "target": "E2"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "D1"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "A2"
+      },
+      {
+        "type": "move",
+        "path": [
+          "A5",
+          "B5",
+          "C5"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "D5",
+          "D6",
+          "D7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "C4"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "F3"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "acid_spit",
+        "target": "C2"
+      },
+      {
+        "type": "ability",
+        "ability": "acid_spit",
+        "target": "F5"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "C2"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "C4"
+      },
+      {
+        "type": "move",
+        "path": [
+          "D6",
+          "D5",
+          "C5"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "C1"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "lunge",
+        "target": "A5"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "C3"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B5",
+          "C5",
+          "D5"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "E5",
+          "E6"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "D2"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "B3"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "D7"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "E5"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "E7"
+        ]
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "C4"
+      },
+      {
+        "type": "ability",
+        "ability": "spore_pod",
+        "target": "G4"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "move",
+        "path": [
+          "D7",
+          "D6",
+          "D5"
+        ]
+      },
+      {
+        "type": "endTurn"
+      }
+    ],
+    "meta": {
+      "bot": "greedy",
+      "seed": 1,
+      "preset": "alien",
+      "label": "golden alien"
+    }
+  },
+  "eventCount": 554,
+  "eventsHash": "028da2dac0a638",
+  "finalStateHash": "1ed3cbca3d1010",
+  "outcome": "win",
+  "rounds": 12
+}

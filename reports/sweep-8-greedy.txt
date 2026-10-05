@@ -1,0 +1,46 @@
+
+Loadout sweep: 8 of 11 abilities, greedy bot, 1000 random loadouts
+==================================================================
+Fights: 1000
+Win rate: 76.3%  (95% CI 73.6% to 78.8%), 763 wins
+Rounds, wins:   median 13, mean 13.7, range 9 to 29
+Rounds, losses: median 9, mean 10.4; 227 reached wave 2
+Causes of death: enemy 176, player 40, round cap 13, minion 5, hazard 3
+Top killers: guard/shot 115, warden/melee 44, flamer/sweep 12, player/poison 10, mine/proximity_mine 7, drone/poison 6
+Mean damage to the player per fight: player 1.21, minion 0.28, enemy 1.88, hazard 0.13
+Mean friendly-fire share of the player's damage: 53.8%
+Hazard fires per fight: 4.40; peak minions: mean 4.27, max 5
+Uses per fight: auto_turret 6.2, parasite 3.2, brood_egg 2.9, spore_pod 2.4, proximity_mine 2.4, barrier_shield 1.8, sidearm 1.7, scout_drone 1.6, grapple_hook 1.4, acid_spit 0.8, lunge 0.6, reload 0.6, redeploy 0.1, sprint 0.0
+
+Win-rate lift (with minus without, points):
+  + 12.4  Auto-Turret            ability  with 79.6% (n=735), without 67.2% (n=265)
+  + 11.9  Parasite               ability  with 79.6% (n=725), without 67.6% (n=275)
+  + 11.6  Reflective Shield      upgrade  with 84.9% (n=258), without 73.3% (n=742)
+  + 11.1  Parasite Jump          upgrade  with 84.4% (n=269), without 73.3% (n=731)
+  +  9.9  Barrier Shield         ability  with 79.0% (n=725), without 69.1% (n=275)
+  +  5.0  Plague Drone           upgrade  with 80.5% (n=164), without 75.5% (n=836)
+  +  4.4  Piercing Rounds        upgrade  with 79.1% (n=373), without 74.6% (n=627)
+  +  2.5  Acid Spit              ability  with 77.0% (n=730), without 74.4% (n=270)
+  +  1.3  Spore Pod              ability  with 76.7% (n=720), without 75.4% (n=280)
+  +  0.7  Suppressing Fire       upgrade  with 76.8% (n=276), without 76.1% (n=724)
+  +  0.6  Overcharged Drone      upgrade  with 76.7% (n=279), without 76.1% (n=721)
+   -0.7  Acid Brood             upgrade  with 75.8% (n=248), without 76.5% (n=752)
+   -2.1  Proximity Mine         ability  with 75.7% (n=716), without 77.8% (n=284)
+   -2.4  Scout Drone            ability  with 75.7% (n=749), without 78.1% (n=251)
+   -3.6  Spore Burst            upgrade  with 73.5% (n=238), without 77.2% (n=762)
+   -4.6  Shot-Triggered Mines   upgrade  with 72.5% (n=182), without 77.1% (n=818)
+   -5.2  Spore Mines            upgrade  with 72.0% (n=175), without 77.2% (n=825)
+   -6.1  Sidearm                ability  with 74.7% (n=730), without 80.7% (n=270)
+   -6.4  Lunge                  ability  with 74.6% (n=727), without 81.0% (n=273)
+   -9.3  Fast Brood             upgrade  with 69.4% (n=258), without 78.7% (n=742)
+  -10.3  Brood Egg              ability  with 73.4% (n=713), without 83.6% (n=287)
+  -10.6  Grapple Hook           ability  with 73.4% (n=730), without 84.1% (n=270)
+  -11.7  Grapple Pin            upgrade  with 67.9% (n=280), without 79.6% (n=720)
+
+Spec metrics (bot proxy):
+  [WARN ] Length of winning fights: median 13, mean 13.7  (target 8 to 12; alarm over 16)
+  [ALARM] Share of player damage from own effects: 53.8%  (target 5% to 30%; alarm over 35%, or under 3%)
+  [WARN ] Share of deaths from one source: enemy 74.3%  (target no source above 60%; alarm hazards above 60%)
+  [OK   ] Hazard fires per fight: 4.40 (88.1% of fights at least 2)  (target at least 2; alarm under 1 on average)
+  [OK   ] Win-rate lift of each ability and upgrade: max 12.4 points (Auto-Turret)  (target under 25 points; alarm any above 40 points)
+  [WARN ] Warden reaches the player: 12.4% of fights that reach round 7; dies before round 9 in 0.0%  (target in most fights that reach round 7; alarm dies before round 9 in most fights)

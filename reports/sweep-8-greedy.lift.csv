@@ -1,0 +1,24 @@
+pick,name,kind,with_n,without_n,with_win_rate,without_win_rate,lift_points
+auto_turret,Auto-Turret,ability,735,265,0.7959,0.6717,12.42
+parasite,Parasite,ability,725,275,0.7959,0.6764,11.95
+T5_reflective_shield,Reflective Shield,upgrade,258,742,0.8488,0.7332,11.57
+A3_parasite_jump,Parasite Jump,upgrade,269,731,0.8439,0.7332,11.06
+barrier_shield,Barrier Shield,ability,725,275,0.7903,0.6909,9.94
+H2_plague_drone,Plague Drone,upgrade,164,836,0.8049,0.7548,5.01
+T1_piercing_rounds,Piercing Rounds,upgrade,373,627,0.7909,0.7464,4.45
+acid_spit,Acid Spit,ability,730,270,0.7699,0.7444,2.54
+spore_pod,Spore Pod,ability,720,280,0.7667,0.7536,1.31
+T3_suppressing_fire,Suppressing Fire,upgrade,276,724,0.7681,0.7610,0.71
+T6_overcharged_drone,Overcharged Drone,upgrade,279,721,0.7670,0.7614,0.56
+A2_acid_brood,Acid Brood,upgrade,248,752,0.7581,0.7646,-0.66
+proximity_mine,Proximity Mine,ability,716,284,0.7570,0.7782,-2.12
+scout_drone,Scout Drone,ability,749,251,0.7570,0.7809,-2.39
+A1_spore_burst,Spore Burst,upgrade,238,762,0.7353,0.7717,-3.64
+T2_shot_triggered_mines,Shot-Triggered Mines,upgrade,182,818,0.7253,0.7714,-4.61
+H1_spore_mines,Spore Mines,upgrade,175,825,0.7200,0.7721,-5.21
+sidearm,Sidearm,ability,730,270,0.7466,0.8074,-6.08
+lunge,Lunge,ability,727,273,0.7455,0.8095,-6.40
+A4_fast_brood,Fast Brood,upgrade,258,742,0.6938,0.7871,-9.33
+brood_egg,Brood Egg,ability,713,287,0.7335,0.8362,-10.27
+grapple_hook,Grapple Hook,ability,730,270,0.7342,0.8407,-10.65
+T4_grapple_pin,Grapple Pin,upgrade,280,720,0.6786,0.7958,-11.73

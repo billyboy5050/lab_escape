@@ -1,0 +1,118 @@
+[
+  {
+    "id": "player",
+    "name": "Intruder",
+    "team": "player",
+    "kind": "player",
+    "hp": 8,
+    "armor": 0,
+    "move": 3
+  },
+  {
+    "id": "guard",
+    "name": "Guard",
+    "team": "enemy",
+    "kind": "enemy",
+    "role": "soldier",
+    "hp": 6,
+    "armor": 0,
+    "move": 3,
+    "attack": { "range": 5, "damage": 3, "damageType": "kinetic" }
+  },
+  {
+    "id": "medic",
+    "name": "Medic",
+    "team": "enemy",
+    "kind": "enemy",
+    "role": "soldier",
+    "hp": 5,
+    "armor": 0,
+    "move": 3,
+    "heal": { "amount": 2, "range": 3 },
+    "ai": { "safeDistance": 4, "followDistance": 3 }
+  },
+  {
+    "id": "flamer",
+    "name": "Flamer",
+    "team": "enemy",
+    "kind": "enemy",
+    "role": "soldier",
+    "hp": 6,
+    "armor": 1,
+    "move": 2,
+    "sweep": { "length": 3, "damage": 3, "damageType": "fire" },
+    "ai": { "scorePerPlayerSideHit": 2, "scorePlayerBonus": 4, "scorePerAllyHit": -3 }
+  },
+  {
+    "id": "warden",
+    "name": "Warden",
+    "team": "enemy",
+    "kind": "enemy",
+    "role": "elite",
+    "elite": true,
+    "hp": 20,
+    "armor": 2,
+    "move": 3,
+    "charge": { "minDistance": 2, "maxMove": 4, "damage": 4, "damageType": "kinetic" },
+    "melee": { "damage": 3, "damageType": "kinetic" },
+    "purge": { "cooldown": 2 }
+  },
+  {
+    "id": "turret",
+    "name": "Auto-Turret",
+    "team": "player",
+    "kind": "minion",
+    "hp": 4,
+    "armor": 0,
+    "move": 0,
+    "ammo": 4,
+    "attack": { "range": 5, "damage": 2, "damageType": "kinetic" }
+  },
+  {
+    "id": "drone",
+    "name": "Scout Drone",
+    "team": "player",
+    "kind": "minion",
+    "hp": 3,
+    "armor": 0,
+    "move": 3,
+    "flying": true,
+    "charges": 2,
+    "zap": { "range": 2, "damage": 1, "chainDamage": 1, "damageType": "electric" },
+    "returnMove": 4,
+    "returnPhases": 2
+  },
+  {
+    "id": "hatchling",
+    "name": "Hatchling",
+    "team": "player",
+    "kind": "minion",
+    "hatchling": true,
+    "hp": 2,
+    "armor": 0,
+    "move": 3,
+    "melee": { "damage": 1, "damageType": "kinetic" }
+  },
+  {
+    "id": "spitter",
+    "name": "Spitter hatchling",
+    "team": "player",
+    "kind": "minion",
+    "hatchling": true,
+    "hp": 4,
+    "armor": 0,
+    "move": 3,
+    "attack": { "range": 3, "damage": 1, "damageType": "acid" }
+  },
+  {
+    "id": "burster",
+    "name": "Burster hatchling",
+    "team": "player",
+    "kind": "minion",
+    "hatchling": true,
+    "hp": 4,
+    "armor": 0,
+    "move": 3,
+    "blast": { "radius": 1, "damage": 3, "damageType": "explosive" }
+  }
+]

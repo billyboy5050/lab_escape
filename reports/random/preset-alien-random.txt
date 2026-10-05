@@ -1,0 +1,17 @@
+
+Preset Alien: random bot, 1000 seeds
+====================================
+Fights: 1000
+Win rate: 0.0%  (95% CI 0.0% to 0.4%), 0 wins
+Rounds, losses: median 3, mean 2.7; 130 reached wave 2
+Causes of death: enemy 876, player 109, hazard 15
+Top killers: guard/shot 876, player/poison 105, gun/wall_gun 12, hatchling/poison 4, panel/panel_grid 2, vent_g6/gas_vent 1
+Mean damage to the player per fight: player 0.71, minion 0.00, enemy 7.19, hazard 0.10
+Mean friendly-fire share of the player's damage: 8.9%
+Hazard fires per fight: 0.12; peak minions: mean 1.21, max 4
+Uses per fight: spore_pod 3.2, brood_egg 1.5, lunge 0.9, parasite 0.3, acid_spit 0.3, sprint 0.1
+
+Spec metrics (bot proxy):
+  [OK   ] Share of player damage from own effects: 8.9%  (target 5% to 30%; alarm over 35%, or under 3%)
+  [WARN ] Share of deaths from one source: enemy 87.6%  (target no source above 60%; alarm hazards above 60%)
+  [ALARM] Hazard fires per fight: 0.12 (0.5% of fights at least 2)  (target at least 2; alarm under 1 on average)

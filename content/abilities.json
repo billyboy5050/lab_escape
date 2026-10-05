@@ -1,0 +1,149 @@
+{
+  "abilities": [
+    {
+      "id": "sidearm",
+      "name": "Sidearm",
+      "kit": "tech",
+      "ap": 1,
+      "targeting": { "kind": "projectile", "range": 6 },
+      "damage": 2,
+      "damageType": "kinetic",
+      "tags": ["kinetic", "projectile"],
+      "text": "Projectile, range 6. 2 kinetic damage to the first unit hit."
+    },
+    {
+      "id": "grapple_hook",
+      "name": "Grapple Hook",
+      "kit": "tech",
+      "ap": 1,
+      "targeting": { "kind": "grapple", "range": 5 },
+      "tags": ["pull"],
+      "text": "Range 5, along a line of sight. Pull self: travel toward the tile and stop on the last free tile before a blocker. Pull unit: drag the first unit hit until it is adjacent to you. Cannot pull the Warden."
+    },
+    {
+      "id": "proximity_mine",
+      "name": "Proximity Mine",
+      "kit": "tech",
+      "ap": 1,
+      "targeting": { "kind": "place", "range": 3 },
+      "blast": { "radius": 1, "damage": 3, "damageType": "explosive" },
+      "tags": ["explosive", "deployed"],
+      "text": "Place on an empty tile within 3. Any ground unit entering it, friend or foe, sets it off: 3 explosive damage to its tile and the 8 neighbours. At most 4 mines. Pick Up (1 AP, adjacent) removes one."
+    },
+    {
+      "id": "auto_turret",
+      "name": "Auto-Turret",
+      "kit": "tech",
+      "ap": 2,
+      "targeting": { "kind": "place", "range": 2 },
+      "summon": "turret",
+      "tags": ["kinetic", "summon"],
+      "text": "Place on an empty tile within 2. Minion, 4 HP, 4 ammo. Shoots the nearest enemy within 5 for 2 kinetic. Reload costs 1 AP."
+    },
+    {
+      "id": "scout_drone",
+      "name": "Scout Drone",
+      "kit": "tech",
+      "ap": 2,
+      "targeting": { "kind": "adjacent" },
+      "summon": "drone",
+      "tags": ["electric", "summon", "chain"],
+      "text": "Spawns adjacent to you. Flying minion, 3 HP, 2 charges. Zaps the nearest enemy within 2 for 1 electric, chaining 1 to every unit adjacent to it. Flies home when empty; Redeploy costs 1 AP."
+    },
+    {
+      "id": "barrier_shield",
+      "name": "Barrier Shield",
+      "kit": "tech",
+      "ap": 1,
+      "targeting": { "kind": "placePair", "range": 4 },
+      "segmentHp": 4,
+      "tags": ["deployed"],
+      "text": "Two adjacent empty tiles within 4. Two segments of 4 HP that block movement and projectiles, not sight. At most 2 placements."
+    },
+    {
+      "id": "acid_spit",
+      "name": "Acid Spit",
+      "kit": "alien",
+      "ap": 1,
+      "targeting": { "kind": "projectile", "range": 5 },
+      "damage": 1,
+      "damageType": "acid",
+      "corrode": 2,
+      "tags": ["acid", "projectile"],
+      "text": "Projectile, range 5. 1 acid damage and 2 Corrode stacks to the first unit hit. Each stack removes 1 armor for the rest of the fight."
+    },
+    {
+      "id": "lunge",
+      "name": "Lunge",
+      "kit": "alien",
+      "ap": 1,
+      "targeting": { "kind": "lunge", "range": 3 },
+      "damage": 2,
+      "damageType": "kinetic",
+      "tags": ["melee", "movement"],
+      "text": "Leap up to 3 tiles in a straight orthogonal line, over units but not pillars, walls or shields, onto a free tile. Then you may hit one adjacent unit for 2 kinetic."
+    },
+    {
+      "id": "spore_pod",
+      "name": "Spore Pod",
+      "kit": "alien",
+      "ap": 1,
+      "targeting": { "kind": "lob", "range": 5 },
+      "area": { "shape": "square", "radius": 1 },
+      "status": { "id": "poison", "duration": 3 },
+      "tags": ["poison", "spread"],
+      "text": "Lob, range 5. Poisons every unit in a 3x3 area, friend or foe: 1 damage a round for 3 rounds, spreading to up to 3 neighbours a round."
+    },
+    {
+      "id": "brood_egg",
+      "name": "Brood Egg",
+      "kit": "alien",
+      "ap": 2,
+      "targeting": { "kind": "egg", "range": 3 },
+      "tags": ["summon"],
+      "text": "An empty tile or enemy corpse within 3. Floor: 2 hatchlings in 1 round. Guard corpse: a spitter in 2 rounds. Flamer corpse: a burster in 2 rounds. The egg has 3 HP."
+    },
+    {
+      "id": "parasite",
+      "name": "Parasite",
+      "kit": "alien",
+      "ap": 1,
+      "targeting": { "kind": "projectile", "range": 5 },
+      "status": { "id": "parasite", "duration": 3 },
+      "tags": ["infect", "summon", "projectile"],
+      "text": "Projectile, range 5. The first unit hit takes 2 damage a round for 3 rounds. If it dies, a hatchling bursts out."
+    }
+  ],
+  "utilities": [
+    {
+      "id": "sprint",
+      "name": "Sprint",
+      "ap": 1,
+      "movement": 2,
+      "text": "Gain 2 extra movement this turn."
+    },
+    {
+      "id": "reload",
+      "name": "Reload",
+      "ap": 1,
+      "range": 2,
+      "requiresAbility": "auto_turret",
+      "text": "Refill a turret within 2."
+    },
+    {
+      "id": "pick_up_mine",
+      "name": "Pick Up",
+      "ap": 1,
+      "range": 1,
+      "requiresAbility": "proximity_mine",
+      "text": "Remove an adjacent mine."
+    },
+    {
+      "id": "redeploy",
+      "name": "Redeploy",
+      "ap": 1,
+      "requiresAbility": "scout_drone",
+      "text": "Place a docked drone adjacent to you with full charges."
+    }
+  ]
+}

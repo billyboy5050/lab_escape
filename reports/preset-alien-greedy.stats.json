@@ -1,0 +1,111 @@
+{
+  "fights": 1000,
+  "errors": 0,
+  "wins": 464,
+  "winRate": 0.464,
+  "winRateCI": [
+    0.4332867721553454,
+    0.4949887645428749
+  ],
+  "roundsWin": {
+    "median": 11,
+    "mean": 11.196120689655173,
+    "min": 10,
+    "max": 13
+  },
+  "roundsLoss": {
+    "median": 4,
+    "mean": 5.330223880597015
+  },
+  "lossesReachingWave2": 278,
+  "causesByCategory": {
+    "player": 205,
+    "enemy": 322,
+    "hazard": 9
+  },
+  "topCauses": [
+    [
+      "guard/shot",
+      304
+    ],
+    [
+      "hatchling/poison",
+      88
+    ],
+    [
+      "player/poison",
+      84
+    ],
+    [
+      "guard/poison",
+      30
+    ],
+    [
+      "warden/melee",
+      12
+    ],
+    [
+      "flamer/sweep",
+      5
+    ]
+  ],
+  "meanPlayerDamage": {
+    "player": 0.931,
+    "minion": 0,
+    "enemy": 5.037,
+    "hazard": 0.692
+  },
+  "meanFriendlyFireShare": 0.13472799350432257,
+  "meanHazardFires": 1.906,
+  "fightsWithTwoHazardFires": 599,
+  "meanPeakMinions": 3.459,
+  "maxPeakMinions": 5,
+  "wardenReachedShare": 0.033386327503974564,
+  "wardenEarlyDeathShare": 0,
+  "abilityUse": {
+    "parasite": 4.264,
+    "spore_pod": 3.372,
+    "brood_egg": 5.871,
+    "acid_spit": 1.959,
+    "lunge": 0.613,
+    "sprint": 0.023
+  },
+  "lift": [],
+  "checks": [
+    {
+      "metric": "Length of winning fights",
+      "value": "median 11, mean 11.2",
+      "target": "8 to 12",
+      "alarm": "over 16",
+      "status": "ok"
+    },
+    {
+      "metric": "Share of player damage from own effects",
+      "value": "13.5%",
+      "target": "5% to 30%",
+      "alarm": "over 35%, or under 3%",
+      "status": "ok"
+    },
+    {
+      "metric": "Share of deaths from one source",
+      "value": "enemy 60.1%",
+      "target": "no source above 60%",
+      "alarm": "hazards above 60%",
+      "status": "warn"
+    },
+    {
+      "metric": "Hazard fires per fight",
+      "value": "1.91 (59.9% of fights at least 2)",
+      "target": "at least 2",
+      "alarm": "under 1 on average",
+      "status": "warn"
+    },
+    {
+      "metric": "Warden reaches the player",
+      "value": "3.3% of fights that reach round 7; dies before round 9 in 0.0%",
+      "target": "in most fights that reach round 7",
+      "alarm": "dies before round 9 in most fights",
+      "status": "warn"
+    }
+  ]
+}

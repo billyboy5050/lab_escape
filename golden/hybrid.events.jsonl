@@ -1,0 +1,484 @@
+{"t":"RoundStarted","round":1}
+{"t":"PhaseStarted","round":1,"phase":"roundStart"}
+{"t":"UnitSpawned","unit":{"id":1,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":2,"y":2},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":1,"arrivalRound":1},"cause":"wave 1"}
+{"t":"UnitSpawned","unit":{"id":2,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":6,"y":2},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":1,"arrivalRound":1},"cause":"wave 1"}
+{"t":"UnitSpawned","unit":{"id":3,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":1,"y":1},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":1,"arrivalRound":1},"cause":"wave 1"}
+{"t":"UnitSpawned","unit":{"id":4,"def":"medic","team":"enemy","kind":"enemy","pos":{"x":4,"y":1},"hp":5,"maxHp":5,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":1,"arrivalRound":1},"cause":"wave 1"}
+{"t":"WaveSpawned","wave":1,"units":[1,2,3,4]}
+{"t":"IntercomLine","line":"round1","text":"Containment grade 2, armory floor. Sentries and a Medic to sector three."}
+{"t":"PhaseStarted","round":1,"phase":"player"}
+{"t":"AbilityUsed","ability":"scout_drone","actor":0,"target":{"x":1,"y":6},"ap":2}
+{"t":"UnitSpawned","unit":{"id":5,"def":"drone","team":"player","kind":"minion","pos":{"x":1,"y":6},"hp":3,"maxHp":3,"armor":0,"flying":true,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":1,"maxCharges":2,"charges":2,"droneState":"deployed","returningPhases":0},"cause":"scout_drone"}
+{"t":"AbilityUsed","ability":"parasite","actor":0,"target":{"x":6,"y":2},"ap":1}
+{"t":"ProjectileFired","source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"from":{"x":1,"y":7},"path":[{"x":2,"y":6},{"x":3,"y":5},{"x":4,"y":4},{"x":5,"y":3},{"x":6,"y":2}],"hit":{"kind":"unit","id":2},"hitPos":{"x":6,"y":2},"reflected":false}
+{"t":"StatusApplied","target":2,"status":"parasite","value":3,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"refreshed":false,"spread":false}
+{"t":"UnitMoved","id":0,"from":{"x":1,"y":7},"to":{"x":3,"y":6},"path":[{"x":2,"y":7},{"x":2,"y":6},{"x":3,"y":6}],"mode":"walk"}
+{"t":"PhaseStarted","round":1,"phase":"minion"}
+{"t":"UnitMoved","id":5,"from":{"x":1,"y":6},"to":{"x":2,"y":4},"path":[{"x":1,"y":5},{"x":1,"y":4},{"x":2,"y":4}],"mode":"fly"}
+{"t":"ChainArc","from":{"x":2,"y":4},"to":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":2,"y":2},"to":{"x":1,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":1},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":5,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":3},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":5,"killed":false}
+{"t":"StatusApplied","target":1,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"H2_plague_drone"},"refreshed":false,"spread":false}
+{"t":"StatusApplied","target":3,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"H2_plague_drone"},"refreshed":false,"spread":false}
+{"t":"PhaseStarted","round":1,"phase":"enemy"}
+{"t":"AIDecision","id":1,"def":"guard","summary":"Holds C3: it has a shot"}
+{"t":"AIDecision","id":2,"def":"guard","summary":"Holds G3: it has a shot"}
+{"t":"AIDecision","id":3,"def":"guard","summary":"Holds B2: it has a shot"}
+{"t":"AIDecision","id":4,"def":"medic","summary":"Goes to heal guard 1 from F1"}
+{"t":"UnitMoved","id":4,"from":{"x":4,"y":1},"to":{"x":5,"y":0},"path":[{"x":5,"y":1},{"x":5,"y":0}],"mode":"walk"}
+{"t":"PhaseStarted","round":1,"phase":"environment"}
+{"t":"HazardPrimed","hazard":"gun","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":5}]}
+{"t":"HazardPrimed","hazard":"panel","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":5}]}
+{"t":"HazardPrimed","hazard":"vent_b5","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":5}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"IntercomLine","line":"firstHazardPrimed","text":"Defence systems are tracking the intruder."}
+{"t":"DamageDealt","target":{"kind":"unit","id":1},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"StatusTick","target":1,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":2},"targetDef":"guard","targetSide":"enemy","pos":{"x":6,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"damageType":"parasite","raw":2,"absorbed":0,"amount":2,"hpLost":2,"hpAfter":4,"killed":false}
+{"t":"StatusTick","target":2,"status":"parasite","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":3},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"StatusTick","target":3,"status":"poison","remaining":2}
+{"t":"RoundStarted","round":2}
+{"t":"PhaseStarted","round":2,"phase":"roundStart"}
+{"t":"PhaseStarted","round":2,"phase":"player"}
+{"t":"AbilityUsed","ability":"barrier_shield","actor":0,"target":{"x":4,"y":4},"target2":{"x":3,"y":5},"ap":1}
+{"t":"ObjectPlaced","object":{"id":1,"kind":"shield","pos":{"x":4,"y":4},"createdRound":2,"team":"player","hp":4,"maxHp":4,"placement":1},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"barrier_shield"}}
+{"t":"ObjectPlaced","object":{"id":2,"kind":"shield","pos":{"x":3,"y":5},"createdRound":2,"team":"player","hp":4,"maxHp":4,"placement":1},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"barrier_shield"}}
+{"t":"AbilityUsed","ability":"brood_egg","actor":0,"target":{"x":3,"y":3},"ap":2}
+{"t":"ObjectPlaced","object":{"id":3,"kind":"egg","pos":{"x":3,"y":3},"createdRound":2,"team":"player","hp":3,"maxHp":3,"timer":1,"host":"floor","hatchInto":"hatchling"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"brood_egg"}}
+{"t":"UnitMoved","id":0,"from":{"x":3,"y":6},"to":{"x":1,"y":7},"path":[{"x":2,"y":6},{"x":1,"y":6},{"x":1,"y":7}],"mode":"walk"}
+{"t":"PhaseStarted","round":2,"phase":"minion"}
+{"t":"ChainArc","from":{"x":2,"y":4},"to":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":2,"y":2},"to":{"x":1,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":1},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":3},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"StatusApplied","target":1,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"StatusApplied","target":3,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"PhaseStarted","round":2,"phase":"enemy"}
+{"t":"AIDecision","id":1,"def":"guard","summary":"Holds C3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":1,"def":"guard","via":"shot"},"from":{"x":2,"y":2},"path":[{"x":2,"y":3},{"x":2,"y":4}],"hit":{"kind":"unit","id":5},"hitPos":{"x":2,"y":4},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":5},"targetDef":"drone","targetSide":"player","pos":{"x":2,"y":4},"source":{"side":"enemy","category":"enemy","kind":"unit","id":1,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":5,"def":"drone","team":"player","kind":"minion","pos":{"x":2,"y":4},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":1,"def":"guard","via":"shot"}}
+{"t":"AIDecision","id":2,"def":"guard","summary":"Holds G3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":2,"def":"guard","via":"shot"},"from":{"x":6,"y":2},"path":[{"x":5,"y":3},{"x":4,"y":4}],"hit":{"kind":"object","id":1},"hitPos":{"x":4,"y":4},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"object","id":1},"targetDef":"shield","targetSide":"player","pos":{"x":4,"y":4},"source":{"side":"enemy","category":"enemy","kind":"unit","id":2,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":1,"killed":false}
+{"t":"AIDecision","id":3,"def":"guard","summary":"No firing tile in reach: closes in to B3"}
+{"t":"UnitMoved","id":3,"from":{"x":1,"y":1},"to":{"x":1,"y":2},"path":[{"x":1,"y":2}],"mode":"walk"}
+{"t":"AIDecision","id":4,"def":"medic","summary":"Goes to heal guard 1 from F1"}
+{"t":"Healed","target":1,"source":{"side":"enemy","category":"enemy","kind":"unit","id":4,"def":"medic","via":"heal"},"amount":2,"hpAfter":5}
+{"t":"PhaseStarted","round":2,"phase":"environment"}
+{"t":"HazardFired","hazard":"gun","victims":[{"kind":"object","id":1}],"tiles":[{"x":6,"y":4},{"x":5,"y":4},{"x":4,"y":4}]}
+{"t":"ProjectileFired","source":{"side":"hazard","category":"hazard","kind":"hazard","id":"gun","def":"wall_gun","via":"wall_gun"},"from":{"x":7,"y":4},"path":[{"x":6,"y":4},{"x":5,"y":4},{"x":4,"y":4}],"hit":{"kind":"object","id":1},"hitPos":{"x":4,"y":4},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"object","id":1},"targetDef":"shield","targetSide":"player","pos":{"x":4,"y":4},"source":{"side":"hazard","category":"hazard","kind":"hazard","id":"gun","def":"wall_gun","via":"wall_gun"},"damageType":"kinetic","raw":2,"absorbed":0,"amount":2,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"ObjectDestroyed","id":1,"kind":"shield","pos":{"x":4,"y":4},"killer":{"side":"hazard","category":"hazard","kind":"hazard","id":"gun","def":"wall_gun","via":"wall_gun"}}
+{"t":"HazardCancelled","hazard":"panel","reason":"Nothing to hit","victims":[]}
+{"t":"HazardCancelled","hazard":"vent_b5","reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":1},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"StatusTick","target":1,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":2},"targetDef":"guard","targetSide":"enemy","pos":{"x":6,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"damageType":"parasite","raw":2,"absorbed":0,"amount":2,"hpLost":2,"hpAfter":2,"killed":false}
+{"t":"StatusTick","target":2,"status":"parasite","remaining":1}
+{"t":"DamageDealt","target":{"kind":"unit","id":3},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":5,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":2,"killed":false}
+{"t":"StatusTick","target":3,"status":"poison","remaining":2}
+{"t":"ObjectRemoved","id":3,"kind":"egg","pos":{"x":3,"y":3},"reason":"hatched"}
+{"t":"UnitSpawned","unit":{"id":6,"def":"hatchling","team":"player","kind":"minion","pos":{"x":3,"y":3},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":2},"cause":"egg"}
+{"t":"UnitSpawned","unit":{"id":7,"def":"hatchling","team":"player","kind":"minion","pos":{"x":3,"y":2},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":2},"cause":"egg"}
+{"t":"EggHatched","id":3,"pos":{"x":3,"y":3},"host":"floor","spawned":[6,7],"capped":0}
+{"t":"RoundStarted","round":3}
+{"t":"PhaseStarted","round":3,"phase":"roundStart"}
+{"t":"IntercomLine","line":"round3","text":"Security, flank the intruder from the side corridors. Send a Burner."}
+{"t":"PhaseStarted","round":3,"phase":"player"}
+{"t":"AbilityUsed","ability":"sidearm","actor":0,"target":{"x":2,"y":2},"ap":1}
+{"t":"ProjectileFired","source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"},"from":{"x":1,"y":7},"path":[{"x":1,"y":6},{"x":1,"y":5},{"x":2,"y":4},{"x":2,"y":3},{"x":2,"y":2}],"hit":{"kind":"unit","id":1},"hitPos":{"x":2,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":1},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"},"damageType":"kinetic","raw":2,"absorbed":0,"amount":2,"hpLost":2,"hpAfter":2,"killed":false}
+{"t":"AbilityUsed","ability":"sidearm","actor":0,"target":{"x":2,"y":2},"ap":1}
+{"t":"ProjectileFired","source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"},"from":{"x":1,"y":7},"path":[{"x":1,"y":6},{"x":1,"y":5},{"x":2,"y":4},{"x":2,"y":3},{"x":2,"y":2}],"hit":{"kind":"unit","id":1},"hitPos":{"x":2,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":1},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"},"damageType":"kinetic","raw":2,"absorbed":0,"amount":2,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":1,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":2,"y":2},"killer":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"}}
+{"t":"ObjectPlaced","object":{"id":4,"kind":"corpse","pos":{"x":2,"y":2},"createdRound":3,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"AbilityUsed","ability":"spore_pod","actor":0,"target":{"x":5,"y":2},"ap":1}
+{"t":"AreaEffect","kind":"spore","tiles":[{"x":4,"y":1},{"x":5,"y":1},{"x":6,"y":1},{"x":4,"y":2},{"x":5,"y":2},{"x":6,"y":2},{"x":4,"y":3},{"x":5,"y":3},{"x":6,"y":3}],"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"}}
+{"t":"StatusApplied","target":2,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"},"refreshed":false,"spread":false}
+{"t":"UnitMoved","id":0,"from":{"x":1,"y":7},"to":{"x":1,"y":4},"path":[{"x":1,"y":6},{"x":1,"y":5},{"x":1,"y":4}],"mode":"walk"}
+{"t":"PhaseStarted","round":3,"phase":"minion"}
+{"t":"UnitMoved","id":6,"from":{"x":3,"y":3},"to":{"x":2,"y":3},"path":[{"x":2,"y":3}],"mode":"walk"}
+{"t":"DamageDealt","target":{"kind":"unit","id":3},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":6,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"UnitMoved","id":7,"from":{"x":3,"y":2},"to":{"x":2,"y":2},"path":[{"x":2,"y":2}],"mode":"walk"}
+{"t":"DamageDealt","target":{"kind":"unit","id":3},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":7,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":3,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":1,"y":2},"killer":{"side":"player","category":"minion","kind":"unit","id":7,"def":"hatchling","via":"bite"}}
+{"t":"ObjectPlaced","object":{"id":5,"kind":"corpse","pos":{"x":1,"y":2},"createdRound":3,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"PhaseStarted","round":3,"phase":"enemy"}
+{"t":"AIDecision","id":2,"def":"guard","summary":"Holds G3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":2,"def":"guard","via":"shot"},"from":{"x":6,"y":2},"path":[{"x":5,"y":2},{"x":4,"y":3},{"x":3,"y":3},{"x":2,"y":3}],"hit":{"kind":"unit","id":6},"hitPos":{"x":2,"y":3},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":6},"targetDef":"hatchling","targetSide":"player","pos":{"x":2,"y":3},"source":{"side":"enemy","category":"enemy","kind":"unit","id":2,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":6,"def":"hatchling","team":"player","kind":"minion","pos":{"x":2,"y":3},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":2,"def":"guard","via":"shot"}}
+{"t":"AIDecision","id":4,"def":"medic","summary":"Goes to heal guard 2 from G1"}
+{"t":"UnitMoved","id":4,"from":{"x":5,"y":0},"to":{"x":6,"y":0},"path":[{"x":6,"y":0}],"mode":"walk"}
+{"t":"Healed","target":2,"source":{"side":"enemy","category":"enemy","kind":"unit","id":4,"def":"medic","via":"heal"},"amount":2,"hpAfter":4}
+{"t":"PhaseStarted","round":3,"phase":"environment"}
+{"t":"HazardHeld","hazard":"panel","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardPrimed","hazard":"vent_b5","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":0}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":2},"targetDef":"guard","targetSide":"enemy","pos":{"x":6,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"StatusTick","target":2,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":2},"targetDef":"guard","targetSide":"enemy","pos":{"x":6,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"damageType":"parasite","raw":2,"absorbed":0,"amount":2,"hpLost":2,"hpAfter":1,"killed":false}
+{"t":"StatusTick","target":2,"status":"parasite","remaining":0}
+{"t":"StatusExpired","target":2,"status":"parasite"}
+{"t":"RoundStarted","round":4}
+{"t":"PhaseStarted","round":4,"phase":"roundStart"}
+{"t":"UnitSpawned","unit":{"id":8,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":0,"y":2},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":4,"arrivalRound":4},"cause":"wave 2"}
+{"t":"UnitSpawned","unit":{"id":9,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":0,"y":1},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":4,"arrivalRound":4},"cause":"wave 2"}
+{"t":"UnitSpawned","unit":{"id":10,"def":"flamer","team":"enemy","kind":"enemy","pos":{"x":7,"y":2},"hp":6,"maxHp":6,"armor":1,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":4,"arrivalRound":4},"cause":"wave 2"}
+{"t":"WaveSpawned","wave":2,"units":[8,9,10]}
+{"t":"PhaseStarted","round":4,"phase":"player"}
+{"t":"AbilityUsed","ability":"barrier_shield","actor":0,"target":{"x":5,"y":0},"target2":{"x":4,"y":1},"ap":1}
+{"t":"ObjectPlaced","object":{"id":6,"kind":"shield","pos":{"x":5,"y":0},"createdRound":4,"team":"player","hp":4,"maxHp":4,"placement":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"barrier_shield"}}
+{"t":"ObjectPlaced","object":{"id":7,"kind":"shield","pos":{"x":4,"y":1},"createdRound":4,"team":"player","hp":4,"maxHp":4,"placement":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"barrier_shield"}}
+{"t":"AbilityUsed","ability":"sidearm","actor":0,"target":{"x":6,"y":2},"ap":1}
+{"t":"ProjectileFired","source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"},"from":{"x":1,"y":4},"path":[{"x":2,"y":4},{"x":3,"y":3},{"x":4,"y":3},{"x":5,"y":2},{"x":6,"y":2}],"hit":{"kind":"unit","id":2},"hitPos":{"x":6,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":2},"targetDef":"guard","targetSide":"enemy","pos":{"x":6,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"},"damageType":"kinetic","raw":2,"absorbed":0,"amount":2,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":2,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":6,"y":2},"killer":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"sidearm"}}
+{"t":"ObjectPlaced","object":{"id":8,"kind":"corpse","pos":{"x":6,"y":2},"createdRound":4,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"UnitMoved","id":0,"from":{"x":1,"y":4},"to":{"x":3,"y":3},"path":[{"x":2,"y":4},{"x":2,"y":3},{"x":3,"y":3}],"mode":"walk"}
+{"t":"AbilityUsed","ability":"proximity_mine","actor":0,"target":{"x":6,"y":3},"ap":1}
+{"t":"ObjectPlaced","object":{"id":9,"kind":"mine","pos":{"x":6,"y":3},"createdRound":4,"team":"player"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"proximity_mine"}}
+{"t":"PhaseStarted","round":4,"phase":"minion"}
+{"t":"UnitMoved","id":7,"from":{"x":2,"y":2},"to":{"x":1,"y":2},"path":[{"x":1,"y":2}],"mode":"walk"}
+{"t":"DamageDealt","target":{"kind":"unit","id":8},"targetDef":"guard","targetSide":"enemy","pos":{"x":0,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":7,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":5,"killed":false}
+{"t":"PhaseStarted","round":4,"phase":"enemy"}
+{"t":"AIDecision","id":4,"def":"medic","summary":"Goes to heal guard 8 from F3"}
+{"t":"UnitMoved","id":4,"from":{"x":6,"y":0},"to":{"x":5,"y":2},"path":[{"x":6,"y":1},{"x":6,"y":2},{"x":5,"y":2}],"mode":"walk"}
+{"t":"AIDecision","id":8,"def":"guard","summary":"Holds A3: it has a shot"}
+{"t":"AIDecision","id":9,"def":"guard","summary":"Holds A2: it has a shot"}
+{"t":"AIDecision","id":10,"def":"flamer","summary":"Best sweep scores 6: from G4 facing W","options":[{"tile":{"x":7,"y":2},"dir":{"x":-1,"y":0},"score":-3,"steps":0,"hits":[4]},{"tile":{"x":6,"y":2},"dir":{"x":-1,"y":0},"score":-3,"steps":1,"hits":[4]},{"tile":{"x":6,"y":3},"dir":{"x":-1,"y":0},"score":6,"steps":2,"hits":[0]}]}
+{"t":"UnitMoved","id":10,"from":{"x":7,"y":2},"to":{"x":6,"y":3},"path":[{"x":7,"y":3},{"x":6,"y":3}],"mode":"walk"}
+{"t":"ObjectTriggered","id":9,"kind":"mine","pos":{"x":6,"y":3},"by":{"kind":"unit","id":10}}
+{"t":"ObjectRemoved","id":9,"kind":"mine","pos":{"x":6,"y":3},"reason":"detonated"}
+{"t":"AreaEffect","kind":"blast","tiles":[{"x":5,"y":2},{"x":6,"y":2},{"x":7,"y":2},{"x":5,"y":3},{"x":6,"y":3},{"x":7,"y":3},{"x":5,"y":4},{"x":6,"y":4},{"x":7,"y":4}],"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"proximity_mine"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":4},"targetDef":"medic","targetSide":"enemy","pos":{"x":5,"y":2},"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":2,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":10},"targetDef":"flamer","targetSide":"enemy","pos":{"x":6,"y":3},"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":1,"amount":2,"hpLost":2,"hpAfter":4,"killed":false}
+{"t":"StatusApplied","target":4,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"H1_spore_mines"},"refreshed":false,"spread":false}
+{"t":"StatusApplied","target":10,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"H1_spore_mines"},"refreshed":false,"spread":false}
+{"t":"PhaseStarted","round":4,"phase":"environment"}
+{"t":"HazardCancelled","hazard":"vent_b5","reason":"Nothing to hit","victims":[]}
+{"t":"HazardPrimed","hazard":"panel","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":0}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":4},"targetDef":"medic","targetSide":"enemy","pos":{"x":5,"y":2},"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"StatusTick","target":4,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":10},"targetDef":"flamer","targetSide":"enemy","pos":{"x":6,"y":3},"source":{"side":"player","category":"player","kind":"object","id":9,"def":"mine","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"StatusTick","target":10,"status":"poison","remaining":2}
+{"t":"ObjectRemoved","id":4,"kind":"corpse","pos":{"x":2,"y":2},"reason":"decayed"}
+{"t":"ObjectRemoved","id":5,"kind":"corpse","pos":{"x":1,"y":2},"reason":"decayed"}
+{"t":"RoundStarted","round":5}
+{"t":"PhaseStarted","round":5,"phase":"roundStart"}
+{"t":"PhaseStarted","round":5,"phase":"player"}
+{"t":"AbilityUsed","ability":"scout_drone","actor":0,"target":{"x":3,"y":2},"ap":2}
+{"t":"UnitSpawned","unit":{"id":11,"def":"drone","team":"player","kind":"minion","pos":{"x":3,"y":2},"hp":3,"maxHp":3,"armor":0,"flying":true,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":5,"maxCharges":2,"charges":2,"droneState":"deployed","returningPhases":0},"cause":"scout_drone"}
+{"t":"UnitMoved","id":0,"from":{"x":3,"y":3},"to":{"x":1,"y":4},"path":[{"x":2,"y":3},{"x":2,"y":4},{"x":1,"y":4}],"mode":"walk"}
+{"t":"AbilityUsed","ability":"proximity_mine","actor":0,"target":{"x":4,"y":3},"ap":1}
+{"t":"ObjectPlaced","object":{"id":10,"kind":"mine","pos":{"x":4,"y":3},"createdRound":5,"team":"player"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"proximity_mine"}}
+{"t":"PhaseStarted","round":5,"phase":"minion"}
+{"t":"DamageDealt","target":{"kind":"unit","id":8},"targetDef":"guard","targetSide":"enemy","pos":{"x":0,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":7,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"ChainArc","from":{"x":3,"y":2},"to":{"x":5,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":11,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":5,"y":2},"to":{"x":6,"y":3},"source":{"side":"player","category":"minion","kind":"unit","id":11,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":4},"targetDef":"medic","targetSide":"enemy","pos":{"x":5,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":11,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"DamageDealt","target":{"kind":"unit","id":10},"targetDef":"flamer","targetSide":"enemy","pos":{"x":6,"y":3},"source":{"side":"player","category":"minion","kind":"unit","id":11,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":2,"killed":false}
+{"t":"StatusApplied","target":10,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":11,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"UnitDied","id":4,"def":"medic","team":"enemy","kind":"enemy","pos":{"x":5,"y":2},"killer":{"side":"player","category":"minion","kind":"unit","id":11,"def":"drone","via":"zap"}}
+{"t":"ObjectPlaced","object":{"id":11,"kind":"corpse","pos":{"x":5,"y":2},"createdRound":5,"of":"medic","decay":2,"team":"enemy"},"source":null}
+{"t":"IntercomLine","line":"medicDies","text":"Medic is down."}
+{"t":"PhaseStarted","round":5,"phase":"enemy"}
+{"t":"AIDecision","id":8,"def":"guard","summary":"Holds A3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":8,"def":"guard","via":"shot"},"from":{"x":0,"y":2},"path":[{"x":1,"y":2}],"hit":{"kind":"unit","id":7},"hitPos":{"x":1,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":7},"targetDef":"hatchling","targetSide":"player","pos":{"x":1,"y":2},"source":{"side":"enemy","category":"enemy","kind":"unit","id":8,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":7,"def":"hatchling","team":"player","kind":"minion","pos":{"x":1,"y":2},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":8,"def":"guard","via":"shot"}}
+{"t":"AIDecision","id":9,"def":"guard","summary":"Holds A2: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"},"from":{"x":0,"y":1},"path":[{"x":1,"y":1},{"x":2,"y":2},{"x":3,"y":2}],"hit":{"kind":"unit","id":11},"hitPos":{"x":3,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":11},"targetDef":"drone","targetSide":"player","pos":{"x":3,"y":2},"source":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":11,"def":"drone","team":"player","kind":"minion","pos":{"x":3,"y":2},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"}}
+{"t":"AIDecision","id":10,"def":"flamer","summary":"No positive sweep: moves toward player 0","options":[]}
+{"t":"UnitMoved","id":10,"from":{"x":6,"y":3},"to":{"x":4,"y":3},"path":[{"x":5,"y":3},{"x":4,"y":3}],"mode":"walk"}
+{"t":"ObjectTriggered","id":10,"kind":"mine","pos":{"x":4,"y":3},"by":{"kind":"unit","id":10}}
+{"t":"ObjectRemoved","id":10,"kind":"mine","pos":{"x":4,"y":3},"reason":"detonated"}
+{"t":"AreaEffect","kind":"blast","tiles":[{"x":3,"y":2},{"x":4,"y":2},{"x":5,"y":2},{"x":3,"y":3},{"x":4,"y":3},{"x":5,"y":3},{"x":3,"y":4},{"x":4,"y":4},{"x":5,"y":4}],"source":{"side":"player","category":"player","kind":"object","id":10,"def":"mine","via":"proximity_mine"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":10},"targetDef":"flamer","targetSide":"enemy","pos":{"x":4,"y":3},"source":{"side":"player","category":"player","kind":"object","id":10,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":1,"amount":2,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":10,"def":"flamer","team":"enemy","kind":"enemy","pos":{"x":4,"y":3},"killer":{"side":"player","category":"player","kind":"object","id":10,"def":"mine","via":"proximity_mine"}}
+{"t":"ObjectPlaced","object":{"id":12,"kind":"corpse","pos":{"x":4,"y":3},"createdRound":5,"of":"flamer","decay":2,"team":"enemy"},"source":null}
+{"t":"IntercomLine","line":"flamerDies","text":"Burner is down."}
+{"t":"PhaseStarted","round":5,"phase":"environment"}
+{"t":"HazardCancelled","hazard":"panel","reason":"Nothing to hit","victims":[]}
+{"t":"HazardPrimed","hazard":"gun","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":0}]}
+{"t":"HazardPrimed","hazard":"vent_b5","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":0}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"ObjectRemoved","id":8,"kind":"corpse","pos":{"x":6,"y":2},"reason":"decayed"}
+{"t":"RoundStarted","round":6}
+{"t":"PhaseStarted","round":6,"phase":"roundStart"}
+{"t":"IntercomLine","line":"round6","text":"Warden to the armory floor."}
+{"t":"PhaseStarted","round":6,"phase":"player"}
+{"t":"UnitMoved","id":0,"from":{"x":1,"y":4},"to":{"x":2,"y":6},"path":[{"x":1,"y":5},{"x":1,"y":6},{"x":2,"y":6}],"mode":"walk"}
+{"t":"AbilityUsed","ability":"brood_egg","actor":0,"target":{"x":2,"y":3},"ap":2}
+{"t":"ObjectPlaced","object":{"id":13,"kind":"egg","pos":{"x":2,"y":3},"createdRound":6,"team":"player","hp":3,"maxHp":3,"timer":1,"host":"floor","hatchInto":"hatchling"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"brood_egg"}}
+{"t":"AbilityUsed","ability":"spore_pod","actor":0,"target":{"x":0,"y":1},"ap":1}
+{"t":"AreaEffect","kind":"spore","tiles":[{"x":0,"y":0},{"x":1,"y":0},{"x":0,"y":1},{"x":1,"y":1},{"x":0,"y":2},{"x":1,"y":2}],"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"}}
+{"t":"StatusApplied","target":8,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"},"refreshed":false,"spread":false}
+{"t":"StatusApplied","target":9,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"},"refreshed":false,"spread":false}
+{"t":"PhaseStarted","round":6,"phase":"minion"}
+{"t":"PhaseStarted","round":6,"phase":"enemy"}
+{"t":"AIDecision","id":8,"def":"guard","summary":"No firing tile in reach: closes in to D3"}
+{"t":"UnitMoved","id":8,"from":{"x":0,"y":2},"to":{"x":3,"y":2},"path":[{"x":1,"y":2},{"x":2,"y":2},{"x":3,"y":2}],"mode":"walk"}
+{"t":"AIDecision","id":9,"def":"guard","summary":"No firing tile in reach: closes in to C3"}
+{"t":"UnitMoved","id":9,"from":{"x":0,"y":1},"to":{"x":2,"y":2},"path":[{"x":1,"y":1},{"x":2,"y":1},{"x":2,"y":2}],"mode":"walk"}
+{"t":"PhaseStarted","round":6,"phase":"environment"}
+{"t":"HazardCancelled","hazard":"gun","reason":"Nothing to hit","victims":[]}
+{"t":"HazardCancelled","hazard":"vent_b5","reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"panel","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":8},"targetDef":"guard","targetSide":"enemy","pos":{"x":3,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"StatusTick","target":8,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":9},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":5,"killed":false}
+{"t":"StatusTick","target":9,"status":"poison","remaining":2}
+{"t":"ObjectRemoved","id":13,"kind":"egg","pos":{"x":2,"y":3},"reason":"hatched"}
+{"t":"UnitSpawned","unit":{"id":12,"def":"hatchling","team":"player","kind":"minion","pos":{"x":2,"y":3},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":6},"cause":"egg"}
+{"t":"UnitSpawned","unit":{"id":13,"def":"hatchling","team":"player","kind":"minion","pos":{"x":1,"y":2},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":6},"cause":"egg"}
+{"t":"EggHatched","id":13,"pos":{"x":2,"y":3},"host":"floor","spawned":[12,13],"capped":0}
+{"t":"ObjectRemoved","id":11,"kind":"corpse","pos":{"x":5,"y":2},"reason":"decayed"}
+{"t":"ObjectRemoved","id":12,"kind":"corpse","pos":{"x":4,"y":3},"reason":"decayed"}
+{"t":"RoundStarted","round":7}
+{"t":"PhaseStarted","round":7,"phase":"roundStart"}
+{"t":"UnitSpawned","unit":{"id":14,"def":"warden","team":"enemy","kind":"enemy","pos":{"x":3,"y":1},"hp":20,"maxHp":20,"armor":2,"flying":false,"elite":true,"statuses":{},"cooldowns":{"purge":0},"spawnRound":7,"arrivalRound":7},"cause":"wave 3"}
+{"t":"UnitSpawned","unit":{"id":15,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":2,"y":1},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":7,"arrivalRound":7},"cause":"wave 3"}
+{"t":"UnitSpawned","unit":{"id":16,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":5,"y":1},"hp":6,"maxHp":6,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":7,"arrivalRound":7},"cause":"wave 3"}
+{"t":"WaveSpawned","wave":3,"units":[14,15,16]}
+{"t":"PhaseStarted","round":7,"phase":"player"}
+{"t":"AbilityUsed","ability":"proximity_mine","actor":0,"target":{"x":2,"y":7},"ap":1}
+{"t":"ObjectPlaced","object":{"id":14,"kind":"mine","pos":{"x":2,"y":7},"createdRound":7,"team":"player"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"proximity_mine"}}
+{"t":"AbilityUsed","ability":"scout_drone","actor":0,"target":{"x":1,"y":5},"ap":2}
+{"t":"UnitSpawned","unit":{"id":17,"def":"drone","team":"player","kind":"minion","pos":{"x":1,"y":5},"hp":3,"maxHp":3,"armor":0,"flying":true,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":7,"maxCharges":2,"charges":2,"droneState":"deployed","returningPhases":0},"cause":"scout_drone"}
+{"t":"UnitMoved","id":0,"from":{"x":2,"y":6},"to":{"x":4,"y":5},"path":[{"x":3,"y":6},{"x":4,"y":6},{"x":4,"y":5}],"mode":"walk"}
+{"t":"PhaseStarted","round":7,"phase":"minion"}
+{"t":"DamageDealt","target":{"kind":"unit","id":8},"targetDef":"guard","targetSide":"enemy","pos":{"x":3,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":12,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":2,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":9},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":13,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"UnitMoved","id":17,"from":{"x":1,"y":5},"to":{"x":1,"y":4},"path":[{"x":1,"y":4}],"mode":"fly"}
+{"t":"ChainArc","from":{"x":1,"y":4},"to":{"x":3,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":3,"y":2},"to":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":3,"y":2},"to":{"x":2,"y":3},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":3,"y":2},"to":{"x":3,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":3,"y":2},"to":{"x":2,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":8},"targetDef":"guard","targetSide":"enemy","pos":{"x":3,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":9},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":12},"targetDef":"hatchling","targetSide":"player","pos":{"x":2,"y":3},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":3,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":19,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":15},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":5,"killed":false}
+{"t":"StatusApplied","target":8,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"StatusApplied","target":9,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"StatusApplied","target":12,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":false,"spread":false}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":false,"spread":false}
+{"t":"StatusApplied","target":15,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":false,"spread":false}
+{"t":"PhaseStarted","round":7,"phase":"enemy"}
+{"t":"AIDecision","id":8,"def":"guard","summary":"Holds D3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":8,"def":"guard","via":"shot"},"from":{"x":3,"y":2},"path":[{"x":2,"y":3}],"hit":{"kind":"unit","id":12},"hitPos":{"x":2,"y":3},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":12},"targetDef":"hatchling","targetSide":"player","pos":{"x":2,"y":3},"source":{"side":"enemy","category":"enemy","kind":"unit","id":8,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":12,"def":"hatchling","team":"player","kind":"minion","pos":{"x":2,"y":3},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":8,"def":"guard","via":"shot"}}
+{"t":"AIDecision","id":9,"def":"guard","summary":"Holds C3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"},"from":{"x":2,"y":2},"path":[{"x":1,"y":2}],"hit":{"kind":"unit","id":13},"hitPos":{"x":1,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":13},"targetDef":"hatchling","targetSide":"player","pos":{"x":1,"y":2},"source":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":13,"def":"hatchling","team":"player","kind":"minion","pos":{"x":1,"y":2},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"}}
+{"t":"AIDecision","id":15,"def":"guard","summary":"Moves to firing tile B3"}
+{"t":"UnitMoved","id":15,"from":{"x":2,"y":1},"to":{"x":1,"y":2},"path":[{"x":1,"y":1},{"x":1,"y":2}],"mode":"walk"}
+{"t":"AIDecision","id":16,"def":"guard","summary":"Holds F2: it has a shot"}
+{"t":"PhaseStarted","round":7,"phase":"environment"}
+{"t":"HazardPrimed","hazard":"gun","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":17}]}
+{"t":"HazardPrimed","hazard":"panel","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":0}]}
+{"t":"HazardPrimed","hazard":"vent_b5","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":17}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":8},"targetDef":"guard","targetSide":"enemy","pos":{"x":3,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":8,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":3,"y":2},"killer":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"poison"}}
+{"t":"ObjectPlaced","object":{"id":15,"kind":"corpse","pos":{"x":3,"y":2},"createdRound":7,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"DamageDealt","target":{"kind":"unit","id":9},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":2,"killed":false}
+{"t":"StatusTick","target":9,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":3,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":18,"killed":false}
+{"t":"StatusTick","target":14,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":15},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"StatusTick","target":15,"status":"poison","remaining":2}
+{"t":"RoundStarted","round":8}
+{"t":"PhaseStarted","round":8,"phase":"roundStart"}
+{"t":"PhaseStarted","round":8,"phase":"player"}
+{"t":"UnitMoved","id":0,"from":{"x":4,"y":5},"to":{"x":2,"y":6},"path":[{"x":4,"y":6},{"x":3,"y":6},{"x":2,"y":6}],"mode":"walk"}
+{"t":"AbilityUsed","ability":"proximity_mine","actor":0,"target":{"x":2,"y":3},"ap":1}
+{"t":"ObjectPlaced","object":{"id":16,"kind":"mine","pos":{"x":2,"y":3},"createdRound":8,"team":"player"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"proximity_mine"}}
+{"t":"AbilityUsed","ability":"brood_egg","actor":0,"target":{"x":5,"y":3},"ap":2}
+{"t":"ObjectPlaced","object":{"id":17,"kind":"egg","pos":{"x":5,"y":3},"createdRound":8,"team":"player","hp":3,"maxHp":3,"timer":1,"host":"floor","hatchInto":"hatchling"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"brood_egg"}}
+{"t":"PhaseStarted","round":8,"phase":"minion"}
+{"t":"UnitMoved","id":17,"from":{"x":1,"y":4},"to":{"x":2,"y":4},"path":[{"x":2,"y":4}],"mode":"fly"}
+{"t":"ChainArc","from":{"x":2,"y":4},"to":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":2,"y":2},"to":{"x":3,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"ChainArc","from":{"x":2,"y":2},"to":{"x":1,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":9},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":3,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":17,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":15},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":2},"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"StatusApplied","target":9,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"StatusApplied","target":15,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":17,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"PhaseStarted","round":8,"phase":"enemy"}
+{"t":"AIDecision","id":9,"def":"guard","summary":"Holds C3: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"},"from":{"x":2,"y":2},"path":[{"x":2,"y":3},{"x":2,"y":4}],"hit":{"kind":"unit","id":17},"hitPos":{"x":2,"y":4},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":17},"targetDef":"drone","targetSide":"player","pos":{"x":2,"y":4},"source":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":17,"def":"drone","team":"player","kind":"minion","pos":{"x":2,"y":4},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":9,"def":"guard","via":"shot"}}
+{"t":"StatusRemoved","target":14,"status":"poison","reason":"purge"}
+{"t":"Purged","id":14}
+{"t":"AIDecision","id":14,"def":"warden","summary":"Approaches to C4"}
+{"t":"UnitMoved","id":14,"from":{"x":3,"y":1},"to":{"x":2,"y":3},"path":[{"x":3,"y":2},{"x":3,"y":3},{"x":2,"y":3}],"mode":"walk"}
+{"t":"ObjectTriggered","id":16,"kind":"mine","pos":{"x":2,"y":3},"by":{"kind":"unit","id":14}}
+{"t":"ObjectRemoved","id":16,"kind":"mine","pos":{"x":2,"y":3},"reason":"detonated"}
+{"t":"AreaEffect","kind":"blast","tiles":[{"x":1,"y":2},{"x":2,"y":2},{"x":3,"y":2},{"x":1,"y":3},{"x":2,"y":3},{"x":3,"y":3},{"x":1,"y":4},{"x":2,"y":4},{"x":3,"y":4}],"source":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"proximity_mine"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":9},"targetDef":"guard","targetSide":"enemy","pos":{"x":2,"y":2},"source":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":3},"source":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":2,"amount":1,"hpLost":1,"hpAfter":16,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":15},"targetDef":"guard","targetSide":"enemy","pos":{"x":1,"y":2},"source":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":0,"killed":true}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"H1_spore_mines"},"refreshed":false,"spread":false}
+{"t":"UnitDied","id":9,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":2,"y":2},"killer":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"proximity_mine"}}
+{"t":"ObjectPlaced","object":{"id":18,"kind":"corpse","pos":{"x":2,"y":2},"createdRound":8,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"UnitDied","id":15,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":1,"y":2},"killer":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"proximity_mine"}}
+{"t":"ObjectPlaced","object":{"id":19,"kind":"corpse","pos":{"x":1,"y":2},"createdRound":8,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"AIDecision","id":16,"def":"guard","summary":"Holds F2: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"},"from":{"x":5,"y":1},"path":[{"x":4,"y":2},{"x":4,"y":3},{"x":3,"y":4},{"x":3,"y":5}],"hit":{"kind":"object","id":2},"hitPos":{"x":3,"y":5},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"object","id":2},"targetDef":"shield","targetSide":"player","pos":{"x":3,"y":5},"source":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":1,"killed":false}
+{"t":"PhaseStarted","round":8,"phase":"environment"}
+{"t":"HazardCancelled","hazard":"gun","reason":"Nothing to hit","victims":[]}
+{"t":"HazardCancelled","hazard":"panel","reason":"An elite would be hit","victims":[{"kind":"unit","id":14}]}
+{"t":"HazardCancelled","hazard":"vent_b5","reason":"An elite would be hit","victims":[{"kind":"unit","id":14}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":3},"source":{"side":"player","category":"player","kind":"object","id":16,"def":"mine","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":15,"killed":false}
+{"t":"StatusTick","target":14,"status":"poison","remaining":2}
+{"t":"ObjectRemoved","id":17,"kind":"egg","pos":{"x":5,"y":3},"reason":"hatched"}
+{"t":"UnitSpawned","unit":{"id":18,"def":"hatchling","team":"player","kind":"minion","pos":{"x":5,"y":3},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":8},"cause":"egg"}
+{"t":"UnitSpawned","unit":{"id":19,"def":"hatchling","team":"player","kind":"minion","pos":{"x":4,"y":2},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":8},"cause":"egg"}
+{"t":"EggHatched","id":17,"pos":{"x":5,"y":3},"host":"floor","spawned":[18,19],"capped":0}
+{"t":"ObjectRemoved","id":15,"kind":"corpse","pos":{"x":3,"y":2},"reason":"decayed"}
+{"t":"RoundStarted","round":9}
+{"t":"PhaseStarted","round":9,"phase":"roundStart"}
+{"t":"PhaseStarted","round":9,"phase":"player"}
+{"t":"AbilityUsed","ability":"scout_drone","actor":0,"target":{"x":3,"y":6},"ap":2}
+{"t":"UnitSpawned","unit":{"id":20,"def":"drone","team":"player","kind":"minion","pos":{"x":3,"y":6},"hp":3,"maxHp":3,"armor":0,"flying":true,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":9,"maxCharges":2,"charges":2,"droneState":"deployed","returningPhases":0},"cause":"scout_drone"}
+{"t":"AbilityUsed","ability":"spore_pod","actor":0,"target":{"x":6,"y":1},"ap":1}
+{"t":"AreaEffect","kind":"spore","tiles":[{"x":5,"y":0},{"x":6,"y":0},{"x":7,"y":0},{"x":5,"y":1},{"x":6,"y":1},{"x":7,"y":1},{"x":5,"y":2},{"x":6,"y":2},{"x":7,"y":2}],"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"}}
+{"t":"StatusApplied","target":16,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"},"refreshed":false,"spread":false}
+{"t":"PhaseStarted","round":9,"phase":"minion"}
+{"t":"UnitMoved","id":18,"from":{"x":5,"y":3},"to":{"x":5,"y":2},"path":[{"x":5,"y":2}],"mode":"walk"}
+{"t":"DamageDealt","target":{"kind":"unit","id":16},"targetDef":"guard","targetSide":"enemy","pos":{"x":5,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":18,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":5,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":16},"targetDef":"guard","targetSide":"enemy","pos":{"x":5,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":19,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":4,"killed":false}
+{"t":"UnitMoved","id":20,"from":{"x":3,"y":6},"to":{"x":4,"y":5},"path":[{"x":4,"y":6},{"x":4,"y":5}],"mode":"fly"}
+{"t":"ChainArc","from":{"x":4,"y":5},"to":{"x":2,"y":3},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":3},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":14,"killed":false}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"PhaseStarted","round":9,"phase":"enemy"}
+{"t":"AIDecision","id":14,"def":"warden","summary":"Approaches to B6"}
+{"t":"UnitMoved","id":14,"from":{"x":2,"y":3},"to":{"x":1,"y":5},"path":[{"x":2,"y":4},{"x":1,"y":4},{"x":1,"y":5}],"mode":"walk"}
+{"t":"AIDecision","id":16,"def":"guard","summary":"Holds F2: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"},"from":{"x":5,"y":1},"path":[{"x":5,"y":2}],"hit":{"kind":"unit","id":18},"hitPos":{"x":5,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":18},"targetDef":"hatchling","targetSide":"player","pos":{"x":5,"y":2},"source":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":18,"def":"hatchling","team":"player","kind":"minion","pos":{"x":5,"y":2},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"}}
+{"t":"PhaseStarted","round":9,"phase":"environment"}
+{"t":"HazardHeld","hazard":"gun","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardPrimed","hazard":"panel","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":20}]}
+{"t":"HazardHeld","hazard":"vent_b5","step":1,"reason":"An elite would be hit","victims":[{"kind":"unit","id":14}]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":1,"y":5},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":13,"killed":false}
+{"t":"StatusTick","target":14,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":16},"targetDef":"guard","targetSide":"enemy","pos":{"x":5,"y":1},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":3,"killed":false}
+{"t":"StatusTick","target":16,"status":"poison","remaining":2}
+{"t":"StatusApplied","target":0,"status":"poison","value":2,"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"H2_plague_drone"},"refreshed":false,"spread":true}
+{"t":"StatusApplied","target":19,"status":"poison","value":2,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"spore_pod"},"refreshed":false,"spread":true}
+{"t":"ObjectRemoved","id":18,"kind":"corpse","pos":{"x":2,"y":2},"reason":"decayed"}
+{"t":"ObjectRemoved","id":19,"kind":"corpse","pos":{"x":1,"y":2},"reason":"decayed"}
+{"t":"RoundStarted","round":10}
+{"t":"PhaseStarted","round":10,"phase":"roundStart"}
+{"t":"PhaseStarted","round":10,"phase":"player"}
+{"t":"AbilityUsed","ability":"proximity_mine","actor":0,"target":{"x":5,"y":7},"ap":1}
+{"t":"ObjectPlaced","object":{"id":20,"kind":"mine","pos":{"x":5,"y":7},"createdRound":10,"team":"player"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"proximity_mine"}}
+{"t":"UnitMoved","id":0,"from":{"x":2,"y":6},"to":{"x":3,"y":6},"path":[{"x":3,"y":6}],"mode":"walk"}
+{"t":"AbilityUsed","ability":"parasite","actor":0,"target":{"x":1,"y":5},"ap":1}
+{"t":"ProjectileFired","source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"from":{"x":3,"y":6},"path":[{"x":2,"y":6},{"x":1,"y":5}],"hit":{"kind":"unit","id":14},"hitPos":{"x":1,"y":5},"reflected":false}
+{"t":"StatusApplied","target":14,"status":"parasite","value":3,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"refreshed":false,"spread":false}
+{"t":"AbilityUsed","ability":"acid_spit","actor":0,"target":{"x":1,"y":5},"ap":1}
+{"t":"ProjectileFired","source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"acid_spit"},"from":{"x":3,"y":6},"path":[{"x":2,"y":6},{"x":1,"y":5}],"hit":{"kind":"unit","id":14},"hitPos":{"x":1,"y":5},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":1,"y":5},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"acid_spit"},"damageType":"acid","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":12,"killed":false}
+{"t":"StatusApplied","target":14,"status":"corrode","value":2,"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"acid_spit"},"refreshed":false,"spread":false}
+{"t":"UnitMoved","id":0,"from":{"x":3,"y":6},"to":{"x":4,"y":7},"path":[{"x":4,"y":6},{"x":4,"y":7}],"mode":"walk"}
+{"t":"PhaseStarted","round":10,"phase":"minion"}
+{"t":"DamageDealt","target":{"kind":"unit","id":16},"targetDef":"guard","targetSide":"enemy","pos":{"x":5,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":19,"def":"hatchling","via":"bite"},"damageType":"kinetic","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":2,"killed":false}
+{"t":"UnitMoved","id":20,"from":{"x":4,"y":5},"to":{"x":3,"y":6},"path":[{"x":4,"y":6},{"x":3,"y":6}],"mode":"fly"}
+{"t":"ChainArc","from":{"x":3,"y":6},"to":{"x":1,"y":5},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":1,"y":5},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":11,"killed":false}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"H2_plague_drone"},"refreshed":true,"spread":false}
+{"t":"PhaseStarted","round":10,"phase":"enemy"}
+{"t":"StatusRemoved","target":14,"status":"poison","reason":"purge"}
+{"t":"Purged","id":14}
+{"t":"AIDecision","id":14,"def":"warden","summary":"Approaches to C8, lining up a charge lane"}
+{"t":"UnitMoved","id":14,"from":{"x":1,"y":5},"to":{"x":2,"y":7},"path":[{"x":1,"y":6},{"x":2,"y":6},{"x":2,"y":7}],"mode":"walk"}
+{"t":"ObjectTriggered","id":14,"kind":"mine","pos":{"x":2,"y":7},"by":{"kind":"unit","id":14}}
+{"t":"ObjectRemoved","id":14,"kind":"mine","pos":{"x":2,"y":7},"reason":"detonated"}
+{"t":"AreaEffect","kind":"blast","tiles":[{"x":1,"y":6},{"x":2,"y":6},{"x":3,"y":6},{"x":1,"y":7},{"x":2,"y":7},{"x":3,"y":7}],"source":{"side":"player","category":"player","kind":"object","id":14,"def":"mine","via":"proximity_mine"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":7},"source":{"side":"player","category":"player","kind":"object","id":14,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":8,"killed":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":20},"targetDef":"drone","targetSide":"player","pos":{"x":3,"y":6},"source":{"side":"player","category":"player","kind":"object","id":14,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":0,"killed":true}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"object","id":14,"def":"mine","via":"H1_spore_mines"},"refreshed":false,"spread":false}
+{"t":"UnitDied","id":20,"def":"drone","team":"player","kind":"minion","pos":{"x":3,"y":6},"killer":{"side":"player","category":"player","kind":"object","id":14,"def":"mine","via":"proximity_mine"}}
+{"t":"IntercomLine","line":"wardenLow","text":"Warden, report."}
+{"t":"AIDecision","id":16,"def":"guard","summary":"Holds F2: it has a shot"}
+{"t":"ProjectileFired","source":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"},"from":{"x":5,"y":1},"path":[{"x":4,"y":2}],"hit":{"kind":"unit","id":19},"hitPos":{"x":4,"y":2},"reflected":false}
+{"t":"DamageDealt","target":{"kind":"unit","id":19},"targetDef":"hatchling","targetSide":"player","pos":{"x":4,"y":2},"source":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"},"damageType":"kinetic","raw":3,"absorbed":0,"amount":3,"hpLost":2,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":19,"def":"hatchling","team":"player","kind":"minion","pos":{"x":4,"y":2},"killer":{"side":"enemy","category":"enemy","kind":"unit","id":16,"def":"guard","via":"shot"}}
+{"t":"PhaseStarted","round":10,"phase":"environment"}
+{"t":"HazardCancelled","hazard":"panel","reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"gun","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"vent_b5","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"vent_g6","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"DamageDealt","target":{"kind":"unit","id":0},"targetDef":"player","targetSide":"player","pos":{"x":4,"y":7},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":7,"killed":false}
+{"t":"StatusTick","target":0,"status":"poison","remaining":1}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":7},"source":{"side":"player","category":"player","kind":"object","id":14,"def":"mine","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":7,"killed":false}
+{"t":"StatusTick","target":14,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":7},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"damageType":"parasite","raw":2,"absorbed":0,"amount":2,"hpLost":2,"hpAfter":5,"killed":false}
+{"t":"StatusTick","target":14,"status":"parasite","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":16},"targetDef":"guard","targetSide":"enemy","pos":{"x":5,"y":1},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"StatusTick","target":16,"status":"poison","remaining":1}
+{"t":"RoundStarted","round":11}
+{"t":"PhaseStarted","round":11,"phase":"roundStart"}
+{"t":"PhaseStarted","round":11,"phase":"player"}
+{"t":"UnitMoved","id":0,"from":{"x":4,"y":7},"to":{"x":5,"y":6},"path":[{"x":4,"y":6},{"x":5,"y":6}],"mode":"walk"}
+{"t":"AbilityUsed","ability":"scout_drone","actor":0,"target":{"x":6,"y":5},"ap":2}
+{"t":"UnitSpawned","unit":{"id":21,"def":"drone","team":"player","kind":"minion","pos":{"x":6,"y":5},"hp":3,"maxHp":3,"armor":0,"flying":true,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":11,"maxCharges":2,"charges":2,"droneState":"deployed","returningPhases":0},"cause":"scout_drone"}
+{"t":"AbilityUsed","ability":"proximity_mine","actor":0,"target":{"x":2,"y":6},"ap":1}
+{"t":"ObjectPlaced","object":{"id":21,"kind":"mine","pos":{"x":2,"y":6},"createdRound":11,"team":"player"},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"proximity_mine"}}
+{"t":"PhaseStarted","round":11,"phase":"minion"}
+{"t":"UnitMoved","id":21,"from":{"x":6,"y":5},"to":{"x":6,"y":3},"path":[{"x":6,"y":4},{"x":6,"y":3}],"mode":"fly"}
+{"t":"ChainArc","from":{"x":6,"y":3},"to":{"x":5,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":21,"def":"drone","via":"zap"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":16},"targetDef":"guard","targetSide":"enemy","pos":{"x":5,"y":1},"source":{"side":"player","category":"minion","kind":"unit","id":21,"def":"drone","via":"zap"},"damageType":"electric","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":16,"def":"guard","team":"enemy","kind":"enemy","pos":{"x":5,"y":1},"killer":{"side":"player","category":"minion","kind":"unit","id":21,"def":"drone","via":"zap"}}
+{"t":"ObjectPlaced","object":{"id":22,"kind":"corpse","pos":{"x":5,"y":1},"createdRound":11,"of":"guard","decay":2,"team":"enemy"},"source":null}
+{"t":"PhaseStarted","round":11,"phase":"enemy"}
+{"t":"AIDecision","id":14,"def":"warden","summary":"Approaches to D7, lining up a charge lane"}
+{"t":"UnitMoved","id":14,"from":{"x":2,"y":7},"to":{"x":2,"y":6},"path":[{"x":2,"y":6}],"mode":"walk"}
+{"t":"ObjectTriggered","id":21,"kind":"mine","pos":{"x":2,"y":6},"by":{"kind":"unit","id":14}}
+{"t":"ObjectRemoved","id":21,"kind":"mine","pos":{"x":2,"y":6},"reason":"detonated"}
+{"t":"AreaEffect","kind":"blast","tiles":[{"x":1,"y":5},{"x":2,"y":5},{"x":3,"y":5},{"x":1,"y":6},{"x":2,"y":6},{"x":3,"y":6},{"x":1,"y":7},{"x":2,"y":7},{"x":3,"y":7}],"source":{"side":"player","category":"player","kind":"object","id":21,"def":"mine","via":"proximity_mine"}}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":2,"y":6},"source":{"side":"player","category":"player","kind":"object","id":21,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":3,"hpAfter":2,"killed":false}
+{"t":"DamageDealt","target":{"kind":"object","id":2},"targetDef":"shield","targetSide":"player","pos":{"x":3,"y":5},"source":{"side":"player","category":"player","kind":"object","id":21,"def":"mine","via":"proximity_mine"},"damageType":"explosive","raw":3,"absorbed":0,"amount":3,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"StatusApplied","target":14,"status":"poison","value":3,"source":{"side":"player","category":"player","kind":"object","id":21,"def":"mine","via":"H1_spore_mines"},"refreshed":true,"spread":false}
+{"t":"ObjectDestroyed","id":2,"kind":"shield","pos":{"x":3,"y":5},"killer":{"side":"player","category":"player","kind":"object","id":21,"def":"mine","via":"proximity_mine"}}
+{"t":"UnitMoved","id":14,"from":{"x":2,"y":6},"to":{"x":3,"y":6},"path":[{"x":3,"y":6}],"mode":"walk"}
+{"t":"PhaseStarted","round":11,"phase":"environment"}
+{"t":"HazardHeld","hazard":"gun","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"panel","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardHeld","hazard":"vent_b5","step":4,"reason":"Nothing to hit","victims":[]}
+{"t":"HazardPrimed","hazard":"vent_g6","step":3,"reason":"Only your side would be hit","victims":[{"kind":"unit","id":0}]}
+{"t":"DamageDealt","target":{"kind":"unit","id":0},"targetDef":"player","targetSide":"player","pos":{"x":5,"y":6},"source":{"side":"player","category":"minion","kind":"unit","id":20,"def":"drone","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":6,"killed":false}
+{"t":"StatusTick","target":0,"status":"poison","remaining":0}
+{"t":"StatusExpired","target":0,"status":"poison"}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":3,"y":6},"source":{"side":"player","category":"player","kind":"object","id":21,"def":"mine","via":"poison"},"damageType":"poison","raw":1,"absorbed":0,"amount":1,"hpLost":1,"hpAfter":1,"killed":false}
+{"t":"StatusTick","target":14,"status":"poison","remaining":2}
+{"t":"DamageDealt","target":{"kind":"unit","id":14},"targetDef":"warden","targetSide":"enemy","pos":{"x":3,"y":6},"source":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"},"damageType":"parasite","raw":2,"absorbed":0,"amount":2,"hpLost":1,"hpAfter":0,"killed":true}
+{"t":"UnitDied","id":14,"def":"warden","team":"enemy","kind":"enemy","pos":{"x":3,"y":6},"killer":{"side":"player","category":"player","kind":"unit","id":0,"def":"player","via":"parasite"}}
+{"t":"ObjectPlaced","object":{"id":23,"kind":"corpse","pos":{"x":3,"y":6},"createdRound":11,"of":"warden","decay":2,"team":"enemy"},"source":null}
+{"t":"UnitSpawned","unit":{"id":22,"def":"hatchling","team":"player","kind":"minion","pos":{"x":3,"y":6},"hp":2,"maxHp":2,"armor":0,"flying":false,"elite":false,"statuses":{},"cooldowns":{},"spawnRound":11},"cause":"parasite"}
+{"t":"FightEnded","result":"win","cause":"All enemies are dead","round":11}
+{"t":"IntercomLine","line":"wardenDies","text":"Warden is down. The armory is compromised."}

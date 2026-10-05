@@ -1,0 +1,29 @@
+{
+  "turn": { "ap": 3, "movement": 3 },
+  "sprint": { "ap": 1, "movement": 2 },
+  "caps": { "minions": 5, "eggs": 3, "mines": 4, "shieldPlacements": 2 },
+  "statuses": {
+    "poison": { "damage": 1, "duration": 3, "spreadCap": 3, "damageType": "poison" },
+    "parasite": { "damage": 2, "duration": 3, "damageType": "parasite" },
+    "corrode": { "duration": 0 },
+    "pinned": { "duration": 1 },
+    "slowed": { "duration": 1, "movementPenalty": 1 }
+  },
+  "armorAppliesTo": ["kinetic", "explosive", "fire"],
+  "corpseDecay": 2,
+  "eggs": {
+    "hp": 3,
+    "floorTimer": 1,
+    "corpseTimer": 2,
+    "floorHatchlings": 2,
+    "floorVariant": "hatchling",
+    "corpseHosts": { "guard": "spitter", "flamer": "burster", "medic": null, "warden": null }
+  },
+  "parasiteHatchling": "hatchling",
+  "chainDepthCap": 20,
+  "roundCap": 30,
+  "arrivalRound": "all",
+  "earlyWaveWhenEmpty": false,
+  "loadout": { "abilities": 8, "upgrades": 3 },
+  "ui": { "showHazardCooldowns": false, "secondsPerActor": 0.4 }
+}

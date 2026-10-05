@@ -1,0 +1,277 @@
+{
+  "format": "lab-escape/replay@1",
+  "engineVersion": "0.1.0",
+  "contentHash": "08a289f83c157f",
+  "loadout": {
+    "abilities": [
+      "sidearm",
+      "grapple_hook",
+      "proximity_mine",
+      "auto_turret",
+      "scout_drone",
+      "barrier_shield"
+    ],
+    "upgrades": [
+      "T1_piercing_rounds",
+      "T2_shot_triggered_mines",
+      "T6_overcharged_drone"
+    ]
+  },
+  "settings": {},
+  "commands": [
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "A6"
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "C3"
+    },
+    {
+      "type": "move",
+      "path": [
+        "B7",
+        "B6"
+      ]
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "D4"
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "E2"
+    },
+    {
+      "type": "move",
+      "path": [
+        "B5",
+        "C5",
+        "D5"
+      ]
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "E3"
+    },
+    {
+      "type": "move",
+      "path": [
+        "C5",
+        "B5",
+        "B6"
+      ]
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "F1"
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "C4"
+    },
+    {
+      "type": "ability",
+      "ability": "proximity_mine",
+      "target": "B3"
+    },
+    {
+      "type": "move",
+      "path": [
+        "B5",
+        "C5"
+      ]
+    },
+    {
+      "type": "move",
+      "path": [
+        "B5"
+      ]
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "barrier_shield",
+      "target": "C4",
+      "target2": "C5"
+    },
+    {
+      "type": "ability",
+      "ability": "proximity_mine",
+      "target": "D3"
+    },
+    {
+      "type": "ability",
+      "ability": "proximity_mine",
+      "target": "E4"
+    },
+    {
+      "type": "move",
+      "path": [
+        "A5"
+      ]
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "B3"
+    },
+    {
+      "type": "ability",
+      "ability": "grapple_hook",
+      "target": "C7",
+      "mode": "self"
+    },
+    {
+      "type": "move",
+      "path": [
+        "D7",
+        "E7",
+        "F7"
+      ]
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "D5"
+    },
+    {
+      "type": "move",
+      "path": [
+        "E7",
+        "E6",
+        "E5"
+      ]
+    },
+    {
+      "type": "ability",
+      "ability": "proximity_mine",
+      "target": "E3"
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "barrier_shield",
+      "target": "D3",
+      "target2": "E4"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "C3"
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "proximity_mine",
+      "target": "F5"
+    },
+    {
+      "type": "move",
+      "path": [
+        "E6",
+        "D6"
+      ]
+    },
+    {
+      "type": "ability",
+      "ability": "proximity_mine",
+      "target": "G5"
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "F4"
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "E7"
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "E5"
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "E8"
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "G5"
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "auto_turret",
+      "target": "E5"
+    },
+    {
+      "type": "ability",
+      "ability": "grapple_hook",
+      "target": "D8",
+      "mode": "self"
+    },
+    {
+      "type": "move",
+      "path": [
+        "D7"
+      ]
+    },
+    {
+      "type": "endTurn"
+    },
+    {
+      "type": "ability",
+      "ability": "sidearm",
+      "target": "E2"
+    },
+    {
+      "type": "endTurn"
+    }
+  ],
+  "meta": {
+    "bot": "greedy",
+    "seed": 2,
+    "preset": "tech"
+  }
+}

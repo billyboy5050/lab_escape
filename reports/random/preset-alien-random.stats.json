@@ -1,0 +1,92 @@
+{
+  "fights": 1000,
+  "errors": 0,
+  "wins": 0,
+  "winRate": 0,
+  "winRateCI": [
+    0,
+    0.003826898586390522
+  ],
+  "roundsWin": null,
+  "roundsLoss": {
+    "median": 3,
+    "mean": 2.717
+  },
+  "lossesReachingWave2": 130,
+  "causesByCategory": {
+    "hazard": 15,
+    "enemy": 876,
+    "player": 109
+  },
+  "topCauses": [
+    [
+      "guard/shot",
+      876
+    ],
+    [
+      "player/poison",
+      105
+    ],
+    [
+      "gun/wall_gun",
+      12
+    ],
+    [
+      "hatchling/poison",
+      4
+    ],
+    [
+      "panel/panel_grid",
+      2
+    ],
+    [
+      "vent_g6/gas_vent",
+      1
+    ]
+  ],
+  "meanPlayerDamage": {
+    "player": 0.713,
+    "minion": 0,
+    "enemy": 7.191,
+    "hazard": 0.096
+  },
+  "meanFriendlyFireShare": 0.089125,
+  "meanHazardFires": 0.124,
+  "fightsWithTwoHazardFires": 5,
+  "meanPeakMinions": 1.205,
+  "maxPeakMinions": 4,
+  "wardenReachedShare": null,
+  "wardenEarlyDeathShare": null,
+  "abilityUse": {
+    "parasite": 0.339,
+    "brood_egg": 1.465,
+    "spore_pod": 3.203,
+    "lunge": 0.937,
+    "acid_spit": 0.337,
+    "sprint": 0.136
+  },
+  "lift": [],
+  "checks": [
+    {
+      "metric": "Share of player damage from own effects",
+      "value": "8.9%",
+      "target": "5% to 30%",
+      "alarm": "over 35%, or under 3%",
+      "status": "ok"
+    },
+    {
+      "metric": "Share of deaths from one source",
+      "value": "enemy 87.6%",
+      "target": "no source above 60%",
+      "alarm": "hazards above 60%",
+      "status": "warn"
+    },
+    {
+      "metric": "Hazard fires per fight",
+      "value": "0.12 (0.5% of fights at least 2)",
+      "target": "at least 2",
+      "alarm": "under 1 on average",
+      "status": "alarm"
+    }
+  ]
+}

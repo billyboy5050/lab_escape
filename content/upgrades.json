@@ -1,0 +1,117 @@
+[
+  {
+    "id": "T1_piercing_rounds",
+    "code": "T1",
+    "name": "Piercing Rounds",
+    "kit": "tech",
+    "requires": { "any": ["sidearm", "auto_turret"] },
+    "armorIgnore": 2,
+    "text": "Kinetic damage from your Sidearm and turrets ignores 2 armor."
+  },
+  {
+    "id": "T2_shot_triggered_mines",
+    "code": "T2",
+    "name": "Shot-Triggered Mines",
+    "kit": "tech",
+    "requires": { "all": ["proximity_mine", "sidearm"] },
+    "text": "The Sidearm can target one of your mines in range and sight. A shot that reaches it detonates it."
+  },
+  {
+    "id": "T3_suppressing_fire",
+    "code": "T3",
+    "name": "Suppressing Fire",
+    "kit": "tech",
+    "requires": { "all": ["auto_turret"] },
+    "status": { "id": "slowed", "duration": 1 },
+    "text": "An enemy hit by a turret shot is Slowed: 1 less movement on its next move."
+  },
+  {
+    "id": "T4_grapple_pin",
+    "code": "T4",
+    "name": "Grapple Pin",
+    "kit": "tech",
+    "requires": { "all": ["grapple_hook"] },
+    "damage": 1,
+    "damageType": "kinetic",
+    "status": { "id": "pinned", "duration": 1 },
+    "text": "A unit pulled by the grapple takes 1 kinetic damage on landing and is Pinned for 1 round."
+  },
+  {
+    "id": "T5_reflective_shield",
+    "code": "T5",
+    "name": "Reflective Shield",
+    "kit": "tech",
+    "requires": { "all": ["barrier_shield"] },
+    "text": "The first projectile to hit each shield segment each round is reflected back along its line."
+  },
+  {
+    "id": "T6_overcharged_drone",
+    "code": "T6",
+    "name": "Overcharged Drone",
+    "kit": "tech",
+    "requires": { "all": ["scout_drone"] },
+    "charges": 3,
+    "extraChainHops": 1,
+    "text": "Drones have 3 charges, and the chain jumps one extra hop to units adjacent to chained targets."
+  },
+  {
+    "id": "A1_spore_burst",
+    "code": "A1",
+    "name": "Spore Burst",
+    "kit": "alien",
+    "requires": { "all": ["spore_pod"] },
+    "hook": "unitDied",
+    "area": { "shape": "square", "radius": 1 },
+    "status": { "id": "poison", "duration": 3 },
+    "text": "When a poisoned unit dies, it poisons its 3x3 area."
+  },
+  {
+    "id": "A2_acid_brood",
+    "code": "A2",
+    "name": "Acid Brood",
+    "kit": "alien",
+    "requires": { "all": ["brood_egg"] },
+    "hook": "unitDied",
+    "corrode": 2,
+    "text": "When any hatchling dies, adjacent units gain 2 Corrode."
+  },
+  {
+    "id": "A3_parasite_jump",
+    "code": "A3",
+    "name": "Parasite Jump",
+    "kit": "alien",
+    "requires": { "all": ["parasite"] },
+    "hook": "unitDied",
+    "range": 3,
+    "status": { "id": "parasite", "duration": 3 },
+    "text": "When a Parasite host dies, the Parasite jumps to the nearest enemy within 3 and sight, and restarts its 3 rounds."
+  },
+  {
+    "id": "A4_fast_brood",
+    "code": "A4",
+    "name": "Fast Brood",
+    "kit": "alien",
+    "requires": { "all": ["brood_egg"] },
+    "corpseTimer": 1,
+    "text": "Corpse eggs hatch in 1 round."
+  },
+  {
+    "id": "H1_spore_mines",
+    "code": "H1",
+    "name": "Spore Mines",
+    "kit": "hybrid",
+    "requires": { "all": ["proximity_mine", "spore_pod"] },
+    "hook": "objectTriggered",
+    "status": { "id": "poison", "duration": 3 },
+    "text": "Mine explosions also poison every unit in their blast area."
+  },
+  {
+    "id": "H2_plague_drone",
+    "code": "H2",
+    "name": "Plague Drone",
+    "kit": "hybrid",
+    "requires": { "all": ["scout_drone", "spore_pod"] },
+    "status": { "id": "poison", "duration": 3 },
+    "text": "Drone zaps also poison the target and every unit the chain hits."
+  }
+]
