@@ -80,7 +80,9 @@ export function validateContent(f: ContentFiles): string[] {
   int(r.statuses?.pinned?.duration, 'rules.statuses.pinned.duration', 1);
   int(r.statuses?.slowed?.duration, 'rules.statuses.slowed.duration', 1);
   int(r.statuses?.slowed?.movementPenalty, 'rules.statuses.slowed.movementPenalty');
-  (r.armorAppliesTo ?? []).forEach((d, i) => dtype(d, `rules.armorAppliesTo[${i}]`));
+  // Every damage calculation calls includes() on this, so a missing or non-list value must be rejected, not skipped.
+  if (!Array.isArray(r.armorAppliesTo)) p.push('rules.armorAppliesTo must be a list of damage types');
+  else r.armorAppliesTo.forEach((d, i) => dtype(d, `rules.armorAppliesTo[${i}]`));
   int(r.corpseDecay, 'rules.corpseDecay', 1);
   int(r.eggs?.hp, 'rules.eggs.hp', 1);
   int(r.eggs?.floorTimer, 'rules.eggs.floorTimer', 1);

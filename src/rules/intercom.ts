@@ -2,13 +2,20 @@ import type { IntercomLineDef, IntercomTrigger } from '../content/types';
 import type { Unit } from '../state/types';
 import type { World } from './world';
 
+interface TriggerData {
+  round?: number;
+  def?: string;
+  /** For hpBelow: the threshold that was just crossed. */
+  threshold?: number;
+}
+
 /**
  * Intercom rules: each line plays at most once per fight and at most one line plays per phase.
  * Lines triggered together queue in table order and play one per phase. The player's death line
  * plays at once and clears the queue. Lines raised during a root action wait for it to finish,
  * so lines triggered by the same action play in table order.
  */
-export function intercomTrigger(w: World, type: IntercomTrigger['type'], data: { round?: number; def?: string } = {}): void {
+export function intercomTrigger(w: World, type: IntercomTrigger['type'], data: TriggerData = {}): void {
   const lines = w.c.intercom.lines;
   const ic = w.s.intercom;
   let changed = false;
@@ -35,13 +42,16 @@ export function intercomFlush(w: World): void {
   tryPlay(w);
 }
 
-/** Damage that leaves a unit alive below a line's threshold triggers it ("Warden, report."). */
+/**
+ * Damage that leaves a unit alive below a line's threshold triggers it ("Warden, report."). Each line is raised by
+ * its own threshold, so one hit across two thresholds raises both and a hit that crosses only the higher one does
+ * not raise the lower.
+ */
 export function intercomHpCheck(w: World, u: Unit, before: number): void {
   for (const line of w.c.intercom.lines) {
     const t = line.trigger;
     if (t.type === 'hpBelow' && t.def === u.def && t.threshold !== undefined && u.hp > 0 && u.hp < t.threshold && before >= t.threshold) {
-      intercomTrigger(w, 'hpBelow', { def: u.def });
-      return;
+      intercomTrigger(w, 'hpBelow', { def: u.def, threshold: t.threshold });
     }
   }
 }
@@ -68,10 +78,12 @@ function play(w: World, line: IntercomLineDef): void {
   w.emit({ t: 'IntercomLine', line: line.id, text: line.text });
 }
 
-function matches(line: IntercomLineDef, type: IntercomTrigger['type'], data: { round?: number; def?: string }): boolean {
+function matches(line: IntercomLineDef, type: IntercomTrigger['type'], data: TriggerData): boolean {
   const t = line.trigger;
   if (t.type !== type) return false;
   if (t.round !== undefined && t.round !== data.round) return false;
   if (t.def !== undefined && t.def !== data.def) return false;
+  // An hpBelow line is raised by the threshold it names, so a second line on the same unit waits for its own.
+  if (type === 'hpBelow' && t.threshold !== data.threshold) return false;
   return true;
 }

@@ -38,11 +38,78 @@ export class ReplayMismatch extends Error {
   }
 }
 
-/** Throws if a record was made with a different engine version or different content values. */
-export function checkCompatible(c: Content, rec: FightRecord): void {
-  if (rec.format !== RECORD_FORMAT) throw new ReplayMismatch(`Unknown replay format "${rec.format}"`);
-  if (rec.engineVersion !== ENGINE_VERSION) throw new ReplayMismatch(`Replay was recorded on engine ${rec.engineVersion}; this is ${ENGINE_VERSION}`);
-  if (rec.contentHash !== c.hash) throw new ReplayMismatch(`Replay was recorded with content ${rec.contentHash}; the current content is ${c.hash}`);
+const COMMAND_TYPES: readonly string[] = ['move', 'sprint', 'ability', 'reload', 'pickUpMine', 'redeploy', 'endTurn', 'debug'];
+const DEBUG_OPS: readonly string[] = ['setHp', 'setAp', 'spawn', 'forceWave'];
+/** How many problems a rejection message lists; a file with thousands of bad commands would otherwise print them all. */
+const MAX_PROBLEMS = 6;
+
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * Structural problems in parsed replay JSON: the parts of a record that the loaders and screens read without checking
+ * (loadout, settings, the command list, the turn times) must exist and have the right types. What the commands do is
+ * the engine's business: it rejects an illegal one with a message, and replay() reports it. Stops after a few problems.
+ */
+export function recordProblems(rec: unknown): string[] {
+  const p: string[] = [];
+  const add = (msg: string) => {
+    if (p.length <= MAX_PROBLEMS) p.push(msg);
+  };
+  if (!isObject(rec)) return ['the file is not a replay file'];
+  const names = (v: unknown, where: string) => {
+    if (!Array.isArray(v)) return add(`${where} must be a list`);
+    v.forEach((x, i) => typeof x !== 'string' && add(`${where}[${i}] must be a name (got ${JSON.stringify(x)})`));
+  };
+  if (!isObject(rec.loadout)) add('loadout must be an object with abilities and upgrades');
+  else {
+    names(rec.loadout.abilities, 'loadout.abilities');
+    names(rec.loadout.upgrades, 'loadout.upgrades');
+  }
+  if (!isObject(rec.settings)) add('settings must be an object');
+  else {
+    const w = rec.settings.maxWaves;
+    if (w !== undefined && (typeof w !== 'number' || !Number.isInteger(w) || w < 1)) add(`settings.maxWaves must be a whole number of at least 1 (got ${JSON.stringify(w)})`);
+  }
+  if (!Array.isArray(rec.commands)) add('commands must be a list');
+  else {
+    rec.commands.forEach((cmd, i) => {
+      if (!isObject(cmd) || typeof cmd.type !== 'string') add(`commands[${i}] must be an object with a type`);
+      else if (!COMMAND_TYPES.includes(cmd.type)) add(`commands[${i}] has unknown type ${JSON.stringify(cmd.type)}`);
+      else if (cmd.type === 'debug' && !DEBUG_OPS.includes(cmd.op as string)) add(`commands[${i}] has unknown debug op ${JSON.stringify(cmd.op)}`);
+    });
+  }
+  const meta = rec.meta;
+  if (meta !== undefined) {
+    if (!isObject(meta)) add('meta must be an object');
+    else {
+      for (const k of ['created', 'label', 'bot', 'preset'] as const) if (meta[k] !== undefined && typeof meta[k] !== 'string') add(`meta.${k} must be text`);
+      if (meta.seed !== undefined && typeof meta.seed !== 'number') add('meta.seed must be a number');
+      const t = meta.turnTimesMs;
+      if (t !== undefined) {
+        if (!Array.isArray(t)) add('meta.turnTimesMs must be a list of numbers');
+        else t.forEach((x, i) => (typeof x !== 'number' || !Number.isFinite(x)) && add(`meta.turnTimesMs[${i}] must be a number (got ${JSON.stringify(x)})`));
+      }
+    }
+  }
+  return p;
+}
+
+/**
+ * Throws a ReplayMismatch unless the parsed JSON is a replay of this engine version and content that has the whole
+ * record shape. Callers parse untrusted files, so the argument is unknown and a pass narrows it to a FightRecord.
+ * The header is checked first: an old file should be told it is old, not that its shape is wrong.
+ */
+export function checkCompatible(c: Content, rec: unknown): asserts rec is FightRecord {
+  if (!isObject(rec)) throw new ReplayMismatch('The file is not a replay file');
+  if (rec.format !== RECORD_FORMAT) throw new ReplayMismatch(`Unknown replay format "${String(rec.format)}"`);
+  if (rec.engineVersion !== ENGINE_VERSION) throw new ReplayMismatch(`Replay was recorded on engine ${String(rec.engineVersion)}; this is ${ENGINE_VERSION}`);
+  if (rec.contentHash !== c.hash) throw new ReplayMismatch(`Replay was recorded with content ${String(rec.contentHash)}; the current content is ${c.hash}`);
+  const problems = recordProblems(rec);
+  if (problems.length) {
+    const shown = problems.slice(0, MAX_PROBLEMS);
+    const more = problems.length > MAX_PROBLEMS ? ['(further problems not shown)'] : [];
+    throw new ReplayMismatch(`The replay file is malformed:\n  - ${[...shown, ...more].join('\n  - ')}`);
+  }
 }
 
 export interface ReplayResult {

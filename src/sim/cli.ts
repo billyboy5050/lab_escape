@@ -4,13 +4,13 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { defaultContent } from '../content';
 import type { GameEvent } from '../state/types';
-import { replay, type FightRecord } from '../telemetry/record';
+import { checkCompatible, replay } from '../telemetry/record';
 import { summarize } from '../telemetry/summary';
 import { contentFor, seedRange, type BatchSpec, type BotKind, type FightRow } from './batch';
 import { recordGolden, verifyGolden, eventsToJsonl, type GoldenFile } from './golden';
 import { parseInteger } from './options';
 import { runBatchParallel } from './parallel';
-import { aggregate, formatReport, liftToCsv, rowsToCsv } from './report';
+import { aggregate, formatReport, formatTuneRow, liftToCsv, rowsToCsv } from './report';
 
 const HELP = `Lab Escape headless simulator
 
@@ -133,11 +133,8 @@ function main(): Promise<void> | void {
           const c = contentFor(o);
           const rows = await runBatchParallel({ bot, loadout: { preset: values.preset! }, seeds, overrides: o, settings }, { workers, onProgress: progress(`${values.param}=${raw}`) });
           const s = aggregate(rows, c);
-          const own = s.meanPlayerDamage.player + s.meanPlayerDamage.minion;
-          const all = own + s.meanPlayerDamage.enemy + s.meanPlayerDamage.hazard;
-          out.push(
-            `${String(raw).padEnd(10)} ${`${(s.winRate * 100).toFixed(1)}% (${(s.winRateCI[0] * 100).toFixed(0)} to ${(s.winRateCI[1] * 100).toFixed(0)})`.padEnd(26)} ${(s.roundsWin ? String(s.roundsWin.median) : '-').padEnd(12)} ${s.meanHazardFires.toFixed(2).padEnd(13)} ${all ? ((own / all) * 100).toFixed(1) : '0.0'}%`,
-          );
+          // A bad value can break only some seeds; aggregate leaves those out, so the row has to say they happened.
+          out.push(...formatTuneRow(String(raw), s, rows.find((r) => r.outcome === 'error')?.error));
         }
         console.log(out.join('\n'));
       })();
@@ -175,8 +172,9 @@ function main(): Promise<void> | void {
     case 'replay': {
       const file = positionals[1];
       if (!file) throw new Error('replay needs a FILE');
-      const rec = JSON.parse(fs.readFileSync(file, 'utf8')) as FightRecord;
+      const rec: unknown = JSON.parse(fs.readFileSync(file, 'utf8'));
       const c = defaultContent();
+      checkCompatible(c, rec);
       const r = replay(c, rec);
       const s = summarize(r.events, r.state);
       console.log(JSON.stringify({ outcome: s.outcome, cause: s.cause, rounds: s.rounds, loadout: s.loadout, playerDamageTaken: s.playerDamageTaken, kills: s.kills, peakMinions: s.peakMinions, hazardFires: s.hazardFires.length }, null, 2));
@@ -239,7 +237,11 @@ function writeOutputs(o: { outDir?: string; csv?: string; name: string; rows: Fi
   console.log(`Wrote ${base}.txt, .csv and .stats.json`);
 }
 
-Promise.resolve(main()).catch((e) => {
-  console.error(e instanceof Error ? e.message : e);
-  process.exitCode = 1;
-});
+// main() runs inside the chain so that an error it throws before it returns a promise (a bad option, a bad file) is
+// printed as a message by the handler below, like the errors from the async commands, instead of as a stack trace.
+Promise.resolve()
+  .then(main)
+  .catch((e) => {
+    console.error(e instanceof Error ? e.message : e);
+    process.exitCode = 1;
+  });

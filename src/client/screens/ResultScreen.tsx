@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Content } from '../../content/types';
 import type { Category } from '../../telemetry/summary';
 import type { FightSession } from '../../telemetry/session';
@@ -29,8 +29,27 @@ function Bars({ data }: { data: Record<Category, number> }) {
   );
 }
 
-export function ResultScreen(props: { c: Content; session: FightSession; saved: string | null; onRetry: () => void; onChange: () => void }) {
+/**
+ * The telemetry folder a fight was saved to once the save settles: undefined while it is still going, null when it was
+ * not saved (no dev server, or no save was started). The save can still be in flight when the player opens the results.
+ */
+function useSaved(save: Promise<string | null> | null): string | null | undefined {
+  const [saved, setSaved] = useState<string | null | undefined>(save ? undefined : null);
+  useEffect(() => {
+    if (!save) return setSaved(null);
+    let current = true;
+    setSaved(undefined);
+    void save.then((dir) => current && setSaved(dir));
+    return () => {
+      current = false;
+    };
+  }, [save]);
+  return saved;
+}
+
+export function ResultScreen(props: { c: Content; session: FightSession; save: Promise<string | null> | null; onRetry: () => void; onChange: () => void }) {
   const { c, session } = props;
+  const saved = useSaved(props.save);
   const s = useMemo(() => session.summary(), [session]);
   const won = s.outcome === 'win';
   const playerTotal = ORDER.reduce((a, k) => a + s.playerDamageTaken[k], 0);
@@ -106,7 +125,7 @@ export function ResultScreen(props: { c: Content; session: FightSession; saved: 
         <div className="panel">
           <h3>Telemetry</h3>
           <div className="info-body">
-            <div className="muted">{props.saved ? `Saved to ${props.saved}/` : 'Not saved automatically (no dev server). Download the files below.'}</div>
+            <div className="muted">{saved === undefined ? 'Saving…' : saved ? `Saved to ${saved}/` : 'Not saved automatically (no dev server). Download the files below.'}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button className="btn small" onClick={() => download(`replay-${stamp}.json`, JSON.stringify(session.record, null, 2))}>
                 Replay (command log)

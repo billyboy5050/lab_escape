@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/engine/step';
 import type { SourceRef } from '../src/state/types';
-import { C, eventsOf, inWorld, run, scenario } from './helpers';
+import { C, contentWith, eventsOf, inWorld, run, scenario } from './helpers';
 
 const src: SourceRef = { side: 'player', category: 'player', kind: 'unit', id: 0, def: 'player', via: 'test' };
 
@@ -60,6 +60,33 @@ describe('intercom', () => {
     const r = run(s, { type: 'endTurn' });
     expect(eventsOf(r.events, 'HazardPrimed').length).toBeGreaterThan(0);
     expect(eventsOf(r.events, 'IntercomLine').some((e) => e.line === 'firstHazardPrimed')).toBe(false);
+  });
+
+  describe('two hpBelow lines for one unit', () => {
+    const lines = (c = C) => [
+      ...c.files.intercom.lines.filter((l) => l.trigger.type !== 'hpBelow'),
+      { id: 'wardenHalf', trigger: { type: 'hpBelow' as const, def: 'warden', threshold: 10 }, text: 'Warden, report.' },
+      { id: 'wardenCritical', trigger: { type: 'hpBelow' as const, def: 'warden', threshold: 5 }, text: 'Warden, fall back.' },
+    ];
+    const c2 = contentWith({ 'intercom.lines': lines() });
+    const hit = (hp: number, amount: number) => {
+      const s = scenario({ player: 'B8', units: [{ def: 'warden', at: 'B5', hp }], content: c2 });
+      const r = inWorld(s, (w) => w.damageUnit(w.unit(1)!, amount, 'acid', src), c2);
+      return { lines: eventsOf(r.events, 'IntercomLine').map((e) => e.line), queue: r.s.intercom.queue };
+    };
+
+    it('plays only the line whose threshold was crossed, not the lower one as well', () => {
+      // 11 to 9 crosses 10 but not 5: the 5 HP warning must not be played or queued early.
+      expect(hit(11, 2)).toEqual({ lines: ['wardenHalf'], queue: [] });
+    });
+
+    it('plays the lower line when its own threshold is crossed later', () => {
+      expect(hit(6, 2)).toEqual({ lines: ['wardenCritical'], queue: [] });
+    });
+
+    it('one hit across both thresholds raises both lines, the second queued for the next phase', () => {
+      expect(hit(12, 8)).toEqual({ lines: ['wardenHalf'], queue: ['wardenCritical'] });
+    });
   });
 
   it('reports the Warden below 10 HP and the player below 4 HP', () => {

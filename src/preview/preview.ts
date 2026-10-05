@@ -227,6 +227,11 @@ export function computeIntents(c: Content, s: GameState): IntentReport {
     const frame = frames.find((f) => f.actor === id);
     const docked = u.droneState === 'docked';
     if (!frame) {
+      // An actor that reaches its turn always gets a frame, even an empty one (a turret with no ammo), so none means it
+      // was docked, cut off by the end of the fight, or removed before its turn. Read that from the simulated state
+      // rather than from the missing frame, so a unit that is still standing is never reported as dead.
+      const alive = sim.units.some((x) => x.id === id && !x.dead);
+      const diesFirst = !docked && !outcome && !alive;
       intents.push({
         id,
         def: u.def,
@@ -238,9 +243,9 @@ export function computeIntents(c: Content, s: GameState): IntentReport {
         lines: [],
         tiles: [],
         hits: [],
-        diesFirst: !docked && !outcome,
+        diesFirst,
         idle: true,
-        label: docked ? 'Docked' : outcome ? 'Does not act (the fight ends first)' : 'Dies before acting',
+        label: docked ? 'Docked' : outcome ? 'Does not act (the fight ends first)' : diesFirst ? 'Dies before acting' : 'Holds',
       });
       continue;
     }

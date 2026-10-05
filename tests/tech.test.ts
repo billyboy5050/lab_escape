@@ -217,6 +217,23 @@ describe('intents', () => {
     expect(rep.intents.find((i) => i.id === 3)!.label).toMatch(/fight ends first/);
   });
 
+  it('a unit that has nothing to do is idle and holds, not dead: an empty turret next to a working one', () => {
+    // The second turret has no ammo, so it does nothing on its turn; it is still alive and must not be shown dying.
+    const s = scenario({ player: 'B8', units: [{ def: 'turret', at: 'C7' }, { def: 'turret', at: 'A7', ammo: 0 }, { def: 'guard', at: 'E4' }] });
+    const empty = computeIntents(C, s).intents.find((i) => i.id === 2)!;
+    expect(empty.diesFirst).toBe(false);
+    expect(empty.idle).toBe(true);
+    expect(empty.label).toBe('Holds');
+  });
+
+  it('a unit killed by someone acting earlier is marked as dying before it acts', () => {
+    // The turret (minion phase) shoots the 1 HP guard before the enemy phase, so the guard never gets its turn.
+    const s = scenario({ player: 'B8', units: [{ def: 'turret', at: 'C7' }, { def: 'guard', at: 'E4', hp: 1 }] });
+    const guard = computeIntents(C, s).intents.find((i) => i.def === 'guard')!;
+    expect(guard.diesFirst).toBe(true);
+    expect(guard.label).toBe('Dies before acting');
+  });
+
   it('a unit in its arrival round shows its destination only', () => {
     const s = scenario({ player: 'E8', units: [{ def: 'guard', at: 'A1', arrival: true }] });
     const rep = computeIntents(C, s);

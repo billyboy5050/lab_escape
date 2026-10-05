@@ -219,6 +219,22 @@ export function formatReport(title: string, s: BatchStats): string {
   return L.join('\n');
 }
 
+/**
+ * The lines a `tune` table shows for one tested value. Fights that raised errors are left out of every figure, so a
+ * value where some or all of them did says so, with the first error, instead of presenting what is left as the result.
+ */
+export function formatTuneRow(value: string, s: BatchStats, firstError?: string): string[] {
+  const indent = ' '.repeat(11);
+  const detail = (extra: string) => `${indent}first error: ${firstError ?? 'unknown'}${extra}`;
+  if (s.errors === s.fights) return [`${value.padEnd(10)} all ${s.fights} fights errored`, detail('')];
+  const own = s.meanPlayerDamage.player + s.meanPlayerDamage.minion;
+  const all = own + s.meanPlayerDamage.enemy + s.meanPlayerDamage.hazard;
+  const rate = `${(s.winRate * 100).toFixed(1)}% (${(s.winRateCI[0] * 100).toFixed(0)} to ${(s.winRateCI[1] * 100).toFixed(0)})`;
+  const figures = `${value.padEnd(10)} ${rate.padEnd(26)} ${(s.roundsWin ? String(s.roundsWin.median) : '-').padEnd(12)} ${s.meanHazardFires.toFixed(2).padEnd(13)} ${all ? ((own / all) * 100).toFixed(1) : '0.0'}%`;
+  if (!s.errors) return [figures];
+  return [`${figures}  ! ${s.errors} of ${s.fights} fights errored`, detail(`; the figures cover the ${s.fights - s.errors} that finished`)];
+}
+
 /** One row per fight, for spreadsheets. */
 export function rowsToCsv(rows: FightRow[]): string {
   const head = [

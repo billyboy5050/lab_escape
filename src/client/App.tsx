@@ -22,7 +22,7 @@ export function App() {
   const [restartKey, setRestartKey] = useState(0);
   const [replay, setReplay] = useState<FightRecord | null>(null);
   const [debugOpen, setDebugOpen] = useState(false);
-  const [result, setResult] = useState<{ session: FightSession; saved: string | null } | null>(null);
+  const [result, setResult] = useState<{ session: FightSession; save: Promise<string | null> | null } | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
   const lastHash = useRef(c.hash);
@@ -76,7 +76,7 @@ export function App() {
     if (!path) return;
     void fetch(path.startsWith('/') ? path : `/${path}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
-      .then((rec: FightRecord) => {
+      .then((rec: unknown) => {
         checkCompatible(c, rec);
         setReplay(rec);
         setDebugOpen(true);
@@ -153,8 +153,8 @@ export function App() {
               setReplay(rec);
               setRestartKey((k) => k + 1);
             }}
-            onFinished={(session, saved) => {
-              setResult({ session, saved });
+            onFinished={(session, save) => {
+              setResult({ session, save });
               setScreen('result');
             }}
             onChangeLoadout={() => setScreen('loadout')}
@@ -164,7 +164,7 @@ export function App() {
           />
         </div>
       )}
-      {view === 'result' && result && <ResultScreen c={c} session={result.session} saved={result.saved} onRetry={() => retry(result.session)} onChange={() => setScreen('loadout')} />}
+      {view === 'result' && result && <ResultScreen c={c} session={result.session} save={result.save} onRetry={() => retry(result.session)} onChange={() => setScreen('loadout')} />}
       {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </>
   );

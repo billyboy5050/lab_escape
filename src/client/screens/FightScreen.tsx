@@ -11,7 +11,7 @@ import { parseTile, tileName } from '../../util/tiles';
 import { Board, type Highlight } from '../components/Board';
 import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/DebugPanel';
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
-import { actionIndexForKey, endsTurn } from '../actionKeys';
+import { actionIndexForKey, endsTurn, spaceSkips } from '../actionKeys';
 import { saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
 
@@ -37,7 +37,8 @@ export function FightScreen(props: {
   restartKey: number;
   onRestart: () => void;
   onLoadReplay: (rec: FightRecord) => void;
-  onFinished: (session: FightSession, saved: string | null) => void;
+  /** `save` settles with the telemetry folder (null when it was not saved); it is null when no save was started (a replay). */
+  onFinished: (session: FightSession, save: Promise<string | null> | null) => void;
   onChangeLoadout: () => void;
   debugOpen: boolean;
   setDebugOpen: (b: boolean) => void;
@@ -48,7 +49,8 @@ export function FightScreen(props: {
   const fight = useFight(c, loadout, settings, {
     debugLog: props.debugOpen && toggles.log,
     restartKey: props.restartKey,
-    meta: { preset: props.presetId ?? undefined, label: props.replay ? 'replay' : 'client' },
+    replay: props.replay,
+    meta: { preset: props.presetId ?? undefined },
   });
   const live = fight.session.state;
   const [cursor, setCursor] = useState(0);
@@ -60,7 +62,9 @@ export function FightScreen(props: {
   const [hover, setHover] = useState<Pos | null>(null);
   const [showIntents, setShowIntents] = useState(true);
   const [logOpen, setLogOpen] = useState(false);
-  const [saved, setSaved] = useState<string | null>(null);
+  // The telemetry save, started once when the fight is over. The promise itself is kept (not just its result) so that
+  // a click on See results before it settles hands it to the result screen, which then shows how it ended.
+  const [save, setSave] = useState<Promise<string | null> | null>(null);
 
   const statuses = useMemo(() => actionStatuses(c, live), [c, live]);
   const moves = useMemo(() => (idle ? moveOptions(c, live) : []), [c, live, idle]);
@@ -207,16 +211,16 @@ export function FightScreen(props: {
     }
     const t = window.setTimeout(playReplayCommand, 120);
     return () => window.clearTimeout(t);
-    // playReplayCommand is rebuilt every render and reads the same props, fight and cursor as these dependencies.
+    // playReplayCommand is rebuilt every render and reads only what these dependencies cover. `fight` itself is left out
+    // on purpose: it is a new object every render, so depending on it would restart the 120 ms timer on every hover.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.replay, replayPlaying, fight, cursor]);
+  }, [props.replay, replayPlaying, fight.busy, fight.apply, cursor, props.toast]);
 
   // Save telemetry once the fight is over and the last animation has played.
   useEffect(() => {
-    if (!live.outcome || fight.busy || saved !== null || props.replay) return;
-    setSaved('');
-    void saveTelemetry(c, fight.session).then((dir) => setSaved(dir ?? ''));
-  }, [live.outcome, fight.busy, saved, c, fight.session, props.replay]);
+    if (!live.outcome || fight.busy || save !== null || props.replay) return;
+    setSave(saveTelemetry(c, fight.session));
+  }, [live.outcome, fight.busy, save, c, fight.session, props.replay]);
 
   // Keyboard: every control has a shortcut.
   useEffect(() => {
@@ -228,7 +232,9 @@ export function FightScreen(props: {
         return e.preventDefault();
       }
       if ((e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
-        if (!fight.undo() && idle) props.toast('Nothing to undo: AP spent or nothing moved');
+        // Only when the player can act: between the commands of a replay the session still has an undo entry, and
+        // undoing then would leave the replay's cursor ahead of the state it feeds the next command.
+        if (idle && !fight.undo()) props.toast('Nothing to undo: AP spent or nothing moved');
         return e.preventDefault();
       }
       if (e.key === 'Escape') {
@@ -237,6 +243,8 @@ export function FightScreen(props: {
         return setMode({ id: null, first: null });
       }
       if (e.key === ' ') {
+        // A focused button (or link, or summary) is operated by Space; only otherwise does it skip the animation.
+        if (!spaceSkips(el as HTMLElement | null)) return;
         if (fight.busy) fight.skip();
         return e.preventDefault();
       }
@@ -345,7 +353,7 @@ export function FightScreen(props: {
           <div className="banner" style={{ pointerEvents: 'auto', textTransform: 'none', letterSpacing: 0, display: 'grid', gap: 10, justifyItems: 'center' }}>
             <div style={{ fontSize: 22, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{live.outcome.result === 'win' ? 'Victory' : 'Defeat'}</div>
             <div style={{ fontWeight: 400 }}>{live.outcome.cause}</div>
-            <button className="btn primary" onClick={() => props.onFinished(fight.session, saved || null)}>
+            <button className="btn primary" onClick={() => props.onFinished(fight.session, save)}>
               See results
             </button>
           </div>

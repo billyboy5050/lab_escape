@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTION_KEYS, actionIndexForKey, actionKeyLabel, endsTurn } from '../src/client/actionKeys';
+import { ACTION_KEYS, actionIndexForKey, actionKeyLabel, endsTurn, operatesFocus, spaceSkips } from '../src/client/actionKeys';
 import { actionStatuses } from '../src/engine/commands';
 import { C, scenario } from './helpers';
 
@@ -63,5 +63,29 @@ describe('ending the turn from the keyboard', () => {
 
   it('ends the turn on no other key', () => {
     for (const k of [' ', 'Escape', 'z', 'Tab', '1', 'Shift']) expect(endsTurn(k, null)).toBe(false);
+  });
+});
+
+describe('keys that a focused control owns', () => {
+  it('treats an enabled button, link or summary as operated by Enter and Space', () => {
+    for (const tagName of ['BUTTON', 'A', 'SUMMARY']) expect(operatesFocus({ tagName })).toBe(true);
+  });
+
+  it('does not treat a disabled button as operated: it cannot be activated, so the shortcut should still work', () => {
+    expect(operatesFocus({ tagName: 'BUTTON', disabled: true })).toBe(false);
+    expect(endsTurn('Enter', { tagName: 'BUTTON', disabled: true })).toBe(true);
+  });
+
+  it('does not treat the page, the board or nothing as operated', () => {
+    expect(operatesFocus(null)).toBe(false);
+    for (const tagName of ['BODY', 'DIV', 'svg', 'MAIN']) expect(operatesFocus({ tagName })).toBe(false);
+  });
+
+  it('lets Space activate a focused control instead of skipping, and skips otherwise', () => {
+    expect(spaceSkips({ tagName: 'BUTTON' })).toBe(false);
+    expect(spaceSkips({ tagName: 'A' })).toBe(false);
+    expect(spaceSkips({ tagName: 'BUTTON', disabled: true })).toBe(true);
+    expect(spaceSkips({ tagName: 'DIV' })).toBe(true);
+    expect(spaceSkips(null)).toBe(true);
   });
 });

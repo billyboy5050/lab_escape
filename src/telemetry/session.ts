@@ -25,12 +25,18 @@ export class FightSession {
   /** True from the start of a player turn until turnReady() restarts the clock, once the client has finished animating. */
   private clockPending = true;
 
+  /**
+   * `timed` is false when the commands come from a recorded replay: `meta` then carries the original record's turn times
+   * (and seed, bot and the rest), and playing the commands back adds no timings of its own, so the result screen and any
+   * replay downloaded from it still describe the original fight.
+   */
   constructor(
     readonly c: Content,
     loadout: Loadout,
     settings: FightSettings = {},
     meta: FightRecord['meta'] = {},
     private readonly now: () => number = () => Date.now(),
+    private readonly timed = true,
   ) {
     const g = newGame(c, loadout, settings, { frames: true });
     this.state = g.state;
@@ -52,7 +58,7 @@ export class FightSession {
       this.undoStack = [];
     }
     // A turn ends when the player ends it, or when the fight does: the winning (or fatal) action closes the last turn.
-    if (cmd.type === 'endTurn' || r.state.outcome) {
+    if (this.timed && (cmd.type === 'endTurn' || r.state.outcome)) {
       this.record.meta?.turnTimesMs?.push(Math.max(0, Math.round(this.now() - this.turnStart)));
     }
     if (cmd.type === 'endTurn') {

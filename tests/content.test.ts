@@ -119,6 +119,22 @@ describe('sprint has one definition', () => {
   });
 });
 
+describe('content validation of armorAppliesTo', () => {
+  it.each([
+    ['removed', (x: ContentFiles) => delete (x.rules as { armorAppliesTo?: unknown }).armorAppliesTo],
+    ['null', (x: ContentFiles) => ((x.rules as { armorAppliesTo?: unknown }).armorAppliesTo = null)],
+    ['not a list', (x: ContentFiles) => ((x.rules as { armorAppliesTo?: unknown }).armorAppliesTo = 'kinetic')],
+  ])('rejects an edit that leaves it %s, since every damage calculation calls includes() on it', (_, edit) => {
+    expect(validateContent(edited(edit))).toEqual(['rules.armorAppliesTo must be a list of damage types']);
+  });
+
+  it('still checks each entry, and accepts an empty list (armor then applies to nothing)', () => {
+    expect(validateContent(edited((x) => (x.rules.armorAppliesTo = ['kinetic', 'fire'])))).toEqual([]);
+    expect(validateContent(edited((x) => (x.rules.armorAppliesTo = [])))).toEqual([]);
+    expect(validateContent(edited((x) => (x.rules.armorAppliesTo = ['kinetic', 'plasma' as never])))).toEqual(['rules.armorAppliesTo[1] has unknown damage type "plasma"']);
+  });
+});
+
 describe('content validation of lane hazards', () => {
   const gun = (f: ContentFiles) => f.map.hazards.find((h) => h.id === 'gun')!;
 

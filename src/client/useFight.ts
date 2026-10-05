@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Content } from '../content/types';
 import type { StepResult } from '../engine/step';
 import type { Command, FightSettings, Frame, GameEvent, GameState, Loadout } from '../state/types';
+import type { FightRecord } from '../telemetry/record';
 import { FightSession } from '../telemetry/session';
 import { EventFormatter, type LogLine } from './format';
 
@@ -32,10 +33,20 @@ export interface FightView {
 
 const PHASE_LABEL: Record<string, string> = { minion: 'Minion phase', enemy: 'Enemy phase', environment: 'Environment', player: 'Your turn' };
 
-export function useFight(c: Content, loadout: Loadout, settings: FightSettings, opts: { debugLog: boolean; restartKey?: number; meta?: Record<string, unknown> }): FightView {
+export function useFight(
+  c: Content,
+  loadout: Loadout,
+  settings: FightSettings,
+  opts: { debugLog: boolean; restartKey?: number; meta?: Record<string, unknown>; replay?: FightRecord | null },
+): FightView {
   const session = useMemo(
-    () => new FightSession(c, loadout, settings, { label: 'client', ...(opts.meta ?? {}) }, () => performance.timeOrigin + performance.now()),
-    // A new session whenever content, loadout or settings change (hot reload restarts the fight).
+    () =>
+      // A replay keeps the original record's metadata, turn times included, and is not timed again while it plays back.
+      opts.replay
+        ? new FightSession(c, loadout, settings, { ...opts.replay.meta }, () => performance.timeOrigin + performance.now(), false)
+        : new FightSession(c, loadout, settings, { label: 'client', ...(opts.meta ?? {}) }, () => performance.timeOrigin + performance.now()),
+    // A new session whenever content, loadout or settings change (hot reload restarts the fight). A replay is loaded
+    // together with a new restartKey, so it needs no entry of its own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [c, JSON.stringify(loadout), JSON.stringify(settings), opts.restartKey],
   );

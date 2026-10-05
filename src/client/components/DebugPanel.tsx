@@ -194,7 +194,7 @@ export function DebugPanel(props: {
                 const f = e.target.files?.[0];
                 if (!f) return;
                 try {
-                  const rec = JSON.parse(await f.text()) as FightRecord;
+                  const rec: unknown = JSON.parse(await f.text());
                   checkCompatible(c, rec);
                   setLoadError(null);
                   props.onLoadReplay(rec);

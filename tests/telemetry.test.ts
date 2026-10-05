@@ -76,6 +76,36 @@ describe('turn times', () => {
   });
 });
 
+describe('turn times during a replay', () => {
+  // The recorded turn times are the original player's; autoplaying the commands must not add the playback's own.
+  const original = { created: '2026-10-04T00:00:00.000Z', label: 'client', preset: 'tech', seed: 9, turnTimesMs: [4_000, 6_500] };
+
+  it('are left as recorded when the session is told it is replaying', () => {
+    const clock = { t: 0 };
+    const f = new FightSession(C, LOADOUT, {}, { ...original, turnTimesMs: [...original.turnTimesMs] }, () => clock.t, false);
+    f.state = scenario({ player: 'B8' });
+    clock.t = 120; // the autoplay's own delays
+    f.apply({ type: 'endTurn' });
+    clock.t = 5_000;
+    f.apply({ type: 'endTurn' });
+    expect(f.record.meta).toEqual(original);
+  });
+
+  it('still carry the rest of the original metadata through to the record that can be downloaded again', () => {
+    const f = new FightSession(C, LOADOUT, {}, { ...original }, () => 0, false);
+    expect(f.record.meta).toMatchObject({ created: original.created, label: 'client', preset: 'tech', seed: 9 });
+  });
+
+  it('are measured as usual for a live fight, the default', () => {
+    const clock = { t: 0 };
+    const f = new FightSession(C, LOADOUT, {}, {}, () => clock.t);
+    f.state = scenario({ player: 'B8' });
+    clock.t = 7_000;
+    f.apply({ type: 'endTurn' });
+    expect(f.record.meta?.turnTimesMs).toEqual([7_000]);
+  });
+});
+
 describe('undo', () => {
   // In Sidearm range of B8 and B7, so a shot is accepted and commits the turn.
   const guard = { def: 'guard', at: 'B5' };
