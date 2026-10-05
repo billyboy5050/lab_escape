@@ -52,7 +52,6 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Phone-width layout.** The narrow breakpoint exists but has not been playtested.
 - **Vite's native config loader.** `npm test` warns that `vite.config.ts` imports `./src/dev/telemetryPath` without a file extension, which the native config loader (planned as Vite's default) will not accept. Adding `.ts` also needs `allowImportingTsExtensions` in `tsconfig.json` (allowed because it sets `noEmit`).
-- **GitHub branch protection on `main`.** The repo's git hooks block commits and pushes to `main` locally, but GitHub does not yet require a pull request or passing CI. Turning on branch protection, with the CI check required, makes that server-side. This is a repository setting for the owner.
 
 ## After the MVP
 

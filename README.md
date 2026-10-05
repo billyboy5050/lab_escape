@@ -45,7 +45,7 @@ npm run sim -- presets --seeds 1000
 | `npm run sim -- <command>` | The headless simulator (below) |
 | `npm run golden:record` | Re-record the golden replays |
 
-`npm install` also points git at the repo's hooks in `.githooks/`, which refuse commits on `main` and pushes to it. Changes reach `main` through pull requests; see [CLAUDE.md](CLAUDE.md).
+`npm install` also points git at the repo's hooks in `.githooks/`, which refuse commits on `main` and pushes to it. Changes reach `main` only through pull requests that pass CI, which GitHub's branch protection enforces; see [CLAUDE.md](CLAUDE.md).
 
 ## Playing
 

@@ -68,7 +68,7 @@ Content changes alter the content hash, so until this is done the golden test fa
 
 These rules are mandatory. `main` is always green and changes only through merged pull requests.
 
-1. **Never commit to `main` or push to it.** The hooks in `.githooks/` refuse both. Never get around them: no `--no-verify`, no unsetting `core.hooksPath`, no editing the hooks to let yourself through. If `git config core.hooksPath` prints nothing, run `npm install`.
+1. **Never commit to `main` or push to it.** The hooks in `.githooks/` refuse both locally, and GitHub's branch protection refuses any push to `main` and merges only pull requests whose `check` CI job passes on a branch that is up to date with `main`. Never get around them: no `--no-verify`, no unsetting `core.hooksPath`, no editing the hooks to let yourself through. If `git config core.hooksPath` prints nothing, run `npm install`.
 2. **One branch per task**, cut from an up-to-date `main`:
 
    ```bash
