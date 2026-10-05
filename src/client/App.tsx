@@ -4,7 +4,7 @@ import type { FightSettings, Loadout } from '../state/types';
 import { checkCompatible, type FightRecord } from '../telemetry/record';
 import type { FightSession } from '../telemetry/session';
 import { useContent } from './contentHot';
-import { loadoutToRetry, reconcileLoadout } from './loadoutSync';
+import { isLoadout, isPresetId, loadoutToRetry, reconcileLoadout } from './loadoutSync';
 import { FightScreen } from './screens/FightScreen';
 import { LoadoutScreen } from './screens/LoadoutScreen';
 import { ResultScreen } from './screens/ResultScreen';
@@ -16,8 +16,8 @@ export function App() {
   const { content: c, error } = useContent();
   const hybrid = c.presets.find((p) => p.id === 'hybrid') ?? c.presets[0]!;
   const [screen, setScreen] = useState<Screen>('loadout');
-  const [loadout, setLoadoutState] = useState<Loadout>(() => loadPref('loadout', { abilities: [...hybrid.abilities], upgrades: [...hybrid.upgrades] }));
-  const [presetId, setPresetIdState] = useState<string | null>(() => loadPref('preset', hybrid.id));
+  const [loadout, setLoadoutState] = useState<Loadout>(() => loadPref('loadout', { abilities: [...hybrid.abilities], upgrades: [...hybrid.upgrades] }, isLoadout));
+  const [presetId, setPresetIdState] = useState<string | null>(() => loadPref('preset', hybrid.id, isPresetId));
   const [settings, setSettings] = useState<FightSettings>({});
   const [restartKey, setRestartKey] = useState(0);
   const [replay, setReplay] = useState<FightRecord | null>(null);
@@ -26,6 +26,9 @@ export function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
   const lastHash = useRef(c.hash);
+  // The content now, for callbacks that outlive the render that created them (a request in flight during a reload).
+  const contentRef = useRef(c);
+  contentRef.current = c;
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -74,16 +77,25 @@ export function App() {
   useEffect(() => {
     const path = new URLSearchParams(window.location.search).get('replay');
     if (!path) return;
+    let cancelled = false;
     void fetch(path.startsWith('/') ? path : `/${path}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
       .then((rec: unknown) => {
-        checkCompatible(c, rec);
+        if (cancelled) return;
+        // Judged against the content as it is when the response arrives: a hot reload while the request was in
+        // flight changes what the replay must match, and the hash the effect started with is out of date.
+        checkCompatible(contentRef.current, rec);
         setReplay(rec);
         setDebugOpen(true);
         setRestartKey((k) => k + 1);
         setScreen('fight');
       })
-      .catch((e: unknown) => toast(`Could not load replay ${path}: ${e instanceof Error ? e.message : String(e)}`));
+      .catch((e: unknown) => {
+        if (!cancelled) toast(`Could not load replay ${path}: ${e instanceof Error ? e.message : String(e)}`);
+      });
+    return () => {
+      cancelled = true;
+    };
     // Only on first load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

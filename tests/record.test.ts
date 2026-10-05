@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ENGINE_VERSION } from '../src/state/state';
 import { checkCompatible, newRecord, recordProblems, replay, ReplayMismatch, type FightRecord } from '../src/telemetry/record';
+import fs from 'node:fs';
+import { makeBot } from '../src/sim/batch';
+import { runFight } from '../src/sim/runner';
 import { C } from './helpers';
 
 const LOADOUT = { abilities: ['sidearm', 'proximity_mine'], upgrades: [] };
@@ -81,5 +84,70 @@ describe('replay file shape', () => {
   it('keeps replay() from throwing a TypeError on a malformed file', () => {
     const raw = broken((r) => delete r.commands) as FightRecord;
     expect(() => replay(C, raw)).toThrow(ReplayMismatch);
+  });
+});
+
+describe('replay command payloads', () => {
+  const withCommand = (cmd: unknown) => broken((r) => (r.commands = [cmd]));
+
+  it.each([
+    ['a debug setAp with a text AP', { type: 'debug', op: 'setAp', ap: 'oops' }, 'commands[0].ap must be a number (got "oops")'],
+    ['a debug setAp with no AP', { type: 'debug', op: 'setAp' }, 'commands[0].ap must be a number'],
+    ['a debug setAp with a null AP (what NaN becomes in JSON)', { type: 'debug', op: 'setAp', ap: null }, 'commands[0].ap must be a number'],
+    ['a debug setAp with text movement', { type: 'debug', op: 'setAp', ap: 3, movement: 'x' }, 'commands[0].movement must be a number'],
+    ['a debug setHp with a text unit', { type: 'debug', op: 'setHp', unit: '1', value: 5 }, 'commands[0].unit must be a whole number'],
+    ['a debug setHp with a fractional unit', { type: 'debug', op: 'setHp', unit: 1.5, value: 5 }, 'commands[0].unit must be a whole number'],
+    ['a debug setHp with no value', { type: 'debug', op: 'setHp', unit: 1 }, 'commands[0].value must be a number'],
+    ['a debug spawn with no unit name', { type: 'debug', op: 'spawn', target: 'D5' }, 'commands[0].def must be text'],
+    ['a move whose path is not a list', { type: 'move', path: 'B7' }, 'commands[0].path must be a list of tile names'],
+    ['a move whose path holds a number', { type: 'move', path: ['B7', 3] }, 'commands[0].path must be a list of tile names'],
+    ['a move with no path', { type: 'move' }, 'commands[0].path must be a list of tile names'],
+    ['an ability with no name', { type: 'ability', target: 'B5' }, 'commands[0].ability must be text'],
+    ['an ability with a numeric target', { type: 'ability', ability: 'sidearm', target: 5 }, 'commands[0].target must be text'],
+    ['an ability with a bad second target', { type: 'ability', ability: 'barrier_shield', target: 'E5', target2: {} }, 'commands[0].target2 must be text'],
+    ['an ability with an unknown grapple mode', { type: 'ability', ability: 'grapple_hook', target: 'B5', mode: 'sideways' }, 'commands[0].mode must be "self" or "unit"'],
+    ['a reload with no target', { type: 'reload' }, 'commands[0].target must be text'],
+    ['a pick-up with a numeric target', { type: 'pickUpMine', target: 7 }, 'commands[0].target must be text'],
+    ['a redeploy with a fractional drone id', { type: 'redeploy', drone: 1.5, target: 'C7' }, 'commands[0].drone must be a whole number'],
+  ])('rejects %s, which the engine would not refuse (or would turn into NaN)', (_name, cmd, problem) => {
+    expect(recordProblems(withCommand(cmd))).toContainEqual(expect.stringContaining(problem));
+    expect(message(withCommand(cmd))).toMatch(/malformed/);
+  });
+
+  it.each([
+    { type: 'sprint' },
+    { type: 'endTurn' },
+    { type: 'move', path: ['B7', 'B6'] },
+    { type: 'ability', ability: 'sidearm', target: 'B5' },
+    { type: 'ability', ability: 'barrier_shield', target: 'E5', target2: 'D6' },
+    { type: 'ability', ability: 'sidearm', target: 'B5', target2: null },
+    { type: 'ability', ability: 'grapple_hook', target: 'B5', mode: 'self' },
+    { type: 'ability', ability: 'grapple_hook', target: 'B5', mode: 'unit' },
+    { type: 'reload', target: 'C6' },
+    { type: 'pickUpMine', target: 'B7' },
+    { type: 'redeploy', drone: 4, target: 'C7' },
+    { type: 'debug', op: 'setHp', unit: 0, value: 3 },
+    { type: 'debug', op: 'setAp', ap: 5 },
+    { type: 'debug', op: 'setAp', ap: 5, movement: 4 },
+    { type: 'debug', op: 'spawn', def: 'guard', target: 'D5' },
+    { type: 'debug', op: 'forceWave' },
+  ])('accepts %j', (cmd) => {
+    expect(recordProblems(withCommand(cmd))).toEqual([]);
+  });
+
+  it('accepts every replay file the repository ships', () => {
+    const files = fs.readdirSync('reports').filter((f) => /^winning-line-.*\.json$/.test(f));
+    expect(files.length).toBeGreaterThan(0);
+    for (const f of files) expect(recordProblems(JSON.parse(fs.readFileSync(`reports/${f}`, 'utf8'))), f).toEqual([]);
+  });
+
+  it('accepts the records of real bot fights, which use every command the player can issue', () => {
+    for (const p of C.presets) {
+      for (const seed of [1, 2]) {
+        const { record } = runFight(C, { abilities: p.abilities, upgrades: p.upgrades }, makeBot('greedy', seed));
+        expect(record.commands.length).toBeGreaterThan(5);
+        expect(recordProblems(JSON.parse(JSON.stringify(record))), `${p.id} seed ${seed}`).toEqual([]);
+      }
+    }
   });
 });

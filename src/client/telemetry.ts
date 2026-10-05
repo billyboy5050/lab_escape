@@ -56,10 +56,18 @@ const KEY = 'lab-escape.attempts';
 /** A per-browser list of recent attempts, shown on the loadout screen. Telemetry on disk is the real record. */
 export function loadAttempts(): Attempt[] {
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? '[]') as Attempt[];
+    const v: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    return Array.isArray(v) ? v.filter(isAttempt) : [];
   } catch {
     return [];
   }
+}
+
+/** The fields the loadout screen reads from a stored attempt; an entry without them is dropped rather than crashing the list. */
+function isAttempt(v: unknown): v is Attempt {
+  if (typeof v !== 'object' || v === null) return false;
+  const a = v as Record<string, unknown>;
+  return typeof a.at === 'string' && typeof a.outcome === 'string' && typeof a.rounds === 'number' && (a.preset === null || typeof a.preset === 'string');
 }
 
 function recordAttempt(session: FightSession): void {
@@ -79,10 +87,16 @@ function recordAttempt(session: FightSession): void {
   }
 }
 
-export function loadPref<T>(key: string, fallback: T): T {
+/**
+ * Reads a saved preference. Storage outlives the code that wrote it (an older version, a hand edit, a corrupt write),
+ * so a value that does not pass `valid` is treated as absent and the fallback is used: the app must start either way.
+ */
+export function loadPref<T>(key: string, fallback: T, valid: (v: unknown) => v is T): T {
   try {
-    const v = localStorage.getItem(`lab-escape.${key}`);
-    return v === null ? fallback : (JSON.parse(v) as T);
+    const raw = localStorage.getItem(`lab-escape.${key}`);
+    if (raw === null) return fallback;
+    const v: unknown = JSON.parse(raw);
+    return valid(v) ? v : fallback;
   } catch {
     return fallback;
   }

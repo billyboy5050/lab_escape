@@ -45,10 +45,37 @@ const MAX_PROBLEMS = 6;
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+type Kind = 'text' | 'number' | 'whole' | 'tiles' | 'mode';
+const KIND: Record<Kind, { ok: (v: unknown) => boolean; noun: string }> = {
+  text: { ok: (v) => typeof v === 'string', noun: 'text' },
+  number: { ok: (v) => typeof v === 'number' && Number.isFinite(v), noun: 'a number' },
+  whole: { ok: (v) => typeof v === 'number' && Number.isInteger(v), noun: 'a whole number' },
+  tiles: { ok: (v) => Array.isArray(v) && v.every((x) => typeof x === 'string'), noun: 'a list of tile names' },
+  mode: { ok: (v) => v === 'self' || v === 'unit', noun: '"self" or "unit"' },
+};
+/** The fields each command carries, by type: those it needs, and those it may have (null counts as absent). */
+type Fields = { need: Record<string, Kind>; may?: Record<string, Kind> };
+const COMMAND_FIELDS: Record<string, Fields> = {
+  move: { need: { path: 'tiles' } },
+  sprint: { need: {} },
+  ability: { need: { ability: 'text', target: 'text' }, may: { target2: 'text', mode: 'mode' } },
+  reload: { need: { target: 'text' } },
+  pickUpMine: { need: { target: 'text' } },
+  redeploy: { need: { drone: 'whole', target: 'text' } },
+  endTurn: { need: {} },
+};
+const DEBUG_FIELDS: Record<string, Fields> = {
+  setHp: { need: { unit: 'whole', value: 'number' } },
+  setAp: { need: { ap: 'number' }, may: { movement: 'number' } },
+  spawn: { need: { def: 'text', target: 'text' } },
+  forceWave: { need: {} },
+};
+
 /**
  * Structural problems in parsed replay JSON: the parts of a record that the loaders and screens read without checking
- * (loadout, settings, the command list, the turn times) must exist and have the right types. What the commands do is
- * the engine's business: it rejects an illegal one with a message, and replay() reports it. Stops after a few problems.
+ * (loadout, settings, the command list, the turn times) must exist and have the right types, and so must the fields of
+ * each command. Whether a command is legal is the engine's business: it rejects an illegal one with a message, and
+ * replay() reports it. Stops after a few problems.
  */
 export function recordProblems(rec: unknown): string[] {
   const p: string[] = [];
@@ -76,6 +103,17 @@ export function recordProblems(rec: unknown): string[] {
       if (!isObject(cmd) || typeof cmd.type !== 'string') add(`commands[${i}] must be an object with a type`);
       else if (!COMMAND_TYPES.includes(cmd.type)) add(`commands[${i}] has unknown type ${JSON.stringify(cmd.type)}`);
       else if (cmd.type === 'debug' && !DEBUG_OPS.includes(cmd.op as string)) add(`commands[${i}] has unknown debug op ${JSON.stringify(cmd.op)}`);
+      else {
+        // The engine turns a command it will not allow into a message, but it does arithmetic on a bad number
+        // (an AP of "oops" becomes NaN and nothing is refused after that), so field types are checked here.
+        const fields = cmd.type === 'debug' ? DEBUG_FIELDS[cmd.op as string]! : COMMAND_FIELDS[cmd.type]!;
+        for (const [key, kind] of Object.entries(fields.need)) {
+          if (!KIND[kind].ok(cmd[key])) add(`commands[${i}].${key} must be ${KIND[kind].noun} (got ${JSON.stringify(cmd[key])})`);
+        }
+        for (const [key, kind] of Object.entries(fields.may ?? {})) {
+          if (cmd[key] !== undefined && cmd[key] !== null && !KIND[kind].ok(cmd[key])) add(`commands[${i}].${key} must be ${KIND[kind].noun} (got ${JSON.stringify(cmd[key])})`);
+        }
+      }
     });
   }
   const meta = rec.meta;

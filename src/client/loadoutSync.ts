@@ -4,6 +4,17 @@ import type { Loadout } from '../state/types';
 
 const sameList = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
+/** A loadout read back from storage or a file: both lists exist and hold names. Whether the names are real is loadoutProblems' job. */
+export function isLoadout(v: unknown): v is Loadout {
+  if (typeof v !== 'object' || v === null) return false;
+  const l = v as { abilities?: unknown; upgrades?: unknown };
+  const names = (x: unknown) => Array.isArray(x) && x.every((n) => typeof n === 'string');
+  return names(l.abilities) && names(l.upgrades);
+}
+
+/** A stored preset choice: the id of a preset, or null for none. Whether that preset still exists is syncPresetLoadout's job. */
+export const isPresetId = (v: unknown): v is string | null => v === null || typeof v === 'string';
+
 export const sameLoadout = (a: Loadout, b: Loadout) => sameList(a.abilities, b.abilities) && sameList(a.upgrades, b.upgrades);
 
 /**

@@ -61,6 +61,17 @@ export function validateContent(f: ContentFiles): string[] {
     int(s.duration, `${where}.status.duration`, 1);
   };
 
+  const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+  /**
+   * A collection the rules read without a fallback. A missing or non-list one is a problem to report, never an empty
+   * list: accepting it would let a bad hot reload through, and the engine or the board would crash on the first read.
+   */
+  const list = <T>(v: T[] | undefined | null, where: string): T[] => {
+    if (Array.isArray(v)) return v;
+    p.push(`${where} must be a list`);
+    return [];
+  };
+
   // Rules
   const r = f.rules;
   if (!r) return ['rules.json is missing'];
@@ -93,10 +104,17 @@ export function validateContent(f: ContentFiles): string[] {
   if (!['all', 'first', 'none'].includes(r.arrivalRound)) p.push(`rules.arrivalRound must be all, first or none`);
   int(r.loadout?.abilities, 'rules.loadout.abilities', 1);
   int(r.loadout?.upgrades, 'rules.loadout.upgrades');
+  if (typeof r.earlyWaveWhenEmpty !== 'boolean') p.push('rules.earlyWaveWhenEmpty must be true or false');
+  // The board reads showHazardCooldowns on every render, and every animation frame's delay is secondsPerActor.
+  if (typeof r.ui?.showHazardCooldowns !== 'boolean') p.push('rules.ui.showHazardCooldowns must be true or false');
+  const secondsPerActor: unknown = r.ui?.secondsPerActor;
+  if (typeof secondsPerActor !== 'number' || !Number.isFinite(secondsPerActor) || secondsPerActor < 0) {
+    p.push(`rules.ui.secondsPerActor must be a number of seconds, 0 or more (got ${JSON.stringify(secondsPerActor)})`);
+  }
 
   // Units
   const unitIds = new Set<string>();
-  for (const u of f.units ?? []) {
+  for (const u of list(f.units, 'units')) {
     const w = `units.${u.id}`;
     if (unitIds.has(u.id)) p.push(`${w} is defined twice`);
     unitIds.add(u.id);
@@ -137,14 +155,18 @@ export function validateContent(f: ContentFiles): string[] {
   }
   if (!unitIds.has(r.eggs?.floorVariant)) p.push(`rules.eggs.floorVariant "${r.eggs?.floorVariant}" is not a unit`);
   if (!unitIds.has(r.parasiteHatchling)) p.push(`rules.parasiteHatchling "${r.parasiteHatchling}" is not a unit`);
-  for (const [host, variant] of Object.entries(r.eggs?.corpseHosts ?? {})) {
-    if (!unitIds.has(host)) p.push(`rules.eggs.corpseHosts key "${host}" is not a unit`);
-    if (variant !== null && !unitIds.has(variant)) p.push(`rules.eggs.corpseHosts.${host} "${variant}" is not a unit`);
+  const corpseHosts: unknown = r.eggs?.corpseHosts;
+  if (!isRecord(corpseHosts)) p.push('rules.eggs.corpseHosts must be an object');
+  else {
+    for (const [host, variant] of Object.entries(corpseHosts)) {
+      if (!unitIds.has(host)) p.push(`rules.eggs.corpseHosts key "${host}" is not a unit`);
+      if (variant !== null && !unitIds.has(variant as string)) p.push(`rules.eggs.corpseHosts.${host} "${variant}" is not a unit`);
+    }
   }
 
   // Abilities and utilities
   const abilityIds = new Set<string>();
-  for (const a of f.abilities?.abilities ?? []) {
+  for (const a of list(f.abilities?.abilities, 'abilities.abilities')) {
     const w = `abilities.${a.id}`;
     abilityIds.add(a.id);
     int(a.ap, `${w}.ap`);
@@ -165,35 +187,52 @@ export function validateContent(f: ContentFiles): string[] {
   for (const req of ['sidearm', 'grapple_hook', 'proximity_mine', 'auto_turret', 'scout_drone', 'barrier_shield', 'acid_spit', 'lunge', 'spore_pod', 'brood_egg', 'parasite']) {
     if (!abilityIds.has(req)) p.push(`abilities.json is missing "${req}"`);
   }
-  const utilityIds = new Set((f.abilities?.utilities ?? []).map((u) => u.id));
+  const utilities = list(f.abilities?.utilities, 'abilities.utilities');
+  const utilityIds = new Set(utilities.map((u) => u.id));
   for (const req of REQUIRED_UTILITIES) {
     if (!utilityIds.has(req)) p.push(`abilities.json is missing utility "${req}"`);
   }
   // Sprint is defined twice: the engine charges rules.sprint, while the action list shows the utility entry.
-  const sprint = (f.abilities?.utilities ?? []).find((u) => u.id === 'sprint');
+  const sprint = utilities.find((u) => u.id === 'sprint');
   if (sprint && r.sprint) {
     if (sprint.ap !== r.sprint.ap) p.push(`utilities.sprint.ap (${sprint.ap}) must equal rules.sprint.ap (${r.sprint.ap})`);
     if (sprint.movement !== undefined && sprint.movement !== r.sprint.movement) p.push(`utilities.sprint.movement (${sprint.movement}) must equal rules.sprint.movement (${r.sprint.movement})`);
   }
-  for (const u of f.abilities?.utilities ?? []) {
+  for (const u of utilities) {
     int(u.ap, `utilities.${u.id}.ap`);
     if (u.requiresAbility && !abilityIds.has(u.requiresAbility)) p.push(`utilities.${u.id}.requiresAbility "${u.requiresAbility}" is not an ability`);
   }
 
   // Upgrades
   const upgradeIds = new Set<string>();
-  for (const u of f.upgrades ?? []) {
+  const upgrades = list(f.upgrades, 'upgrades');
+  /** Upgrades whose `requires` block is sound, so later checks can ask them what they require. */
+  const requirementsOk = new Set<string>();
+  for (const u of upgrades) {
     upgradeIds.add(u.id);
     requireFields(u, `upgrades.${u.id}`, REQUIRED_UPGRADE_FIELDS[u.id]);
     status(u.status, `upgrades.${u.id}`);
-    for (const a of [...(u.requires?.all ?? []), ...(u.requires?.any ?? [])]) {
-      if (!abilityIds.has(a)) p.push(`upgrades.${u.id} requires unknown ability "${a}"`);
+    // The loadout screen asks every upgrade what it requires, so a missing block would crash it.
+    const req: unknown = u.requires;
+    if (!isRecord(req)) p.push(`upgrades.${u.id}.requires must be an object`);
+    else {
+      let sound = true;
+      for (const k of ['all', 'any'] as const) {
+        const names = req[k];
+        if (names === undefined) continue;
+        if (!Array.isArray(names)) {
+          p.push(`upgrades.${u.id}.requires.${k} must be a list`);
+          sound = false;
+        } else for (const a of names) if (!abilityIds.has(a)) p.push(`upgrades.${u.id} requires unknown ability "${a}"`);
+      }
+      if (sound) requirementsOk.add(u.id);
     }
   }
 
   // Hazards and map
-  const hazardIds = new Set((f.hazards ?? []).map((h) => h.id));
-  for (const h of f.hazards ?? []) {
+  const hazardDefs = list(f.hazards, 'hazards');
+  const hazardIds = new Set(hazardDefs.map((h) => h.id));
+  for (const h of hazardDefs) {
     int(h.damage, `hazards.${h.id}.damage`);
     dtype(h.damageType, `hazards.${h.id}`);
     int(h.cooldown, `hazards.${h.id}.cooldown`, 1);
@@ -216,14 +255,14 @@ export function validateContent(f: ContentFiles): string[] {
     if (t.x < 0 || t.y < 0 || t.x >= m.width || t.y >= m.height) p.push(`${where} "${name}" is off the map`);
   };
   tileOk(m.playerStart, 'map.playerStart');
-  for (const hz of m.hazards ?? []) {
+  for (const hz of list(m.hazards, 'map.hazards')) {
     if (!hazardIds.has(hz.def)) p.push(`map hazard ${hz.id} uses unknown hazard def "${hz.def}"`);
     // Every hazard is placed, drawn and (for a lane) fired from its first tile, so one with none would crash the board.
     if (!Array.isArray(hz.tiles) || hz.tiles.length === 0) p.push(`map hazard ${hz.id} needs at least one tile`);
     else hz.tiles.forEach((t) => tileOk(t, `map hazard ${hz.id} tile`));
     // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
     if (hz.direction && !DIRECTION_NAMES.includes(hz.direction)) p.push(`map hazard ${hz.id} has unknown direction ${JSON.stringify(hz.direction)} (use N, E, S or W)`);
-    if (f.hazards.find((h) => h.id === hz.def)?.shape === 'lane' && !hz.direction) p.push(`map hazard ${hz.id} is a lane and needs a direction`);
+    if (hazardDefs.find((h) => h.id === hz.def)?.shape === 'lane' && !hz.direction) p.push(`map hazard ${hz.id} is a lane and needs a direction`);
   }
 
   // Waves
@@ -241,19 +280,19 @@ export function validateContent(f: ContentFiles): string[] {
 
   // Intercom
   const lineIds = new Set<string>();
-  for (const l of f.intercom?.lines ?? []) {
+  for (const l of list(f.intercom?.lines, 'intercom.lines')) {
     if (lineIds.has(l.id)) p.push(`intercom line "${l.id}" is defined twice`);
     lineIds.add(l.id);
     if (l.trigger.def && !unitIds.has(l.trigger.def)) p.push(`intercom line "${l.id}" names unknown unit "${l.trigger.def}"`);
   }
 
   // Presets
-  for (const pr of f.presets ?? []) {
+  for (const pr of list(f.presets, 'presets')) {
     for (const a of pr.abilities) if (!abilityIds.has(a)) p.push(`preset ${pr.id} uses unknown ability "${a}"`);
     for (const u of pr.upgrades) {
       if (!upgradeIds.has(u)) p.push(`preset ${pr.id} uses unknown upgrade "${u}"`);
-      const def = f.upgrades.find((x) => x.id === u);
-      if (def && !upgradeAllowed(def.requires, pr.abilities)) p.push(`preset ${pr.id} takes ${u} without its required abilities`);
+      const def = upgrades.find((x) => x.id === u);
+      if (def && requirementsOk.has(def.id) && !upgradeAllowed(def.requires, pr.abilities)) p.push(`preset ${pr.id} takes ${u} without its required abilities`);
     }
     if (pr.abilities.length > r.loadout.abilities) p.push(`preset ${pr.id} has more than ${r.loadout.abilities} abilities`);
     if (pr.upgrades.length > r.loadout.upgrades) p.push(`preset ${pr.id} has more than ${r.loadout.upgrades} upgrades`);

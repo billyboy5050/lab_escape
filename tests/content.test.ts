@@ -182,3 +182,72 @@ describe('content validation of hazard tiles', () => {
     expect(validateContent(f)).toEqual(['map hazard panel tile "Z9" is off the map']);
   });
 });
+
+describe('content validation of collections and blocks the game reads without a fallback', () => {
+  const drop = (get: (f: ContentFiles) => object, key: string) => edited((x) => delete (get(x) as Record<string, unknown>)[key]);
+  const setTo = (get: (f: ContentFiles) => object, key: string, v: unknown) =>
+    edited((x) => {
+      (get(x) as Record<string, unknown>)[key] = v;
+    });
+
+  it.each([
+    ['map.hazards', drop((f) => f.map, 'hazards'), 'map.hazards must be a list'],
+    ['hazards', edited((x) => ((x as { hazards: unknown }).hazards = undefined)), 'hazards must be a list'],
+    ['presets', edited((x) => ((x as { presets: unknown }).presets = null)), 'presets must be a list'],
+    ['intercom.lines', drop((f) => f.intercom, 'lines'), 'intercom.lines must be a list'],
+    ['units', edited((x) => ((x as { units: unknown }).units = {})), 'units must be a list'],
+    ['upgrades', edited((x) => ((x as { upgrades: unknown }).upgrades = 'none')), 'upgrades must be a list'],
+    ['abilities.abilities', drop((f) => f.abilities, 'abilities'), 'abilities.abilities must be a list'],
+    ['abilities.utilities', drop((f) => f.abilities, 'utilities'), 'abilities.utilities must be a list'],
+  ])('rejects a missing or non-list %s, where it used to read as an empty list', (_name, f, problem) => {
+    expect(validateContent(f)).toContain(problem);
+    expect(() => buildContent(f)).toThrow(ContentError);
+  });
+
+  it('rejects map.hazards set to null as well as removed', () => {
+    expect(validateContent(setTo((f) => f.map, 'hazards', null))).toEqual(['map.hazards must be a list']);
+  });
+
+  it('rejects an egg corpse-host table that is missing or not an object', () => {
+    expect(validateContent(drop((f) => f.rules.eggs, 'corpseHosts'))).toEqual(['rules.eggs.corpseHosts must be an object']);
+    expect(validateContent(setTo((f) => f.rules.eggs, 'corpseHosts', ['guard']))).toEqual(['rules.eggs.corpseHosts must be an object']);
+  });
+
+  describe('rules.ui', () => {
+    it('rejects a removed block, which the board reads on every render', () => {
+      const f = drop((x) => x.rules, 'ui');
+      expect(validateContent(f)).toEqual(['rules.ui.showHazardCooldowns must be true or false', 'rules.ui.secondsPerActor must be a number of seconds, 0 or more (got undefined)']);
+      expect(() => buildContent(f)).toThrow(ContentError);
+    });
+
+    it.each(['yes', 1, null])('rejects showHazardCooldowns of %j', (v) => {
+      expect(validateContent(setTo((f) => f.rules.ui, 'showHazardCooldowns', v))).toEqual(['rules.ui.showHazardCooldowns must be true or false']);
+    });
+
+    it.each([-1, '0.4', null, NaN, Infinity])('rejects secondsPerActor of %j, which would make every animation delay invalid', (v) => {
+      const problems = validateContent(setTo((f) => f.rules.ui, 'secondsPerActor', v));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^rules\.ui\.secondsPerActor must be a number of seconds, 0 or more/);
+    });
+
+    it.each([0, 0.25, 2])('accepts secondsPerActor of %j', (v) => {
+      expect(validateContent(setTo((f) => f.rules.ui, 'secondsPerActor', v))).toEqual([]);
+    });
+  });
+
+  it('rejects an earlyWaveWhenEmpty that is not true or false', () => {
+    expect(validateContent(setTo((f) => f.rules, 'earlyWaveWhenEmpty', 'yes'))).toEqual(['rules.earlyWaveWhenEmpty must be true or false']);
+  });
+
+  describe('upgrade requirements', () => {
+    it('rejects an upgrade with no requires block, which the loadout screen asks of every upgrade', () => {
+      const f = edited((x) => delete (upgrade(x, 'T1_piercing_rounds') as { requires?: unknown }).requires);
+      expect(validateContent(f)).toEqual(['upgrades.T1_piercing_rounds.requires must be an object']);
+    });
+
+    it('rejects requirement lists that are not lists, and still names an unknown ability', () => {
+      expect(validateContent(edited((x) => ((upgrade(x, 'T1_piercing_rounds').requires as { any: unknown }).any = 'sidearm')))).toEqual(['upgrades.T1_piercing_rounds.requires.any must be a list']);
+      expect(validateContent(edited((x) => ((upgrade(x, 'T1_piercing_rounds').requires as { any: string[] }).any = ['sidearm', 'railgun'])))).toEqual(['upgrades.T1_piercing_rounds requires unknown ability "railgun"']);
+    });
+  });
+});
