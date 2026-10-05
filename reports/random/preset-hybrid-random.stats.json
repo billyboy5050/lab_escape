@@ -67,7 +67,8 @@
     "proximity_mine": 1.593,
     "brood_egg": 0.979,
     "sprint": 0.088,
-    "parasite": 0.239
+    "parasite": 0.239,
+    "pick_up_mine": 0.009
   },
   "lift": [],
   "checks": [

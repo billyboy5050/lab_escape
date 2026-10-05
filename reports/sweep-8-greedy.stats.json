@@ -78,7 +78,8 @@
     "parasite": 3.2,
     "lunge": 0.619,
     "sprint": 0.033,
-    "redeploy": 0.08
+    "redeploy": 0.08,
+    "pick_up_mine": 0.009
   },
   "lift": [
     {

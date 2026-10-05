@@ -10,7 +10,7 @@ Top killers: guard/shot 115, warden/melee 44, flamer/sweep 12, player/poison 10,
 Mean damage to the player per fight: player 1.21, minion 0.28, enemy 1.88, hazard 0.13
 Mean friendly-fire share of the player's damage: 53.8%
 Hazard fires per fight: 4.40; peak minions: mean 4.27, max 5
-Uses per fight: auto_turret 6.2, parasite 3.2, brood_egg 2.9, spore_pod 2.4, proximity_mine 2.4, barrier_shield 1.8, sidearm 1.7, scout_drone 1.6, grapple_hook 1.4, acid_spit 0.8, lunge 0.6, reload 0.6, redeploy 0.1, sprint 0.0
+Uses per fight: auto_turret 6.2, parasite 3.2, brood_egg 2.9, spore_pod 2.4, proximity_mine 2.4, barrier_shield 1.8, sidearm 1.7, scout_drone 1.6, grapple_hook 1.4, acid_spit 0.8, lunge 0.6, reload 0.6, redeploy 0.1, sprint 0.0, pick_up_mine 0.0
 
 Win-rate lift (with minus without, points):
   + 12.4  Auto-Turret            ability  with 79.6% (n=735), without 67.2% (n=265)

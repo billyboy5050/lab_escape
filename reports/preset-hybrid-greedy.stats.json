@@ -74,6 +74,7 @@
     "proximity_mine": 2.757,
     "acid_spit": 1.308,
     "sprint": 0.042,
+    "pick_up_mine": 0.007,
     "redeploy": 0.121
   },
   "lift": [],
