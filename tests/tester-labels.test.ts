@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadTester, nextAttempt, saveTelemetry } from '../src/client/telemetry';
+import { loadTester, saveTelemetry } from '../src/client/telemetry';
 import { cleanTester, MAX_TESTER_LENGTH, telemetryFolderName } from '../src/telemetry/label';
 import { newRecord, recordProblems } from '../src/telemetry/record';
 import { FightSession } from '../src/telemetry/session';
@@ -55,21 +55,37 @@ describe('tester and attempt in the browser', () => {
     storage({ 'lab-escape.tester': '{"x":1}' });
     expect(loadTester('')).toBeUndefined();
   });
+  const session = (tester?: string) => new FightSession(C, { abilities: ['sidearm'], upgrades: [] }, {}, { preset: 'hybrid', tester });
+  const finish = async (s: FightSession) => {
+    vi.stubGlobal('fetch', () => Promise.resolve({ ok: false }));
+    await saveTelemetry(C, s);
+    return s.record.meta?.attempt;
+  };
+
   it('numbers attempts after the fights a tester has finished, per tester', async () => {
     storage();
-    vi.stubGlobal('fetch', () => Promise.resolve({ ok: false }));
-    const finish = async (tester: string) => {
-      const s = new FightSession(C, { abilities: ['sidearm'], upgrades: [] }, {}, { preset: 'hybrid', tester, attempt: nextAttempt(tester) });
-      await saveTelemetry(C, s);
-    };
-    expect(nextAttempt('P3')).toBe(1);
-    await finish('P3');
-    await finish('P3');
-    expect(nextAttempt('P3')).toBe(3);
-    expect(nextAttempt('P4')).toBe(1);
+    expect(await finish(session('P3'))).toBe(1);
+    expect(await finish(session('P3'))).toBe(2);
+    expect(await finish(session('P4'))).toBe(1);
   });
-  it('treats a corrupt attempt count as zero', () => {
+  it('numbers by the counter at the finish, so two fights open at once get different numbers', async () => {
+    storage();
+    const a = session('P3');
+    const b = session('P3');
+    expect(await finish(b)).toBe(1);
+    expect(await finish(a)).toBe(2);
+  });
+  it('gives a fight with no tester no attempt number', async () => {
+    storage();
+    expect(await finish(session())).toBeUndefined();
+  });
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])('numbers a tester called %s from 1, then 2', async (id) => {
+    storage();
+    expect(await finish(session(id))).toBe(1);
+    expect(await finish(session(id))).toBe(2);
+  });
+  it('treats a corrupt attempt count as zero', async () => {
     storage({ 'lab-escape.attemptCounts': '{"P3":"many"}' });
-    expect(nextAttempt('P3')).toBe(1);
+    expect(await finish(session('P3'))).toBe(1);
   });
 });

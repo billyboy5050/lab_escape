@@ -12,7 +12,7 @@ import { Board, type Highlight } from '../components/Board';
 import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/DebugPanel';
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
 import { actionIndexForKey, endsTurn, spaceSkips } from '../actionKeys';
-import { nextAttempt, saveTelemetry } from '../telemetry';
+import { saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
 
 interface Mode {
@@ -52,7 +52,7 @@ export function FightScreen(props: {
     debugLog: props.debugOpen && toggles.log,
     restartKey: props.restartKey,
     replay: props.replay,
-    meta: { preset: props.presetId ?? undefined, ...(props.tester ? { tester: props.tester, attempt: nextAttempt(props.tester) } : {}) },
+    meta: { preset: props.presetId ?? undefined, tester: props.tester },
   });
   const live = fight.session.state;
   const [cursor, setCursor] = useState(0);

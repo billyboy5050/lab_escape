@@ -19,7 +19,7 @@ export function telemetryFiles(session: FightSession): Record<string, string> {
 export async function saveTelemetry(c: Content, session: FightSession): Promise<string | null> {
   recordAttempt(session);
   const meta = session.record.meta;
-  if (meta?.tester && meta.attempt !== undefined) countAttempt(meta.tester, meta.attempt);
+  assignAttempt(session);
   const name = telemetryFolderName(new Date(), meta, session.state.outcome?.result ?? 'unfinished');
   try {
     const r = await fetch('/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, files: telemetryFiles(session) }) });
@@ -102,15 +102,18 @@ export function loadTester(search: string = window.location.search): string | un
   return cleanTester(loadPref<unknown>('tester', undefined, (v): v is string => typeof v === 'string'));
 }
 
-/** The number the tester's next fight carries: one more than the fights they have finished in this browser. */
-export function nextAttempt(tester: string): number {
-  return (loadPref('attemptCounts', {}, isCounts)[tester] ?? 0) + 1;
-}
-
-/** Records that a fight with this attempt number finished, so the next one is numbered after it. */
-function countAttempt(tester: string, attempt: number): void {
+/**
+ * Numbers a finished fight for its tester: one more than the fights that tester has finished in this browser, taken from
+ * the counter as it is now (so two tabs finishing in turn get different numbers), and stored in the replay's meta. A fight
+ * with no tester gets none. Own properties only: an ID such as "constructor" must not read the object's inherited members.
+ */
+export function assignAttempt(session: FightSession): void {
+  const meta = session.record.meta;
+  if (!meta?.tester) return;
   const counts = loadPref('attemptCounts', {}, isCounts);
-  savePref('attemptCounts', { ...counts, [tester]: Math.max(counts[tester] ?? 0, attempt) });
+  const attempt = (Object.hasOwn(counts, meta.tester) ? counts[meta.tester]! : 0) + 1;
+  meta.attempt = attempt;
+  savePref('attemptCounts', { ...counts, [meta.tester]: attempt });
 }
 
 /**
