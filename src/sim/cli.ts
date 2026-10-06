@@ -39,6 +39,7 @@ Options
   --out DIR        Write the report, CSV and winning replays to DIR (default reports/ for presets)
   --record         With golden: re-record the golden replays
   --informed-from N  With telemetry: the first attempt number counted as informed (default 2)
+  --informed-attempts N  With telemetry: how many attempts per tester the informed round has, from --informed-from (default 3)
   --informed-preset ID  With telemetry: the preset the informed round plays (default hybrid)
 `;
 
@@ -58,6 +59,7 @@ function main(): Promise<void> | void {
       out: { type: 'string' },
       record: { type: 'boolean', default: false },
       'informed-from': { type: 'string' },
+      'informed-attempts': { type: 'string' },
       'informed-preset': { type: 'string' },
       param: { type: 'string' },
       values: { type: 'string' },
@@ -188,7 +190,7 @@ function main(): Promise<void> | void {
     }
     case 'telemetry': {
       const dir = positionals[1] ?? 'telemetry';
-      const opts = { informedFrom: parseInteger('informed-from', values['informed-from'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedFrom, informedPreset: values['informed-preset'] ?? DEFAULT_PLAYTEST.informedPreset };
+      const opts = { informedFrom: parseInteger('informed-from', values['informed-from'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedFrom, informedAttempts: parseInteger('informed-attempts', values['informed-attempts'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedAttempts, informedPreset: values['informed-preset'] ?? DEFAULT_PLAYTEST.informedPreset };
       console.log(formatPlaytest(dir, loadTelemetry(defaultContent(), dir), opts));
       return;
     }

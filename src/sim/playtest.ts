@@ -17,6 +17,8 @@ export interface PlaytestFight {
   rounds: number;
   /** Share of the player's damage that came from the player's own side (0 to 1). */
   friendlyFireShare: number;
+  /** Total damage the player took; a fight with none has no friendly-fire share to average. */
+  playerDamage: number;
   causeCategory: Category | null;
   hazardFires: number;
   /** Seconds the player took on each turn that ended with a full swarm (minions at the cap). */
@@ -59,6 +61,8 @@ export function loadTelemetry(c: Content, dir: string): TelemetryLoad {
 /** The figures for one fight, or the reason it does not count. */
 export function analyseFight(c: Content, rec: FightRecord, name: string): PlaytestFight | string {
   if (rec.commands.some((cmd) => cmd.type === 'debug')) return 'used debug commands';
+  // The shortened fight (wave 3 held back) has another win condition, so it would skew every figure here.
+  if (rec.settings.maxWaves !== undefined) return 'played with wave 3 held back';
   const r = replay(c, rec, { keepStates: true });
   const s = summarize(r.events, r.state);
   if (s.outcome === 'unfinished') return 'unfinished';
@@ -84,6 +88,7 @@ export function analyseFight(c: Content, rec: FightRecord, name: string): Playte
     outcome: s.outcome,
     rounds: s.rounds,
     friendlyFireShare: s.friendlyFireShare,
+    playerDamage: s.playerDamageTaken.player + s.playerDamageTaken.minion + s.playerDamageTaken.enemy + s.playerDamageTaken.hazard,
     causeCategory: s.causeOfDeath?.category ?? null,
     hazardFires: s.hazardFires.length,
     fullSwarmTurnSeconds,
@@ -93,11 +98,13 @@ export function analyseFight(c: Content, rec: FightRecord, name: string): Playte
 export interface PlaytestOptions {
   /** The first attempt number counted as an informed attempt (round 3 follows round 2 in the same browser, so numbering carries on). */
   informedFrom: number;
+  /** How many attempts per tester the informed round has (the spec: 3), counted from `informedFrom`. */
+  informedAttempts: number;
   /** The preset the informed round plays. */
   informedPreset: string;
 }
 
-export const DEFAULT_PLAYTEST: PlaytestOptions = { informedFrom: 2, informedPreset: 'hybrid' };
+export const DEFAULT_PLAYTEST: PlaytestOptions = { informedFrom: 2, informedAttempts: 3, informedPreset: 'hybrid' };
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 const mean = (xs: readonly number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -109,13 +116,19 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
   const losses = fights.filter((f) => f.outcome === 'lose');
   const wins = fights.filter((f) => f.outcome === 'win');
 
-  const first = fights.filter((f) => f.tester !== undefined && f.attempt === 1);
+  // One first attempt per tester: attempt numbers are counted per browser, so a tester who plays on another browser, or
+  // clears storage, can leave several fights numbered 1. The earliest counts (folder names begin with the time).
+  const firstByTester = new Map<string, PlaytestFight>();
+  for (const f of fights) if (f.tester !== undefined && f.attempt === 1 && !firstByTester.has(f.tester)) firstByTester.set(f.tester, f);
+  const first = [...firstByTester.values()];
   const firstLost = first.filter((f) => f.outcome === 'lose');
+  // A tester whose only recorded fight is a lost first attempt may have quit there (or may not have played again yet).
+  const stopped = firstLost.filter((f) => !fights.some((g) => g.tester === f.tester && (g.attempt ?? 0) > 1));
   out.push(
     first.length
       ? {
           metric: 'First attempts lost',
-          value: `${firstLost.length} of ${first.length} first attempts (${pct(firstLost.length / first.length)})`,
+          value: `${firstLost.length} of ${first.length} testers (${pct(firstLost.length / first.length)}); ${stopped.length} with no fight after the loss`,
           target: 'about 70% (4 of 5, up to 6 of 8)',
           alarm: 'fewer than half, or players quit after one loss',
           status: firstLost.length / first.length < 0.5 ? 'alarm' : firstLost.length / first.length < 0.6 || firstLost.length / first.length > 0.8 ? 'warn' : 'ok',
@@ -134,7 +147,7 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
     });
   } else out.push(na('First-time losses that reach wave 2', 'most reach round 4', 'median loss before round 3', 'no lost first attempts'));
 
-  const informed = fights.filter((f) => f.preset === opts.informedPreset && f.attempt !== undefined && f.attempt >= opts.informedFrom);
+  const informed = fights.filter((f) => f.preset === opts.informedPreset && f.attempt !== undefined && f.attempt >= opts.informedFrom && f.attempt < opts.informedFrom + opts.informedAttempts);
   if (informed.length) {
     const won = informed.filter((f) => f.outcome === 'win').length;
     const byAttempt = new Map<number, [number, number]>();
@@ -145,13 +158,13 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
     const detail = [...byAttempt].sort((a, b) => a[0] - b[0]).map(([a, [w, n]]) => `attempt ${a}: ${w}/${n}`).join(', ');
     const rate = won / informed.length;
     out.push({
-      metric: `Informed win rate (${opts.informedPreset} preset, attempts ${opts.informedFrom} and later)`,
+      metric: `Informed win rate (${opts.informedPreset} preset, attempts ${opts.informedFrom} to ${opts.informedFrom + opts.informedAttempts - 1})`,
       value: `${won} of ${informed.length} (${pct(rate)}); ${detail}`,
       target: '30% to 50%',
       alarm: 'below 15% or above 70%',
       status: rate < 0.15 || rate > 0.7 ? 'alarm' : rate < 0.3 || rate > 0.5 ? 'warn' : 'ok',
     });
-  } else out.push(na(`Informed win rate (${opts.informedPreset} preset)`, '30% to 50%', 'below 15% or above 70%', `no ${opts.informedPreset} fights at attempt ${opts.informedFrom} or later`));
+  } else out.push(na(`Informed win rate (${opts.informedPreset} preset)`, '30% to 50%', 'below 15% or above 70%', `no ${opts.informedPreset} fights at attempts ${opts.informedFrom} to ${opts.informedFrom + opts.informedAttempts - 1}`));
 
   if (wins.length) {
     const m = median(wins.map((f) => f.rounds));
@@ -164,14 +177,16 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
     out.push({ metric: 'Median turn time with a full swarm', value: `${m.toFixed(0)} s over ${swarm.length} turns`, target: 'under 60 s', alarm: 'over 90 s', status: m > 90 ? 'alarm' : m >= 60 ? 'warn' : 'ok' });
   } else out.push(na('Median turn time with a full swarm', 'under 60 s', 'over 90 s', 'no turn ended with the minion cap reached'));
 
-  if (fights.length) {
-    const ff = mean(fights.map((f) => f.friendlyFireShare));
-    out.push({ metric: 'Share of player damage from own effects', value: pct(ff), target: '5% to 30%', alarm: 'over 35%, or under 3%', status: ff > 0.35 || ff < 0.03 ? 'alarm' : ff < 0.05 || ff > 0.3 ? 'warn' : 'ok' });
+  // A fight where the player took no damage has no share, and counting it as 0% would drag the mean down.
+  const damaged = fights.filter((f) => f.playerDamage > 0);
+  if (damaged.length) {
+    const ff = mean(damaged.map((f) => f.friendlyFireShare));
+    out.push({ metric: 'Share of player damage from own effects', value: `${pct(ff)} (${damaged.length} fights where the player took damage)`, target: '5% to 30%', alarm: 'over 35%, or under 3%', status: ff > 0.35 || ff < 0.03 ? 'alarm' : ff < 0.05 || ff > 0.3 ? 'warn' : 'ok' });
   }
 
   if (losses.length) {
     const counts = new Map<string, number>();
-    for (const f of losses) counts.set(f.causeCategory ?? 'unknown', (counts.get(f.causeCategory ?? 'unknown') ?? 0) + 1);
+    for (const f of losses) counts.set(f.causeCategory ?? 'round cap', (counts.get(f.causeCategory ?? 'round cap') ?? 0) + 1);
     const ranked = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const top = ranked[0]!;
     const hazard = (counts.get('hazard') ?? 0) / losses.length;
