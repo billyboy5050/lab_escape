@@ -153,7 +153,7 @@ function applyCommand(w: World, cmd: Command): void {
       const t = tile(cmd.target, 'Target');
       const turret = w.unitAt(t);
       if (!turret || turret.team !== 'player' || turret.maxAmmo === undefined) throw new IllegalCommand('No turret there');
-      if (cheb(turret.pos, p.pos) > (u.range ?? 2)) throw new IllegalCommand('Turret out of range');
+      if (cheb(turret.pos, p.pos) > u.range!) throw new IllegalCommand('Turret out of range');
       if ((turret.ammo ?? 0) >= turret.maxAmmo) throw new IllegalCommand('Turret is already full');
       s.ap -= u.ap;
       s.committed = true;
@@ -168,7 +168,7 @@ function applyCommand(w: World, cmd: Command): void {
       const t = tile(cmd.target, 'Target');
       const mine = w.mineAt(t);
       if (!mine) throw new IllegalCommand('No mine there');
-      if (cheb(t, p.pos) > (u.range ?? 1)) throw new IllegalCommand('Mine is not adjacent');
+      if (cheb(t, p.pos) > u.range!) throw new IllegalCommand('Mine is not adjacent');
       s.ap -= u.ap;
       s.committed = true;
       w.root('pick up mine', 0, () => w.removeObject(mine, 'pickup'));
