@@ -103,6 +103,8 @@ describe('playtest metrics', () => {
     expect(check([fight({ causeCategory: null }), fight({ causeCategory: 'enemy' })], 'Share of deaths').value).toBe('enemy 50.0%, round cap 50.0%');
     expect(check([fight({ hazardFires: 0 })], 'Hazard fires').status).toBe('alarm');
     expect(check([fight({ hazardFires: 1 })], 'Hazard fires').status).toBe('warn');
+    expect(check([fight({ outcome: 'win' })], 'Share of deaths').status).toBe('n/a');
+    expect(check([], 'Hazard fires').status).toBe('n/a');
   });
 });
 

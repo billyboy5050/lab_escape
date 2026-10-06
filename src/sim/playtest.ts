@@ -200,8 +200,8 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
   if (damaged.length) {
     const ff = mean(damaged.map((f) => f.friendlyFireShare));
     out.push({ metric: 'Share of player damage from own effects', value: `${pct(ff)} (${damaged.length} fights where the player took damage)`, target: '5% to 30%', alarm: 'over 35%, or under 3%', status: ff > 0.35 || ff < 0.03 ? 'alarm' : ff < 0.05 || ff > 0.3 ? 'warn' : 'ok' });
-  } else if (fights.length) {
-    out.push(na('Share of player damage from own effects', '5% to 30%', 'over 35%, or under 3%', 'the player took no damage in any fight'));
+  } else {
+    out.push(na('Share of player damage from own effects', '5% to 30%', 'over 35%, or under 3%', fights.length ? 'the player took no damage in any fight' : 'no fights'));
   }
 
   if (losses.length) {
@@ -217,11 +217,15 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
       alarm: 'hazards above 60%',
       status: hazard > 0.6 ? 'alarm' : top[1] / losses.length > 0.6 ? 'warn' : 'ok',
     });
+  } else {
+    out.push(na('Share of deaths from one source', 'no source above 60%', 'hazards above 60%', 'no lost fights'));
   }
 
   if (fights.length) {
     const h = mean(fights.map((f) => f.hazardFires));
     out.push({ metric: 'Hazard fires per fight', value: h.toFixed(2), target: 'at least 2', alarm: 'under 1 on average', status: h < 1 ? 'alarm' : h < 2 ? 'warn' : 'ok' });
+  } else {
+    out.push(na('Hazard fires per fight', 'at least 2', 'under 1 on average', 'no fights'));
   }
   return out;
 }
