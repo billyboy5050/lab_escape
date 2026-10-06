@@ -8,6 +8,12 @@ import { parseTile, tileName } from '../src/util/tiles';
 
 export const C = defaultContent();
 
+/**
+ * Timeout for tests that play whole bot fights. They take a second or two on a developer machine and several times that
+ * on a shared CI runner, past Vitest's 5 s default.
+ */
+export const BOT_FIGHT_TIMEOUT_MS = 30_000;
+
 export function contentWith(overrides: Record<string, unknown>): Content {
   return buildContent(withOverrides(defaultContentFiles(), overrides));
 }
