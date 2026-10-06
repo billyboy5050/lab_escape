@@ -1,5 +1,6 @@
 import type { Content } from '../content/types';
 import type { Loadout } from '../state/types';
+import { cleanTester, telemetryFolderName } from '../telemetry/label';
 import { eventsToJsonl } from '../telemetry/record';
 import type { FightSession } from '../telemetry/session';
 
@@ -17,8 +18,9 @@ export function telemetryFiles(session: FightSession): Record<string, string> {
  */
 export async function saveTelemetry(c: Content, session: FightSession): Promise<string | null> {
   recordAttempt(session);
-  const preset = (session.record.meta?.preset as string | undefined) ?? 'custom';
-  const name = `${new Date().toISOString().replace(/[:.]/g, '-')}-${preset}-${session.state.outcome?.result ?? 'unfinished'}`;
+  const meta = session.record.meta;
+  if (meta?.tester && meta.attempt !== undefined) countAttempt(meta.tester, meta.attempt);
+  const name = telemetryFolderName(new Date(), meta, session.state.outcome?.result ?? 'unfinished');
   try {
     const r = await fetch('/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, files: telemetryFiles(session) }) });
     if (!r.ok) return null;
@@ -85,6 +87,30 @@ function recordAttempt(session: FightSession): void {
   } catch {
     // Storage can be unavailable (private windows); the attempt list is a convenience only.
   }
+}
+
+const isCounts = (v: unknown): v is Record<string, number> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v) && Object.values(v).every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 0);
+
+/** The tester ID: a `?tester=` in the page's URL wins and is remembered, else the one saved from last time. */
+export function loadTester(search: string = window.location.search): string | undefined {
+  const fromUrl = cleanTester(new URLSearchParams(search).get('tester'));
+  if (fromUrl) {
+    savePref('tester', fromUrl);
+    return fromUrl;
+  }
+  return cleanTester(loadPref<unknown>('tester', undefined, (v): v is string => typeof v === 'string'));
+}
+
+/** The number the tester's next fight carries: one more than the fights they have finished in this browser. */
+export function nextAttempt(tester: string): number {
+  return (loadPref('attemptCounts', {}, isCounts)[tester] ?? 0) + 1;
+}
+
+/** Records that a fight with this attempt number finished, so the next one is numbered after it. */
+function countAttempt(tester: string, attempt: number): void {
+  const counts = loadPref('attemptCounts', {}, isCounts);
+  savePref('attemptCounts', { ...counts, [tester]: Math.max(counts[tester] ?? 0, attempt) });
 }
 
 /**

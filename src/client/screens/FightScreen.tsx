@@ -12,7 +12,7 @@ import { Board, type Highlight } from '../components/Board';
 import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/DebugPanel';
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
 import { actionIndexForKey, endsTurn, spaceSkips } from '../actionKeys';
-import { saveTelemetry } from '../telemetry';
+import { nextAttempt, saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
 
 interface Mode {
@@ -40,6 +40,8 @@ export function FightScreen(props: {
   /** `save` settles with the telemetry folder (null when it was not saved); it is null when no save was started (a replay). */
   onFinished: (session: FightSession, save: Promise<string | null> | null) => void;
   onChangeLoadout: () => void;
+  /** Who is playing, for the telemetry folder name and the replay's meta. */
+  tester?: string;
   debugOpen: boolean;
   setDebugOpen: (b: boolean) => void;
   toast: (msg: string) => void;
@@ -50,7 +52,7 @@ export function FightScreen(props: {
     debugLog: props.debugOpen && toggles.log,
     restartKey: props.restartKey,
     replay: props.replay,
-    meta: { preset: props.presetId ?? undefined },
+    meta: { preset: props.presetId ?? undefined, ...(props.tester ? { tester: props.tester, attempt: nextAttempt(props.tester) } : {}) },
   });
   const live = fight.session.state;
   const [cursor, setCursor] = useState(0);

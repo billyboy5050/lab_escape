@@ -22,6 +22,10 @@ export interface FightRecord {
     bot?: string;
     seed?: number;
     preset?: string;
+    /** Who played it, from the playtest: a short ID such as P3. Telemetry only; replay ignores it. */
+    tester?: string;
+    /** This tester's attempt number, counting from 1. Telemetry only; replay ignores it. */
+    attempt?: number;
     /** Wall-clock milliseconds the player spent on each turn. Telemetry only; replay ignores it. */
     turnTimesMs?: number[];
   };
@@ -120,8 +124,9 @@ export function recordProblems(rec: unknown): string[] {
   if (meta !== undefined) {
     if (!isObject(meta)) add('meta must be an object');
     else {
-      for (const k of ['created', 'label', 'bot', 'preset'] as const) if (meta[k] !== undefined && typeof meta[k] !== 'string') add(`meta.${k} must be text`);
+      for (const k of ['created', 'label', 'bot', 'preset', 'tester'] as const) if (meta[k] !== undefined && typeof meta[k] !== 'string') add(`meta.${k} must be text`);
       if (meta.seed !== undefined && typeof meta.seed !== 'number') add('meta.seed must be a number');
+      if (meta.attempt !== undefined && !(typeof meta.attempt === 'number' && Number.isInteger(meta.attempt) && meta.attempt >= 1)) add('meta.attempt must be a whole number of at least 1');
       const t = meta.turnTimesMs;
       if (t !== undefined) {
         if (!Array.isArray(t)) add('meta.turnTimesMs must be a list of numbers');

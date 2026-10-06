@@ -87,6 +87,14 @@ button {
   color: inherit;
   cursor: pointer;
 }
+input[type='text'] {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
 button:disabled {
   cursor: not-allowed;
 }
