@@ -8,7 +8,7 @@ Last reviewed: 2026-10-05.
 
 ## Where things stand
 
-The MVP from the [spec](spec.md) is built and merged (PR #1). Typecheck, build and all tests pass.
+The code for the MVP in the [spec](spec.md) is built and merged (PR #1), and typecheck, build and all tests pass. M7 still needs its playtest round, so not every milestone is done.
 
 | Milestone | Status |
 | --- | --- |
@@ -51,6 +51,7 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Phone-width layout.** The narrow breakpoint exists but has not been playtested.
+- **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.
 - **Vite's native config loader.** `npm test` warns that `vite.config.ts` imports `./src/dev/telemetryPath` without a file extension, which the native config loader (planned as Vite's default) will not accept. Adding `.ts` also needs `allowImportingTsExtensions` in `tsconfig.json` (allowed because it sets `noEmit`).
 
 ## After the MVP

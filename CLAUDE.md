@@ -6,7 +6,7 @@ Instructions for AI agents and people working on Lab Escape. `AGENTS.md` is a sy
 
 Lab Escape: Armory Lockdown is a playable prototype of one room of a tactics roguelite, built to find out whether a single fight is fun before anything else is added. It has a deterministic TypeScript rules engine that runs headless in Node, a React and Vite web client, telemetry and replays, and a headless simulator with bots. Every number is data in `content/*.json`; behaviour is code.
 
-All eight milestones in the spec are built. The project is now in its playtest and tuning phase: see [docs/roadmap.md](docs/roadmap.md).
+Milestones M0 to M6 in the spec are done and M7's tooling is built, but M7 itself is not done: its acceptance criteria need the first full playtest round and its recorded metrics. The project is now in its playtest and tuning phase: see [docs/roadmap.md](docs/roadmap.md).
 
 ## Start here, every session
 
@@ -68,7 +68,7 @@ Content changes alter the content hash, so until this is done the golden test fa
 
 These rules are mandatory. `main` is always green and changes only through merged pull requests.
 
-1. **Never commit to `main` or push to it.** The hooks in `.githooks/` refuse both locally, and GitHub's branch protection refuses any push to `main` and merges only pull requests whose `check` CI job passes on a branch that is up to date with `main`. Never get around them: no `--no-verify`, no unsetting `core.hooksPath`, no editing the hooks to let yourself through. If `git config core.hooksPath` prints nothing, run `npm install`.
+1. **Never commit to `main`, merge into it or push to it.** Locally, the hooks in `.githooks/` refuse commits on `main`, pushes to it, and any other move of `main` (a merge, reset or rebase) except to exactly `origin/main`, which `git pull --ff-only` does. If one refuses a merge or rebase partway, undo it with `git reset --merge` or `git rebase --abort`. GitHub's branch protection refuses any push to `main` and merges only pull requests whose `check` CI job passes on a branch that is up to date with `main`. Never get around them: no `--no-verify`, no unsetting `core.hooksPath`, no editing the hooks to let yourself through. If `git config core.hooksPath` prints nothing, run `npm install`.
 2. **One branch per task**, cut from an up-to-date `main`:
 
    ```bash
@@ -158,6 +158,7 @@ Do not ask about things this file or the docs already answer, or about routine c
 - `telemetry/` at the top level is dev-server output and ignored by git; `src/telemetry/` is source.
 - `presets` writes to `reports/` unless given `--out`, even with `--set` overrides or another bot, so an experiment can overwrite the committed reports. Give exploratory runs `--out` with a scratch folder. Per-fight CSVs are ignored by git; text reports, stats JSON, the lift CSV and winning lines are committed.
 - A fight that throws writes its command log to `reports/error-seed-<N>.json`. That is a bug repro, not a report: turn it into a test or attach it to the fix, and do not commit it under `reports/`.
+- A test that plays whole bot fights needs `BOT_FIGHT_TIMEOUT_MS` from `tests/helpers.ts` as its timeout. Such tests take a second or two locally but several times that on the CI runner, past Vitest's 5 s default.
 - Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values.
 - `npm test` prints a Vite warning about an extensionless import in `vite.config.ts`. It is harmless for now and listed in the roadmap.
 - Enter and Space behave differently when a button has focus. That logic lives in `src/client/actionKeys.ts` and is tested; keep keyboard handling there and in `src/client/screens/FightScreen.tsx`.

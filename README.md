@@ -2,7 +2,7 @@
 
 The playable MVP described in the [spec](docs/spec.md): one 8x8 room, three hidden waves, the Tech and Alien kits, 12 upgrades, the lab's hazard AI, telemetry, replays and a headless simulator.
 
-All eight milestones are built; what remains is the playtest rounds and whatever they turn up. See the [roadmap](docs/roadmap.md).
+Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the first full playtest round has run and its metrics are recorded; that and whatever it turns up is what remains. See the [roadmap](docs/roadmap.md).
 
 ## Documents
 
@@ -16,7 +16,7 @@ All eight milestones are built; what remains is the playtest rounds and whatever
 
 ## Quick start
 
-Needs Node 22 (see `.nvmrc`).
+Needs Node 22.12 or later on the 22 or 24 line, or 26 and up: the range Vitest and Vite support (`engines` in `package.json`). `.nvmrc` picks 22.
 
 ```bash
 npm install
@@ -45,7 +45,7 @@ npm run sim -- presets --seeds 1000
 | `npm run sim -- <command>` | The headless simulator (below) |
 | `npm run golden:record` | Re-record the golden replays |
 
-`npm install` also points git at the repo's hooks in `.githooks/`, which refuse commits on `main` and pushes to it. Changes reach `main` only through pull requests that pass CI, which GitHub's branch protection enforces; see [CLAUDE.md](CLAUDE.md).
+`npm install` also points git at the repo's hooks in `.githooks/`, which refuse commits on `main`, merges, resets and rebases that would move it anywhere but `origin/main`, and pushes to it. Changes reach `main` only through pull requests that pass CI, which GitHub's branch protection enforces; see [CLAUDE.md](CLAUDE.md).
 
 ## Playing
 
@@ -58,7 +58,7 @@ npm run sim -- presets --seeds 1000
 - **Speed**: 1x, 2x or skip (**F** cycles, **Space** skips the current animation unless a control has focus).
 - **L** opens the intercom log. **`** opens the debug overlay.
 
-Shortcuts ignore Ctrl, Cmd and Alt combinations, which stay with the browser. The action keys are defined once in `src/client/actionKeys.ts`.
+With Ctrl, Cmd or Alt held, the action keys are left to the browser (Ctrl or Cmd with `-` and `=` zoom the page). The other shortcuts do not check for modifiers yet, so Ctrl or Cmd with Z, E, F or L also triggers the game's undo, end turn, speed or log (see the [roadmap](docs/roadmap.md)). The action keys are defined once in `src/client/actionKeys.ts`.
 
 ## Debug overlay (`)
 
@@ -86,7 +86,7 @@ With `npm run dev` running, saving a content file hot-reloads it and restarts th
 
 The spec's open decisions are switches in `rules.json`: `earlyWaveWhenEmpty`, `ui.showHazardCooldowns`, `arrivalRound` (`all`, `first`, `none`), `loadout.abilities` (8, or 6 for the informed round), and `statuses.corrode.duration` (0 = rest of the fight).
 
-Any content change alters the content hash, and replays are only valid against the hash they were recorded with. A content change therefore needs the golden replays re-recorded (`npm run golden:record`) and the winning lines regenerated (`npm run sim -- presets --seeds 1000`) in the same commit, or the tests and the `?replay=` links stop working.
+Any content change alters the content hash, and replays are only valid against the hash they were recorded with. A content change therefore needs every generated file regenerated in the same commit: the golden replays, the preset reports and winning lines, the random-bot reports and the sweep. Otherwise the tests and the `?replay=` links stop working and the committed balance figures go stale. The commands for each are under [Regenerating generated files](CLAUDE.md#regenerating-generated-files) in CLAUDE.md.
 
 ## Headless simulator
 
