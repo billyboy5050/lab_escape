@@ -19,14 +19,30 @@ export const REQUIRED_ABILITY_FIELDS: Record<string, readonly string[]> = {
 /** Each unit's AI is chosen by which blocks it has, so a missing block would also change its role silently. */
 export const REQUIRED_UNIT_FIELDS: Record<string, readonly string[]> = {
   guard: ['attack'],
-  medic: ['heal', 'ai.safeDistance', 'ai.followDistance'],
-  flamer: ['sweep', 'ai.scorePerPlayerSideHit', 'ai.scorePlayerBonus', 'ai.scorePerAllyHit'],
+  medic: ['heal'],
+  flamer: ['sweep'],
   warden: ['melee', 'charge'],
   turret: ['attack', 'ammo'],
-  drone: ['zap', 'charges', 'returnPhases'],
+  drone: ['zap', 'charges'],
   hatchling: ['melee'],
   spitter: ['attack'],
   burster: ['blast'],
+};
+
+/**
+ * Fields a unit needs because of a behaviour block it has, whatever its ID: enemyTurn and minionTurn pick the AI by
+ * which block a unit carries, so any unit with the block runs that AI and reads these numbers.
+ */
+export const REQUIRED_BLOCK_FIELDS: Record<string, readonly string[]> = {
+  heal: ['ai.safeDistance', 'ai.followDistance'],
+  sweep: ['ai.scorePerPlayerSideHit', 'ai.scorePlayerBonus', 'ai.scorePerAllyHit'],
+  zap: ['returnPhases'],
+};
+
+/** The hazard shapes the engine knows, and the fields each shape reads without a fallback. */
+export const REQUIRED_HAZARD_SHAPE_FIELDS: Record<string, readonly string[]> = {
+  lane: [],
+  adjacentToTiles: ['radius'],
 };
 
 export const REQUIRED_UPGRADE_FIELDS: Record<string, readonly string[]> = {
