@@ -216,6 +216,14 @@ describe('reading saved telemetry', () => {
     expect(text).not.toContain('By tester');
   });
 
+  it('refuses a fight with a tester ID but no attempt number', { timeout: BOT_FIGHT_TIMEOUT_MS }, () => {
+    const root = tmp();
+    save(root, 'a-no-attempt', play(1, { preset: 'hybrid', tester: 'P1' }));
+    const load = loadTelemetry(C, root);
+    expect(load.fights).toEqual([]);
+    expect(load.skipped).toEqual([{ name: 'a-no-attempt', reason: 'has a tester ID but no attempt number' }]);
+  });
+
   it('says what is wrong when the folder does not exist', () => {
     expect(() => loadTelemetry(C, path.join(os.tmpdir(), 'lab-escape-no-such-folder'))).toThrow(/No telemetry folder/);
   });

@@ -52,7 +52,8 @@ export function loadTelemetry(c: Content, dir: string, opts: { includeUnlabelled
       checkCompatible(c, rec);
       const f = analyseFight(c, rec, entry.name);
       // Every fight the dev server finishes is saved here, so ordinary play with no tester ID sits beside the playtest's fights.
-      if (typeof f !== 'string' && f.tester === undefined && !opts.includeUnlabelled) out.skipped.push({ name: entry.name, reason: 'no tester ID (--include-unlabelled counts it)' });
+      if (typeof f !== 'string' && f.tester !== undefined && f.attempt === undefined) out.skipped.push({ name: entry.name, reason: 'has a tester ID but no attempt number' });
+      else if (typeof f !== 'string' && f.tester === undefined && !opts.includeUnlabelled) out.skipped.push({ name: entry.name, reason: 'no tester ID (--include-unlabelled counts it)' });
       else
       if (typeof f === 'string') out.skipped.push({ name: entry.name, reason: f });
       else if (typeof f !== 'string' && f.tester !== undefined && opts.excludeTesters?.includes(f.tester)) out.skipped.push({ name: entry.name, reason: `tester ${f.tester} excluded (--exclude-tester)` });
@@ -76,9 +77,10 @@ export function analyseFight(c: Content, rec: FightRecord, name: string): Playte
   if (s.outcome === 'unfinished') return 'unfinished';
   // A turn ends at each End Turn, and at the action that ends the fight if that was not an End Turn. The client records
   // one time per turn, in that order, so turn k's time pairs with the state just before its last command.
+  // The swarm a turn ended with is the state before its End Turn, or the state after the action that ended the fight.
   const ends: number[] = [];
   rec.commands.forEach((cmd, i) => cmd.type === 'endTurn' && ends.push(i));
-  if (rec.commands.length && rec.commands[rec.commands.length - 1]!.type !== 'endTurn') ends.push(rec.commands.length - 1);
+  if (rec.commands.length && rec.commands[rec.commands.length - 1]!.type !== 'endTurn') ends.push(rec.commands.length);
   const times = rec.meta?.turnTimesMs ?? [];
   const cap = c.rules.caps.minions;
   const fullSwarmTurnSeconds: number[] = [];
