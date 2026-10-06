@@ -90,7 +90,7 @@ function recordAttempt(session: FightSession): void {
 }
 
 const isCounts = (v: unknown): v is Record<string, number> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v) && Object.values(v).every((n) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0);
+  typeof v === 'object' && v !== null && !Array.isArray(v) && Object.values(v).every((n) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n < Number.MAX_SAFE_INTEGER);
 
 /** The tester ID: a `?tester=` in the page's URL wins and is remembered, else the one saved from last time. */
 export function loadTester(search: string = window.location.search): string | undefined {

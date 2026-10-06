@@ -99,8 +99,8 @@ describe('tester and attempt in the browser', () => {
     expect(await finish(session('Q1'))).toBe(2);
     expect(await finish(session('Q2'))).toBe(1);
   });
-  it('treats a count too large to add one to as corrupt', async () => {
-    storage({ 'lab-escape.attemptCounts': '{"P3":9007199254740992}' });
+  it('treats a count that cannot be incremented safely as corrupt', async () => {
+    storage({ 'lab-escape.attemptCounts': '{"P3":9007199254740991}' });
     expect(await finish(session('P3'))).toBe(1);
   });
 });
