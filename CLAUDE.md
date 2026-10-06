@@ -82,8 +82,9 @@ These rules are mandatory. `main` is always green and changes only through merge
 6. **Stay in scope.** Problems you find along the way go into [docs/roadmap.md](docs/roadmap.md) or the pull request description, not into this branch.
 7. **Stay current with `main`.** If `main` moves, merge it into your branch (or rebase, if nobody else has the branch) and rerun the tests before asking for review. Never force-push a branch someone else has worked on.
 8. **Finish the job** with the definition of done below, then mark the pull request ready (`gh pr ready`).
-9. **Merging is the owner's decision.** Do not merge a pull request, turn on auto-merge or push to `main` unless the owner asks for it in the current conversation. After a merge, delete the branch.
-10. **Picking up someone else's branch:** read its note, check what it holds with `git log origin/main..origin/<branch>`, and add yourself to the note's "Last updated" line. Do not start a competing branch for the same task.
+9. **Ask Codex to review every pull request.** Codex reviews when a pull request is opened or marked ready, but a draft or a later push is not reviewed on its own. Once the branch is pushed and the pull request is open, comment `@codex review`, and comment it again after every later push (a fix, a merge from `main`, an edit the owner asked for). Treat each finding as a claim to check: trace a realistic path to the failure, fix it in this branch if the path is real, and reply on its thread and resolve it either way (one line saying why, when you decline). A pull request is ready to merge when its latest push has a Codex review with no open findings.
+10. **Merging is the owner's decision.** Do not merge a pull request, turn on auto-merge or push to `main` unless the owner asks for it in the current conversation. After a merge, delete the branch.
+11. **Picking up someone else's branch:** read its note, check what it holds with `git log origin/main..origin/<branch>`, and add yourself to the note's "Last updated" line. Do not start a competing branch for the same task.
 
 ## Definition of done
 
@@ -97,6 +98,7 @@ A pull request is ready for review when every line that applies is true.
 - **UI changed:** checked in the browser on the dev server, in light and dark themes, with the keyboard shortcuts still working.
 - **Docs:** the README covers anything a user runs or sees; the implementation notes cover any new interpretation of the spec; the roadmap item is deleted and any follow-ups are added; this file is updated if commands, workflow or invariants changed; anything no longer true is deleted.
 - **Work note:** its lasting content has moved into the docs above, and the note is deleted in the branch's last commit.
+- **Codex review:** requested with `@codex review` on the latest push, and every finding fixed or answered, with its thread replied to and resolved.
 - **Pull request description:** what changed, why, how it was verified, and anything the owner needs to decide. Use the template in `.github/pull_request_template.md`.
 
 ## Keeping the docs current
