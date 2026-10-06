@@ -36,7 +36,7 @@ export interface TelemetryLoad {
  * another engine or content version is refused, not misread. Fights that did not finish, or used debug commands (a
  * cheat is not an attempt), are skipped and reported.
  */
-export function loadTelemetry(c: Content, dir: string, opts: { includeUnlabelled?: boolean } = {}): TelemetryLoad {
+export function loadTelemetry(c: Content, dir: string, opts: { includeUnlabelled?: boolean; excludeTesters?: readonly string[] } = {}): TelemetryLoad {
   if (!fs.existsSync(dir)) throw new Error(`No telemetry folder at ${dir}. Play some fights with npm run dev first.`);
   const out: TelemetryLoad = { fights: [], skipped: [] };
   for (const entry of fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -53,6 +53,7 @@ export function loadTelemetry(c: Content, dir: string, opts: { includeUnlabelled
       if (typeof f !== 'string' && f.tester === undefined && !opts.includeUnlabelled) out.skipped.push({ name: entry.name, reason: 'no tester ID (--include-unlabelled counts it)' });
       else
       if (typeof f === 'string') out.skipped.push({ name: entry.name, reason: f });
+      else if (typeof f !== 'string' && f.tester !== undefined && opts.excludeTesters?.includes(f.tester)) out.skipped.push({ name: entry.name, reason: `tester ${f.tester} excluded (--exclude-tester)` });
       else out.fights.push(f);
     } catch (e) {
       out.skipped.push({ name: entry.name, reason: e instanceof Error ? e.message.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 2).join(' ') : String(e) });
@@ -60,6 +61,8 @@ export function loadTelemetry(c: Content, dir: string, opts: { includeUnlabelled
   }
   return out;
 }
+
+const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 /** The figures for one fight, or the reason it does not count. */
 export function analyseFight(c: Content, rec: FightRecord, name: string): PlaytestFight | string {
@@ -87,7 +90,8 @@ export function analyseFight(c: Content, rec: FightRecord, name: string): Playte
     name,
     tester: rec.meta?.tester,
     attempt: rec.meta?.attempt,
-    preset: rec.meta?.preset,
+    // From the loadout the fight was played with, not from the replay's own claim about it.
+    preset: c.presets.find((p) => sameSet(p.abilities, rec.loadout.abilities) && sameSet(p.upgrades, rec.loadout.upgrades))?.id,
     outcome: s.outcome,
     rounds: s.rounds,
     friendlyFireShare: s.friendlyFireShare,
@@ -191,8 +195,9 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
 
   const swarm = fights.flatMap((f) => f.fullSwarmTurnSeconds);
   if (swarm.length) {
-    const m = median(swarm);
-    out.push({ metric: 'Median turn time with a full swarm', value: `${m.toFixed(0)} s over ${swarm.length} turns`, target: 'under 60 s', alarm: 'over 90 s', status: m > 90 ? 'alarm' : m >= 60 ? 'warn' : 'ok' });
+    // Rounded before it is shown and judged, so the figure on the page is the one the status was decided on.
+    const m = Math.round(median(swarm) * 10) / 10;
+    out.push({ metric: 'Median turn time with a full swarm', value: `${m.toFixed(1)} s over ${swarm.length} turns`, target: 'under 60 s', alarm: 'over 90 s', status: m > 90 ? 'alarm' : m >= 60 ? 'warn' : 'ok' });
   } else out.push(na('Median turn time with a full swarm', 'under 60 s', 'over 90 s', 'no turn ended with the minion cap reached'));
 
   // A fight where the player took no damage has no share, and counting it as 0% would drag the mean down.
@@ -237,9 +242,9 @@ export function formatPlaytest(dir: string, load: TelemetryLoad, opts: PlaytestO
   L.push(title, '='.repeat(title.length));
   L.push(`Fights counted: ${load.fights.length}; skipped: ${load.skipped.length}`);
   for (const s of load.skipped) L.push(`  skipped ${s.name}: ${s.reason}`);
-  if (!load.fights.length) return L.join('\n');
   L.push('', 'Spec metrics:');
   for (const ch of playtestChecks(load.fights, opts)) L.push(`  [${ch.status.toUpperCase().padEnd(5)}] ${ch.metric}: ${ch.value}  (target ${ch.target}; alarm ${ch.alarm})`);
+  if (!load.fights.length) return L.join('\n');
   const testers = new Map<string, PlaytestFight[]>();
   for (const f of load.fights) testers.set(f.tester ?? '(no tester)', [...(testers.get(f.tester ?? '(no tester)') ?? []), f]);
   L.push('', 'By tester:');

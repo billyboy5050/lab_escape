@@ -82,7 +82,10 @@ describe('playtest metrics', () => {
 
   it('turn time: median seconds over the full-swarm turns', () => {
     const t = (xs: number[]) => check([fight({ fullSwarmTurnSeconds: xs })], 'Median turn time');
-    expect(t([20, 40, 100])).toMatchObject({ value: '40 s over 3 turns', status: 'ok' });
+    expect(t([20, 40, 100])).toMatchObject({ value: '40.0 s over 3 turns', status: 'ok' });
+    // The figure shown is the figure judged: 59.96 s shows as 60.0 s and is not "under 60 s".
+    expect(t([59.96])).toMatchObject({ value: '60.0 s over 1 turns', status: 'warn' });
+    expect(t([90.04])).toMatchObject({ value: '90.0 s over 1 turns', status: 'warn' });
     expect(t([70]).status).toBe('warn');
     expect(t([91]).status).toBe('alarm');
     expect(t([]).status).toBe('n/a');
@@ -182,6 +185,28 @@ describe('reading saved telemetry', () => {
     const load = loadTelemetry(C, root);
     expect(load.fights).toEqual([]);
     expect(load.skipped[0]!.reason).toContain('turnTimesMs[0]');
+  });
+
+  it('takes the preset from the loadout, not from what the replay says about itself', { timeout: BOT_FIGHT_TIMEOUT_MS }, () => {
+    const rec = play(1, { preset: 'tech', tester: 'P1', attempt: 1 });
+    const f = analyseFight(C, rec, 'x');
+    expect(typeof f === 'string' ? f : f.preset).toBe('hybrid');
+  });
+
+  it('leaves out the testers it is told to', { timeout: BOT_FIGHT_TIMEOUT_MS }, () => {
+    const root = tmp();
+    save(root, 'a', play(1, { preset: 'hybrid', tester: 'DEV', attempt: 1 }));
+    save(root, 'b', play(2, { preset: 'hybrid', tester: 'P1', attempt: 1 }));
+    const load = loadTelemetry(C, root, { excludeTesters: ['DEV'] });
+    expect(load.fights.map((f) => f.tester)).toEqual(['P1']);
+    expect(load.skipped).toEqual([{ name: 'a', reason: expect.stringContaining('DEV excluded') }]);
+  });
+
+  it('still shows every metric, as n/a, when nothing was counted', () => {
+    const text = formatPlaytest('telemetry', { fights: [], skipped: [{ name: 'x', reason: 'unfinished' }] });
+    expect(text).toContain('Fights counted: 0; skipped: 1');
+    expect(text.match(/\[N\/A/g)).toHaveLength(8);
+    expect(text).not.toContain('By tester');
   });
 
   it('says what is wrong when the folder does not exist', () => {

@@ -110,6 +110,7 @@ npm run sim -- --help
 | `--preset tech\|alien\|hybrid` | Preset for `batch` and `tune` (default hybrid) |
 | `--seeds N`, `--from N` | Number of seeds (default 1000) and the first seed (default 1) |
 | `--workers N` | Worker threads (default: CPU count minus 1) |
+| `--exclude-tester ID` | With `telemetry`: leave a tester out (repeatable), such as the developer who played round 1, so the first-time figures cover only first-time players |
 | `--include-unlabelled` | With `telemetry`: also count fights saved with no tester ID (skipped by default, since ordinary play is saved in the same folder) |
 | `--informed-from N`, `--informed-attempts N`, `--informed-preset ID` | With `telemetry`: the first attempt number counted as informed (default 2), how many attempts per tester the informed round has (default 3) and the preset it plays (default hybrid) |
 | `--size N` | Abilities per random loadout in a sweep (default: the loadout size in `rules.json`) |

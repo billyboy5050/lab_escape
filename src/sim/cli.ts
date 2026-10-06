@@ -40,6 +40,7 @@ Options
   --record         With golden: re-record the golden replays
   --informed-from N  With telemetry: the first attempt number counted as informed (default 2)
   --include-unlabelled  With telemetry: also count fights saved with no tester ID (by default they are skipped)
+  --exclude-tester ID   With telemetry: leave a tester out (repeatable), such as the developer who played round 1
   --informed-attempts N  With telemetry: how many attempts per tester the informed round has, from --informed-from (default 3)
   --informed-preset ID  With telemetry: the preset the informed round plays (default hybrid)
 `;
@@ -61,6 +62,7 @@ function main(): Promise<void> | void {
       record: { type: 'boolean', default: false },
       'informed-from': { type: 'string' },
       'include-unlabelled': { type: 'boolean', default: false },
+      'exclude-tester': { type: 'string', multiple: true },
       'informed-attempts': { type: 'string' },
       'informed-preset': { type: 'string' },
       param: { type: 'string' },
@@ -196,7 +198,7 @@ function main(): Promise<void> | void {
       const informedPreset = values['informed-preset'] ?? DEFAULT_PLAYTEST.informedPreset;
       if (!presetIds.includes(informedPreset)) throw new Error(`--informed-preset must be one of ${presetIds.join(', ')} (got "${informedPreset}")`);
       const opts = { informedFrom: parseInteger('informed-from', values['informed-from'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedFrom, informedAttempts: parseInteger('informed-attempts', values['informed-attempts'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedAttempts, informedPreset };
-      console.log(formatPlaytest(dir, loadTelemetry(defaultContent(), dir, { includeUnlabelled: values['include-unlabelled'] }), opts));
+      console.log(formatPlaytest(dir, loadTelemetry(defaultContent(), dir, { includeUnlabelled: values['include-unlabelled'], excludeTesters: values['exclude-tester'] }), opts));
       return;
     }
     default:
