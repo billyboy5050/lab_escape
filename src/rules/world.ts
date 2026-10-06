@@ -452,9 +452,11 @@ export class World {
         continue;
       }
       if (u.team === 'enemy') this.placeCorpse(u);
+      // Once the player is dead the fight is over: the player's line has cleared the intercom queue, and no
+      // death effect or later line may add to it.
+      if (playerDeath) continue;
       intercomTrigger(this, 'unitDied', { def: u.def });
-      // Once the player is dead the fight is over, so no death effect may add to it.
-      if (!playerDeath) for (const hook of this.deathHooks) hook(this, u);
+      for (const hook of this.deathHooks) hook(this, u);
     }
     if (playerDeath) this.endFight({ result: 'lose', cause: describeSource(playerDeath.killedBy), round: this.s.round, killer: playerDeath.killedBy });
   }

@@ -14,4 +14,13 @@ describe('deaths in the same flush as the player', () => {
     expect(eventsOf(events, 'FightEnded')).toHaveLength(1);
     expect(after.units.some((u) => u.dead)).toBe(false);
   });
+
+  it('leaves no intercom line queued behind the player death line', () => {
+    const s = scenario({ player: 'D4', playerHp: 1, units: [{ def: 'medic', at: 'E4', hp: 1 }, { def: 'warden', at: 'D5', hp: 1 }] });
+    const { s: after } = inWorld(s, (w) => {
+      w.areaDamage([T('D4'), T('E4'), T('D5')], 50, 'explosive', w.playerEffect('test'));
+    });
+    expect(after.outcome?.result).toBe('lose');
+    expect(after.intercom.queue).toEqual([]);
+  });
 });
