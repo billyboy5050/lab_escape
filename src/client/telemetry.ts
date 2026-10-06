@@ -111,10 +111,16 @@ export function assignAttempt(session: FightSession): void {
   const meta = session.record.meta;
   if (!meta?.tester) return;
   const counts = loadPref('attemptCounts', {}, isCounts);
-  const attempt = (Object.hasOwn(counts, meta.tester) ? counts[meta.tester]! : 0) + 1;
+  const stored = Object.hasOwn(counts, meta.tester) ? counts[meta.tester]! : 0;
+  const attempt = Math.max(stored, unsavedAttempts.get(meta.tester) ?? 0) + 1;
   meta.attempt = attempt;
-  savePref('attemptCounts', { ...counts, [meta.tester]: attempt });
+  // When storage refuses the write, this page keeps the count itself, so a fight is never numbered like the one before it.
+  if (savePref('attemptCounts', { ...counts, [meta.tester]: attempt })) unsavedAttempts.delete(meta.tester);
+  else unsavedAttempts.set(meta.tester, attempt);
 }
+
+/** Attempt numbers storage would not keep, by tester, for the life of this page. */
+const unsavedAttempts = new Map<string, number>();
 
 /**
  * Reads a saved preference. Storage outlives the code that wrote it (an older version, a hand edit, a corrupt write),
@@ -131,10 +137,12 @@ export function loadPref<T>(key: string, fallback: T, valid: (v: unknown) => v i
   }
 }
 
-export function savePref(key: string, value: unknown): void {
+/** Saves a preference. Returns false when storage refused it (a private window, a full disk); callers that cannot lose the value keep their own copy. */
+export function savePref(key: string, value: unknown): boolean {
   try {
     localStorage.setItem(`lab-escape.${key}`, JSON.stringify(value));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }

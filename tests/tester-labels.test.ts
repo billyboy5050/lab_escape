@@ -88,4 +88,15 @@ describe('tester and attempt in the browser', () => {
     storage({ 'lab-escape.attemptCounts': '{"P3":"many"}' });
     expect(await finish(session('P3'))).toBe(1);
   });
+  it('keeps counting on the page when storage refuses writes', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('storage is full');
+      },
+    });
+    expect(await finish(session('Q1'))).toBe(1);
+    expect(await finish(session('Q1'))).toBe(2);
+    expect(await finish(session('Q2'))).toBe(1);
+  });
 });
