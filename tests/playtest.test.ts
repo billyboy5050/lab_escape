@@ -62,6 +62,11 @@ describe('playtest metrics', () => {
     expect(check([fight()], 'Informed win rate').status).toBe('n/a');
   });
 
+  it('informed round: one fight per tester and attempt number, the earliest', () => {
+    const fights = [fight({ name: '1', attempt: 2, outcome: 'win' }), fight({ name: '2', attempt: 2 }), fight({ name: '3', attempt: 3 })];
+    expect(check(fights, 'Informed win rate').value).toBe('1 of 2 (50%); attempt 2: 1/1, attempt 3: 0/1');
+  });
+
   it('winning fights: median rounds', () => {
     expect(check([fight({ outcome: 'win', rounds: 10 })], 'Length of winning').status).toBe('ok');
     expect(check([fight({ outcome: 'win', rounds: 7 })], 'Length of winning').status).toBe('warn');
@@ -150,6 +155,24 @@ describe('reading saved telemetry', () => {
     expect(text).toContain('Fights counted: 1; skipped: 5');
     expect(text).toContain('P1: a1 hybrid');
     expect(text).toContain('[');
+  });
+
+  it('skips fights with no tester ID unless asked to count them', { timeout: BOT_FIGHT_TIMEOUT_MS }, () => {
+    const root = tmp();
+    save(root, 'a-labelled', play(1, { preset: 'hybrid', tester: 'P1', attempt: 1 }));
+    save(root, 'b-ordinary-play', play(2, { preset: 'hybrid' }));
+    const load = loadTelemetry(C, root);
+    expect(load.fights.map((f) => f.name)).toEqual(['a-labelled']);
+    expect(load.skipped).toEqual([{ name: 'b-ordinary-play', reason: expect.stringContaining('no tester ID') }]);
+    expect(loadTelemetry(C, root, { includeUnlabelled: true }).fights.map((f) => f.name)).toEqual(['a-labelled', 'b-ordinary-play']);
+  });
+
+  it('refuses a replay with a negative turn time', { timeout: BOT_FIGHT_TIMEOUT_MS }, () => {
+    const root = tmp();
+    save(root, 'a-negative', play(1, { preset: 'hybrid', tester: 'P1', attempt: 1, turnTimesMs: [-5000] }));
+    const load = loadTelemetry(C, root);
+    expect(load.fights).toEqual([]);
+    expect(load.skipped[0]!.reason).toContain('turnTimesMs[0]');
   });
 
   it('says what is wrong when the folder does not exist', () => {

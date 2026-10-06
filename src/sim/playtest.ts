@@ -36,7 +36,7 @@ export interface TelemetryLoad {
  * another engine or content version is refused, not misread. Fights that did not finish, or used debug commands (a
  * cheat is not an attempt), are skipped and reported.
  */
-export function loadTelemetry(c: Content, dir: string): TelemetryLoad {
+export function loadTelemetry(c: Content, dir: string, opts: { includeUnlabelled?: boolean } = {}): TelemetryLoad {
   if (!fs.existsSync(dir)) throw new Error(`No telemetry folder at ${dir}. Play some fights with npm run dev first.`);
   const out: TelemetryLoad = { fights: [], skipped: [] };
   for (const entry of fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -49,10 +49,13 @@ export function loadTelemetry(c: Content, dir: string): TelemetryLoad {
       const rec: unknown = JSON.parse(fs.readFileSync(file, 'utf8'));
       checkCompatible(c, rec);
       const f = analyseFight(c, rec, entry.name);
+      // Every fight the dev server finishes is saved here, so ordinary play with no tester ID sits beside the playtest's fights.
+      if (typeof f !== 'string' && f.tester === undefined && !opts.includeUnlabelled) out.skipped.push({ name: entry.name, reason: 'no tester ID (--include-unlabelled counts it)' });
+      else
       if (typeof f === 'string') out.skipped.push({ name: entry.name, reason: f });
       else out.fights.push(f);
     } catch (e) {
-      out.skipped.push({ name: entry.name, reason: e instanceof Error ? e.message.split('\n')[0]! : String(e) });
+      out.skipped.push({ name: entry.name, reason: e instanceof Error ? e.message.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 2).join(' ') : String(e) });
     }
   }
   return out;
@@ -147,7 +150,14 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
     });
   } else out.push(na('First-time losses that reach wave 2', 'most reach round 4', 'median loss before round 3', 'no lost first attempts'));
 
-  const informed = fights.filter((f) => f.preset === opts.informedPreset && f.attempt !== undefined && f.attempt >= opts.informedFrom && f.attempt < opts.informedFrom + opts.informedAttempts);
+  // One fight per tester and attempt number, the earliest, as for first attempts: the number is counted per browser.
+  const informedByKey = new Map<string, PlaytestFight>();
+  for (const f of fights) {
+    if (f.preset !== opts.informedPreset || f.tester === undefined || f.attempt === undefined) continue;
+    if (f.attempt < opts.informedFrom || f.attempt >= opts.informedFrom + opts.informedAttempts) continue;
+    if (!informedByKey.has(`${f.tester}\u0000${f.attempt}`)) informedByKey.set(`${f.tester}\u0000${f.attempt}`, f);
+  }
+  const informed = [...informedByKey.values()];
   if (informed.length) {
     const won = informed.filter((f) => f.outcome === 'win').length;
     const byAttempt = new Map<number, [number, number]>();

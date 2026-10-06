@@ -130,7 +130,7 @@ export function recordProblems(rec: unknown): string[] {
       const t = meta.turnTimesMs;
       if (t !== undefined) {
         if (!Array.isArray(t)) add('meta.turnTimesMs must be a list of numbers');
-        else t.forEach((x, i) => (typeof x !== 'number' || !Number.isFinite(x)) && add(`meta.turnTimesMs[${i}] must be a number (got ${JSON.stringify(x)})`));
+        else t.forEach((x, i) => (typeof x !== 'number' || !Number.isFinite(x) || x < 0) && add(`meta.turnTimesMs[${i}] must be a number of milliseconds, 0 or more (got ${JSON.stringify(x)})`));
       }
     }
   }
