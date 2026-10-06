@@ -48,6 +48,7 @@ Each fact has one home. Link to it rather than copying it.
 | Simulator help | `npm run sim -- --help` | |
 | Quick balance check while iterating (prints only) | `npm run sim -- batch --preset hybrid --seeds 100` | seconds |
 | Re-record the golden replays | `npm run golden:record` | |
+| Playtest metrics from saved telemetry | `npm run sim -- telemetry [DIR]` | seconds |
 
 Times are for an 8-core machine.
 

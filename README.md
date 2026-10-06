@@ -102,6 +102,7 @@ npm run sim -- --help
 | `tune --param units.warden.hp --values 12,16,20` | One tuning value across a list |
 | `golden [--record]` | Verify (or re-record) the golden replays |
 | `replay FILE` | Replay a saved command log and print its summary |
+| `telemetry [DIR]` | Playtest metrics from the fights saved under `telemetry/` (or DIR), each against the spec's target and alarm, then every tester's attempts |
 
 | Option | Meaning |
 | --- | --- |
@@ -109,6 +110,7 @@ npm run sim -- --help
 | `--preset tech\|alien\|hybrid` | Preset for `batch` and `tune` (default hybrid) |
 | `--seeds N`, `--from N` | Number of seeds (default 1000) and the first seed (default 1) |
 | `--workers N` | Worker threads (default: CPU count minus 1) |
+| `--informed-from N`, `--informed-preset ID` | With `telemetry`: the first attempt number counted as informed (default 2) and the preset the informed round plays (default hybrid) |
 | `--size N` | Abilities per random loadout in a sweep (default: the loadout size in `rules.json`) |
 | `--set PATH=VAL` | Content override, repeatable, e.g. `--set units.warden.hp=16` |
 | `--hold-wave3` | Hold back wave 3; clearing wave 2 wins (the first playtest's setup) |
@@ -131,6 +133,8 @@ The game has no randomness; all variation comes from the bot's seed, stored with
 Each fight is a replay file: loadout, settings and the ordered player commands, plus the engine version and content hash it is valid against. Replaying it reproduces the fight exactly.
 
 With the dev server running, every finished fight is saved to `telemetry/<time>-<preset>-<outcome>/` (or `telemetry/<time>-<tester>-a<attempt>-<preset>-<outcome>/` when a tester ID is set) as `replay.json`, `summary.json` (outcome, rounds, damage by source including friendly fire, abilities used, peak minions, hazard fires with victims, cause of death, turn times) and `events.jsonl` (one event per line). The result screen also offers the three files as downloads.
+
+After a playtest round, `npm run sim -- telemetry` reads every fight under `telemetry/` and prints the spec's playtest metrics: first attempts lost, rounds in first-time losses, informed win rate by attempt, length of winning fights, median turn time with a full swarm, friendly-fire share, deaths by source and hazard fires per fight. It replays each `replay.json`, so a fight from another engine or content version, an unfinished fight and one played with debug commands are skipped and listed with the reason. The informed round continues each tester's attempt numbers, so give `--informed-from` the number of their first informed attempt.
 
 For playtests, give each person a tester ID: open the game at `?tester=P3` or type it into the Tester ID field on the loadout screen. The browser remembers it. The replay's `meta` then carries `tester` and `attempt` (1 for their first finished fight, counted per tester in that browser, so abandoned fights do not use a number), and both go into the folder name. Clear the field outside a playtest. `telemetry/` is ignored by git; `src/telemetry/` is source.
 

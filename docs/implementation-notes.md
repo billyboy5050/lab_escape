@@ -123,6 +123,10 @@ The spec says to update it when implementation forces a rule change. Nothing her
 - **Replays stop at a rejected command.** A replay command the engine refuses (a corrupted or edited file) pauses playback there and says which command it was, instead of playing the rest against a state it no longer matches.
 - **Incoming-damage badges** in the intent forecast sit on the unit's current tile, not on the tile where the forecast says it is hit. The badge belongs to the unit the player can see, and a minion's destination is already drawn as its dashed path; the hit tile is used only for things not on the board yet.
 
+- **The playtest report reads replays, not `summary.json`.** `npm run sim -- telemetry` replays every `replay.json`, because the summary does not record the minion count per turn and a replay is checked against the engine version and content hash. A fight with debug commands is not counted as an attempt.
+- **"Full swarm" means the minion cap.** A turn counts toward the median turn time when the player had the maximum number of minions (`caps.minions`, 5) alive when they ended it. The turn that ends the fight counts like any other. Confirm this reading; the spec does not define a full swarm.
+- **Informed attempts are chosen by attempt number.** Telemetry does not record which playtest round a fight belonged to, and a tester's attempt numbers carry on from round 2 into round 3, so the report counts every fight on the informed preset from `--informed-from` (default attempt 2) as informed. If a tester plays more than one first-time attempt, set it to the number of their first informed attempt.
+
 ### Simulator
 
 - **Greedy bot** looks one action ahead. It plays out the round's minion and enemy phases after each candidate and scores what is left.
