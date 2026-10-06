@@ -20,6 +20,7 @@ const fight = (o: Partial<PlaytestFight> = {}): PlaytestFight => ({
   causeCategory: 'enemy',
   hazardFires: 2,
   fullSwarmTurnSeconds: [],
+  turnTimesComplete: true,
   ...o,
 });
 const check = (fights: PlaytestFight[], metric: string, opts?: Parameters<typeof playtestChecks>[1]) => playtestChecks(fights, opts).find((c) => c.metric.startsWith(metric))!;
@@ -89,6 +90,8 @@ describe('playtest metrics', () => {
     expect(t([70]).status).toBe('warn');
     expect(t([91]).status).toBe('alarm');
     expect(t([]).status).toBe('n/a');
+    const note = check([fight({ fullSwarmTurnSeconds: [30] }), fight({ turnTimesComplete: false })], 'Median turn time');
+    expect(note.value).toBe('30.0 s over 1 turns; 1 of 2 fights left out for missing or incomplete turn times');
   });
 
   it('friendly fire, death sources and hazard fires', () => {
@@ -140,6 +143,10 @@ describe('reading saved telemetry', () => {
     expect(f.attempt).toBe(1);
     expect(f.fullSwarmTurnSeconds.length).toBeLessThanOrEqual(turns);
     for (const s of f.fullSwarmTurnSeconds) expect(s).toBeGreaterThanOrEqual(1);
+    // A missing time shifts the rest onto the wrong turns, so the fight gives no turn time at all.
+    const short = analyseFight(C, { ...rec, meta: { ...rec.meta, turnTimesMs: rec.meta!.turnTimesMs!.slice(1) } }, 'z');
+    expect(typeof short === 'string' ? short : [short.turnTimesComplete, short.fullSwarmTurnSeconds]).toEqual([false, []]);
+    expect(f.turnTimesComplete).toBe(true);
     // With no turn times recorded there is nothing to measure.
     const bare = analyseFight(C, { ...rec, meta: { preset: 'hybrid' } }, 'y');
     expect(typeof bare === 'string' ? bare : bare.fullSwarmTurnSeconds).toEqual([]);

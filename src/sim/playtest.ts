@@ -23,6 +23,8 @@ export interface PlaytestFight {
   hazardFires: number;
   /** Seconds the player took on each turn that ended with a full swarm (minions at the cap). */
   fullSwarmTurnSeconds: number[];
+  /** False when the replay has fewer or more turn times than turns, so no turn can be matched to its time and none is used. */
+  turnTimesComplete: boolean;
 }
 
 export interface TelemetryLoad {
@@ -80,7 +82,9 @@ export function analyseFight(c: Content, rec: FightRecord, name: string): Playte
   const times = rec.meta?.turnTimesMs ?? [];
   const cap = c.rules.caps.minions;
   const fullSwarmTurnSeconds: number[] = [];
-  ends.forEach((idx, k) => {
+  // A missing or extra time shifts every later one onto the wrong turn, so a fight whose count is off contributes none.
+  const turnTimesComplete = times.length === ends.length;
+  if (turnTimesComplete) ends.forEach((idx, k) => {
     const t = times[k];
     if (t === undefined) return;
     const minions = r.states[idx]!.units.filter((u) => u.kind === 'minion' && !u.dead).length;
@@ -99,6 +103,7 @@ export function analyseFight(c: Content, rec: FightRecord, name: string): Playte
     causeCategory: s.causeOfDeath?.category ?? null,
     hazardFires: s.hazardFires.length,
     fullSwarmTurnSeconds,
+    turnTimesComplete,
   };
 }
 
@@ -194,11 +199,13 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
   } else out.push(na('Length of winning fights', '8 to 12', 'over 16', 'no wins'));
 
   const swarm = fights.flatMap((f) => f.fullSwarmTurnSeconds);
+  const untimed = fights.filter((f) => !f.turnTimesComplete).length;
+  const untimedNote = untimed ? `; ${untimed} of ${fights.length} fights left out for missing or incomplete turn times` : '';
   if (swarm.length) {
     // Rounded before it is shown and judged, so the figure on the page is the one the status was decided on.
     const m = Math.round(median(swarm) * 10) / 10;
-    out.push({ metric: 'Median turn time with a full swarm', value: `${m.toFixed(1)} s over ${swarm.length} turns`, target: 'under 60 s', alarm: 'over 90 s', status: m > 90 ? 'alarm' : m >= 60 ? 'warn' : 'ok' });
-  } else out.push(na('Median turn time with a full swarm', 'under 60 s', 'over 90 s', 'no turn ended with the minion cap reached'));
+    out.push({ metric: 'Median turn time with a full swarm', value: `${m.toFixed(1)} s over ${swarm.length} turns${untimedNote}`, target: 'under 60 s', alarm: 'over 90 s', status: m > 90 ? 'alarm' : m >= 60 ? 'warn' : 'ok' });
+  } else out.push(na('Median turn time with a full swarm', 'under 60 s', 'over 90 s', `no turn ended with the minion cap reached${untimedNote}`));
 
   // A fight where the player took no damage has no share, and counting it as 0% would drag the mean down.
   const damaged = fights.filter((f) => f.playerDamage > 0);

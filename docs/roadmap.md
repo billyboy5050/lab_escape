@@ -47,6 +47,7 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 
 ## Smaller items
 
+- **Record the playtest round in telemetry.** The report cannot tell a tester's first-time fights from their informed ones, so it uses one attempt number for everyone (`--informed-from`) and `--exclude-tester` for the developer's round. Testers who needed different numbers of first-time fights are then classified wrongly. Add a round field to the replay's `meta` (set on the loadout screen next to the Tester ID, or by a `?round=` parameter), check it in `recordProblems`, and use it in `src/sim/playtest.ts` in place of the cutoff.
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Phone-width layout.** The narrow breakpoint exists but has not been playtested.
 - **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.
