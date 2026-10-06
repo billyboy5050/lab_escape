@@ -432,7 +432,8 @@ export class World {
 
   /**
    * Removes every unit and object marked dead, in unit ID order, leaving enemy corpses and queueing
-   * death hooks. The player's death ends the fight at once; the last enemy's death waits for checkWin.
+   * death hooks. The player's death ends the fight once every unit that died with them has been reported;
+   * the last enemy's death waits for checkWin.
    */
   flushDeaths(): void {
     const deadObjects = this.s.objects.filter((o) => o.destroyed);
@@ -442,17 +443,20 @@ export class World {
       this.s.objects = this.s.objects.filter((o) => !o.destroyed);
       for (const o of deadObjects) this.emit({ t: 'ObjectDestroyed', id: o.id, kind: o.kind, pos: { ...o.pos }, killer: o.killedBy ?? null });
     }
+    const playerDeath = deadUnits.find((u) => u.id === 0);
     for (const u of deadUnits) {
       this.s.units = this.s.units.filter((x) => x !== u);
       this.emit({ t: 'UnitDied', id: u.id, def: u.def, team: u.team, kind: u.kind, pos: { ...u.pos }, killer: u.killedBy ?? null });
       if (u.id === 0) {
         intercomTrigger(this, 'unitDied', { def: 'player' });
-        this.endFight({ result: 'lose', cause: describeSource(u.killedBy), round: this.s.round, killer: u.killedBy });
+        continue;
       }
       if (u.team === 'enemy') this.placeCorpse(u);
       intercomTrigger(this, 'unitDied', { def: u.def });
-      for (const hook of this.deathHooks) hook(this, u);
+      // Once the player is dead the fight is over, so no death effect may add to it.
+      if (!playerDeath) for (const hook of this.deathHooks) hook(this, u);
     }
+    if (playerDeath) this.endFight({ result: 'lose', cause: describeSource(playerDeath.killedBy), round: this.s.round, killer: playerDeath.killedBy });
   }
 
   /**
