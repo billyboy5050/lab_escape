@@ -1,5 +1,6 @@
 import type { Content } from '../content/types';
 import type { Loadout } from '../state/types';
+import { cleanTester, telemetryFolderName } from '../telemetry/label';
 import { eventsToJsonl } from '../telemetry/record';
 import type { FightSession } from '../telemetry/session';
 
@@ -17,8 +18,9 @@ export function telemetryFiles(session: FightSession): Record<string, string> {
  */
 export async function saveTelemetry(c: Content, session: FightSession): Promise<string | null> {
   recordAttempt(session);
-  const preset = (session.record.meta?.preset as string | undefined) ?? 'custom';
-  const name = `${new Date().toISOString().replace(/[:.]/g, '-')}-${preset}-${session.state.outcome?.result ?? 'unfinished'}`;
+  const meta = session.record.meta;
+  assignAttempt(session);
+  const name = telemetryFolderName(new Date(), meta, session.state.outcome?.result ?? 'unfinished');
   try {
     const r = await fetch('/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, files: telemetryFiles(session) }) });
     if (!r.ok) return null;
@@ -87,6 +89,39 @@ function recordAttempt(session: FightSession): void {
   }
 }
 
+const isCounts = (v: unknown): v is Record<string, number> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v) && Object.values(v).every((n) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n < Number.MAX_SAFE_INTEGER);
+
+/** The tester ID: a `?tester=` in the page's URL wins and is remembered, else the one saved from last time. */
+export function loadTester(search: string = window.location.search): string | undefined {
+  const fromUrl = cleanTester(new URLSearchParams(search).get('tester'));
+  if (fromUrl) {
+    savePref('tester', fromUrl);
+    return fromUrl;
+  }
+  return cleanTester(loadPref<unknown>('tester', undefined, (v): v is string => typeof v === 'string'));
+}
+
+/**
+ * Numbers a finished fight for its tester: one more than the fights that tester has finished in this browser, taken from
+ * the counter as it is now (so two tabs finishing in turn get different numbers), and stored in the replay's meta. A fight
+ * with no tester gets none. Own properties only: an ID such as "constructor" must not read the object's inherited members.
+ */
+export function assignAttempt(session: FightSession): void {
+  const meta = session.record.meta;
+  if (!meta?.tester) return;
+  const counts = loadPref('attemptCounts', {}, isCounts);
+  const stored = Object.hasOwn(counts, meta.tester) ? counts[meta.tester]! : 0;
+  const attempt = Math.max(stored, unsavedAttempts.get(meta.tester) ?? 0) + 1;
+  meta.attempt = attempt;
+  // When storage refuses the write, this page keeps the count itself, so a fight is never numbered like the one before it.
+  if (savePref('attemptCounts', { ...counts, [meta.tester]: attempt })) unsavedAttempts.delete(meta.tester);
+  else unsavedAttempts.set(meta.tester, attempt);
+}
+
+/** Attempt numbers storage would not keep, by tester, for the life of this page. */
+const unsavedAttempts = new Map<string, number>();
+
 /**
  * Reads a saved preference. Storage outlives the code that wrote it (an older version, a hand edit, a corrupt write),
  * so a value that does not pass `valid` is treated as absent and the fallback is used: the app must start either way.
@@ -102,10 +137,12 @@ export function loadPref<T>(key: string, fallback: T, valid: (v: unknown) => v i
   }
 }
 
-export function savePref(key: string, value: unknown): void {
+/** Saves a preference. Returns false when storage refused it (a private window, a full disk); callers that cannot lose the value keep their own copy. */
+export function savePref(key: string, value: unknown): boolean {
   try {
     localStorage.setItem(`lab-escape.${key}`, JSON.stringify(value));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }

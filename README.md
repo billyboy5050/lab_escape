@@ -130,7 +130,9 @@ The game has no randomness; all variation comes from the bot's seed, stored with
 
 Each fight is a replay file: loadout, settings and the ordered player commands, plus the engine version and content hash it is valid against. Replaying it reproduces the fight exactly.
 
-With the dev server running, every finished fight is saved to `telemetry/<time>-<preset>-<outcome>/` as `replay.json`, `summary.json` (outcome, rounds, damage by source including friendly fire, abilities used, peak minions, hazard fires with victims, cause of death, turn times) and `events.jsonl` (one event per line). The result screen also offers the three files as downloads. `telemetry/` is ignored by git; `src/telemetry/` is source.
+With the dev server running, every finished fight is saved to `telemetry/<time>-<preset>-<outcome>/` (or `telemetry/<time>-<tester>-a<attempt>-<preset>-<outcome>/` when a tester ID is set) as `replay.json`, `summary.json` (outcome, rounds, damage by source including friendly fire, abilities used, peak minions, hazard fires with victims, cause of death, turn times) and `events.jsonl` (one event per line). The result screen also offers the three files as downloads.
+
+For playtests, give each person a tester ID: open the game at `?tester=P3` or type it into the Tester ID field on the loadout screen. The browser remembers it. The replay's `meta` then carries `tester` and `attempt` (1 for their first finished fight, counted per tester in that browser, so abandoned fights do not use a number), and both go into the folder name. Clear the field outside a playtest. `telemetry/` is ignored by git; `src/telemetry/` is source.
 
 Golden replays live in `golden/` (one command log and event log per preset). `npm test` fails if a build changes them; re-record on purpose with `npm run golden:record` after an intended rule or content change.
 

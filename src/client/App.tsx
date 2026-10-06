@@ -8,7 +8,8 @@ import { isLoadout, isPresetId, loadoutToRetry, reconcileLoadout } from './loado
 import { FightScreen } from './screens/FightScreen';
 import { LoadoutScreen } from './screens/LoadoutScreen';
 import { ResultScreen } from './screens/ResultScreen';
-import { loadPref, savePref } from './telemetry';
+import { loadPref, loadTester, savePref } from './telemetry';
+import { cleanTester } from '../telemetry/label';
 
 type Screen = 'loadout' | 'fight' | 'result';
 
@@ -18,6 +19,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>('loadout');
   const [loadout, setLoadoutState] = useState<Loadout>(() => loadPref('loadout', { abilities: [...hybrid.abilities], upgrades: [...hybrid.upgrades] }, isLoadout));
   const [presetId, setPresetIdState] = useState<string | null>(() => loadPref('preset', hybrid.id, isPresetId));
+  const [tester, setTesterState] = useState<string | undefined>(() => loadTester());
   const [settings, setSettings] = useState<FightSettings>({});
   const [restartKey, setRestartKey] = useState(0);
   const [replay, setReplay] = useState<FightRecord | null>(null);
@@ -38,6 +40,11 @@ export function App() {
   const setLoadout = (l: Loadout) => {
     setLoadoutState(l);
     savePref('loadout', l);
+  };
+  const setTester = (raw: string) => {
+    const t = cleanTester(raw);
+    setTesterState(t);
+    savePref('tester', t ?? '');
   };
   const setPresetId = (p: string | null) => {
     setPresetIdState(p);
@@ -142,7 +149,7 @@ export function App() {
           </button>
         </div>
       </header>
-      {view === 'loadout' && <LoadoutScreen c={c} loadout={loadout} setLoadout={setLoadout} presetId={presetId} setPresetId={setPresetId} settings={settings} setSettings={setSettings} onStart={start} />}
+      {view === 'loadout' && <LoadoutScreen c={c} loadout={loadout} setLoadout={setLoadout} presetId={presetId} setPresetId={setPresetId} settings={settings} setSettings={setSettings} tester={tester} setTester={setTester} onStart={start} />}
       {view === 'fight' && (
         <div className="screen">
           <FightScreen
@@ -155,6 +162,7 @@ export function App() {
               setRestartKey((k) => k + 1);
             }}
             presetId={current.presetId}
+            tester={tester}
             replay={replay}
             restartKey={restartKey}
             onRestart={() => {

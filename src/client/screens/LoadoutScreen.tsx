@@ -13,6 +13,8 @@ export function LoadoutScreen(props: {
   setPresetId: (p: string | null) => void;
   settings: FightSettings;
   setSettings: (s: FightSettings) => void;
+  tester?: string;
+  setTester: (t: string) => void;
   onStart: () => void;
 }) {
   const { c, loadout } = props;
@@ -131,6 +133,13 @@ export function LoadoutScreen(props: {
                 <input type="checkbox" checked={props.settings.maxWaves === 2} onChange={(e) => props.setSettings(e.target.checked ? { ...props.settings, maxWaves: 2 } : { ...props.settings, maxWaves: undefined })} />
                 Hold back wave 3: clearing wave 2 wins (the first playtest's setup)
               </label>
+            </div>
+            <div style={{ padding: '0 12px 8px' }}>
+              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                Tester ID (playtests)
+                <input type="text" value={props.tester ?? ''} maxLength={20} placeholder="P3" onChange={(e) => props.setTester(e.target.value)} style={{ width: '8em' }} />
+              </label>
+              <span className="muted">{props.tester ? 'Fights are labelled with this ID and an attempt number.' : 'Leave empty outside a playtest.'}</span>
             </div>
             <div className="start-bar">
               <button className="btn primary" disabled={problems.length > 0 || loadout.abilities.length === 0} onClick={props.onStart}>
