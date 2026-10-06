@@ -1,6 +1,6 @@
 {
   "format": "lab-escape/replay@1",
-  "engineVersion": "0.1.0",
+  "engineVersion": "0.1.1",
   "contentHash": "08a289f83c157f",
   "loadout": {
     "abilities": [
