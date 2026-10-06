@@ -62,10 +62,10 @@ export function actionStatuses(c: Content, s: GameState): ActionStatus[] {
       if (id === 'reload') {
         st.options = w
           .playerSide()
-          .filter((t) => t.maxAmmo !== undefined && (t.ammo ?? 0) < t.maxAmmo && cheb(t.pos, p!.pos) <= (u.range ?? 2))
+          .filter((t) => t.maxAmmo !== undefined && (t.ammo ?? 0) < t.maxAmmo && cheb(t.pos, p!.pos) <= u.range!)
           .map((t) => ({ target: { ...t.pos } }));
       } else if (id === 'pick_up_mine') {
-        st.options = w.s.objects.filter((o) => o.kind === 'mine' && cheb(o.pos, p!.pos) <= (u.range ?? 1)).map((o) => ({ target: { ...o.pos } }));
+        st.options = w.s.objects.filter((o) => o.kind === 'mine' && cheb(o.pos, p!.pos) <= u.range!).map((o) => ({ target: { ...o.pos } }));
       } else {
         const docked = s.units.find((x) => x.droneState === 'docked' && !x.dead);
         if (docked) {

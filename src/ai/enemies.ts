@@ -86,8 +86,8 @@ function damagedAllies(w: World, m: Unit): Unit[] {
 export function medicTurn(w: World, m: Unit, arrival: boolean): void {
   const def = w.c.units[m.def]!;
   const heal = def.heal!;
-  const safe = def.ai?.['safeDistance'] ?? 4;
-  const follow = def.ai?.['followDistance'] ?? 3;
+  const safe = def.ai!['safeDistance']!;
+  const follow = def.ai!['followDistance']!;
   const reach = reachable(w, m, w.movementAllowance(m));
   const awayFromPlayerSide = (t: Pos) => {
     let d = 9999;
@@ -139,10 +139,10 @@ export function sweepTiles(w: World, from: Pos, dir: Pos, length: number): Pos[]
 /** Scores every reachable tile and sweep direction: +2 per player-side unit, +4 more for the player, -3 per ally. */
 export function flamerOptions(w: World, f: Unit, tiles: Pos[], steps: (p: Pos) => number): AIOption[] {
   const def = w.c.units[f.def]!;
-  const ai = def.ai ?? {};
-  const perSide = ai['scorePerPlayerSideHit'] ?? 2;
-  const playerBonus = ai['scorePlayerBonus'] ?? 4;
-  const perAlly = ai['scorePerAllyHit'] ?? -3;
+  const ai = def.ai!;
+  const perSide = ai['scorePerPlayerSideHit']!;
+  const playerBonus = ai['scorePlayerBonus']!;
+  const perAlly = ai['scorePerAllyHit']!;
   const units = w.activeUnits().filter((u) => u.id !== f.id);
   const out: AIOption[] = [];
   for (const t of tiles) {

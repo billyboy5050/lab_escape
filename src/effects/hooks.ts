@@ -21,7 +21,7 @@ export const sporeBurst: DeathHook = (w, dead) => {
   const pos = { ...dead.pos };
   w.enqueue(UP.A1, `u${dead.id}`, () => {
     const up = w.up('A1');
-    const tiles = w.b.square(pos, up.area?.radius ?? 1);
+    const tiles = w.b.square(pos, up.area!.radius);
     const src = w.playerEffect(UP.A1, 'unit', dead.id, dead.def);
     w.emit({ t: 'AreaEffect', kind: 'burst', tiles, source: src });
     for (const u of unitsOn(w, tiles)) w.applyStatus(u, up.status!.id, up.status!.duration, src);
@@ -48,7 +48,7 @@ export const parasiteJump: DeathHook = (w, dead) => {
   const pos = { ...dead.pos };
   w.enqueue(UP.A3, `u${dead.id}`, () => {
     const up = w.up('A3');
-    const range = up.range ?? 3;
+    const range = up.range!;
     const cands = w.enemies().filter((u) => u.id !== dead.id && cheb(u.pos, pos) <= range && w.b.hasLOS(pos, u.pos));
     const target = minBy(cands, (u) => [cheb(u.pos, pos), u.hp, u.id]);
     if (target) w.applyStatus(target, 'parasite', up.status?.duration ?? w.c.rules.statuses.parasite.duration, { ...para.src, via: UP.A3 });

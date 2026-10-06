@@ -1,4 +1,4 @@
-import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from './required';
+import { REQUIRED_ABILITY_FIELDS, REQUIRED_BLOCK_FIELDS, REQUIRED_HAZARD_SHAPE_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES, REQUIRED_UTILITY_FIELDS } from './required';
 import { DAMAGE_TYPES, DIRECTION_NAMES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
 import { hashJson } from '../util/hash';
 import { isTileName, parseTile } from '../util/tiles';
@@ -149,6 +149,7 @@ export function validateContent(f: ContentFiles): string[] {
     if (u.ammo !== undefined) int(u.ammo, `${w}.ammo`);
     if (u.charges !== undefined) int(u.charges, `${w}.charges`, 1);
     requireFields(u, w, REQUIRED_UNIT_FIELDS[u.id]);
+    for (const [block, paths] of Object.entries(REQUIRED_BLOCK_FIELDS)) if ((u as unknown as Record<string, unknown>)[block]) requireFields(u, w, paths);
   }
   for (const req of ['player', 'guard', 'medic', 'flamer', 'warden', 'turret', 'drone', 'hatchling', 'spitter', 'burster']) {
     if (!unitIds.has(req)) p.push(`units.json is missing "${req}"`);
@@ -200,6 +201,7 @@ export function validateContent(f: ContentFiles): string[] {
   }
   for (const u of utilities) {
     int(u.ap, `utilities.${u.id}.ap`);
+    requireFields(u, `utilities.${u.id}`, REQUIRED_UTILITY_FIELDS[u.id]);
     if (u.requiresAbility && !abilityIds.has(u.requiresAbility)) p.push(`utilities.${u.id}.requiresAbility "${u.requiresAbility}" is not an ability`);
   }
 
@@ -237,6 +239,9 @@ export function validateContent(f: ContentFiles): string[] {
     dtype(h.damageType, `hazards.${h.id}`);
     int(h.cooldown, `hazards.${h.id}.cooldown`, 1);
     int(h.cancelCooldown, `hazards.${h.id}.cancelCooldown`, 1);
+    const shapeFields = Object.hasOwn(REQUIRED_HAZARD_SHAPE_FIELDS, h.shape) ? REQUIRED_HAZARD_SHAPE_FIELDS[h.shape] : undefined;
+    if (!shapeFields) p.push(`hazards.${h.id}.shape must be one of ${Object.keys(REQUIRED_HAZARD_SHAPE_FIELDS).join(', ')} (got ${JSON.stringify(h.shape)})`);
+    else requireFields(h, `hazards.${h.id}`, shapeFields);
   }
   const m = f.map;
   if (!m) return [...p, 'map.json is missing'];

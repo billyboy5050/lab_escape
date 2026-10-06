@@ -49,7 +49,7 @@ export function hazardTargets(w: World, hz: Hazard): HazardTargets {
     return { units: [], tiles };
   }
   const tiles: Pos[] = [];
-  for (const t of hz.tiles) for (const p of w.b.square(t, def.radius ?? 1)) if (!tiles.some((q) => samePos(q, p))) tiles.push(p);
+  for (const t of hz.tiles) for (const p of w.b.square(t, def.radius!)) if (!tiles.some((q) => samePos(q, p))) tiles.push(p);
   tiles.sort((a, b) => a.y - b.y || a.x - b.x);
   const units = w.activeUnits().filter((u) => tiles.some((t) => samePos(t, u.pos))).sort((a, b) => a.id - b.id);
   return { units, tiles };

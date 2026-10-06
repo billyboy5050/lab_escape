@@ -59,7 +59,7 @@ export function droneTurn(w: World, m: Unit): void {
       if (!moveTo(w, m, reach, dest)) return;
     }
     m.returningPhases = (m.returningPhases ?? 0) + 1;
-    if ((player && cheb(m.pos, player.pos) <= 1) || m.returningPhases >= (def.returnPhases ?? 2)) dock(w, m);
+    if ((player && cheb(m.pos, player.pos) <= 1) || m.returningPhases >= def.returnPhases!) dock(w, m);
     return;
   }
   const inRange = (t: Pos, e: Unit) => cheb(t, e.pos) <= zap.range && w.b.hasLOS(t, e.pos);

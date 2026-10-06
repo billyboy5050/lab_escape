@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildContent, defaultContentFiles, ContentError } from '../src/content';
 import { validateContent } from '../src/content/load';
-import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from '../src/content/required';
+import { REQUIRED_ABILITY_FIELDS, REQUIRED_BLOCK_FIELDS, REQUIRED_HAZARD_SHAPE_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES, REQUIRED_UTILITY_FIELDS } from '../src/content/required';
 import type { ContentFiles } from '../src/content/types';
 import { actionStatuses } from '../src/engine/commands';
 import { contentWith, run, scenario } from './helpers';
@@ -77,6 +77,37 @@ describe('content validation of required fields', () => {
   it.each(pairs(REQUIRED_UPGRADE_FIELDS))('rejects upgrades.%s without %s', (id, path) => {
     const f = edited((x) => drop(upgrade(x, id), path));
     expect(validateContent(f)).toContain(`upgrades.${id}.${path} is missing`);
+  });
+
+  it.each(pairs(REQUIRED_UTILITY_FIELDS))('rejects utilities.%s without %s', (id, path) => {
+    const f = edited((x) => drop(x.abilities.utilities.find((u) => u.id === id)!, path));
+    expect(validateContent(f)).toContain(`utilities.${id}.${path} is missing`);
+  });
+
+  it.each(['panel_grid', 'gas_vent'])('rejects the area hazard %s without a radius', (id) => {
+    const f = edited((x) => delete x.hazards.find((h) => h.id === id)!.radius);
+    expect(validateContent(f)).toContain(`hazards.${id}.radius is missing`);
+  });
+
+  it('rejects a hazard with a missing or unknown shape', () => {
+    for (const shape of [undefined, 'cone', 'toString']) {
+      const f = edited((x) => ((x.hazards.find((h) => h.id === 'wall_gun')! as { shape?: unknown }).shape = shape));
+      expect(validateContent(f)).toEqual([expect.stringContaining('hazards.wall_gun.shape must be one of')]);
+    }
+    expect(Object.keys(REQUIRED_HAZARD_SHAPE_FIELDS)).toEqual(['lane', 'adjacentToTiles']);
+  });
+
+  it.each(pairs(REQUIRED_BLOCK_FIELDS))('rejects any unit with a %s block but no %s', (block, path) => {
+    const id = Object.keys(REQUIRED_UNIT_FIELDS).find((u) => REQUIRED_UNIT_FIELDS[u]!.includes(block))!;
+    const f = edited((x) => drop(x.units.find((u) => u.id === id)!, path));
+    expect(validateContent(f)).toContain(`units.${id}.${path} is missing`);
+    // A different unit that gains the block is held to the same fields.
+    const g = edited((x) => {
+      const donor = x.units.find((u) => u.id === id)! as unknown as Record<string, unknown>;
+      const other = x.units.find((u) => u.id === 'guard')! as unknown as Record<string, unknown>;
+      other[block] = donor[block];
+    });
+    expect(validateContent(g)).toContain(`units.guard.${path} is missing`);
   });
 
   it('rejects a proximity mine with no blast, a null blast, or a bad blast radius', () => {
