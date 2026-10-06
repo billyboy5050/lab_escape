@@ -184,7 +184,7 @@ Poison follows the universal friendly-fire rule, so it can spread to the player 
 - A unit is marked dead the moment its HP reaches 0. It is removed, and its death effects are queued, once the effect that killed it has finished applying its damage.
 - Enemy corpses stay on their tile for 2 rounds (see Timers and cooldowns) and can host Brood Eggs. Player-side units leave no corpse in the MVP.
 - Scrap (stretch): each destroyed enemy drops 1 scrap on its tile (the Warden drops 3). The player picks scrap up by entering the tile. Carry limit is 5. Nothing drops unless Repair is built.
-- The player dying is an immediate loss.
+- The player dying is an immediate loss. Units that die in the same effect are still removed and reported first (in unit ID order, so after the player's own death is recorded), and leave their corpses, but no death effect or intercom line they would trigger plays, since the fight is over.
 
 **Chains and friendly fire**
 
@@ -896,3 +896,9 @@ Two notes on the evidence behind these changes:
 
 - The round-1 figures come from a short script of the Enemy phase under this spec's Guard rule, not from a build. Treat them as indicative until the M3 tests reproduce them.
 - The first draft described the Warden's charge two ways: "within 4 tiles" and "up to 4 tiles". This revision reads range 4 as distance moved, so a target 2 to 5 tiles away can be charged. Confirm that reading.
+
+## Changes since revision 2
+
+| Date | Change | Why |
+| --- | --- | --- |
+| 2026-10-06 | Units that die in the same effect as the player are reported and leave corpses; their death effects and intercom lines are skipped. The loss itself is unchanged. | The engine stopped at the player's death (unit ID 0), so enemies killed by the same blast went unreported and telemetry undercounted kills in lost fights. |

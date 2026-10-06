@@ -4,7 +4,7 @@ import { parseTile } from '../util/tiles';
 import type { FightSettings, GameState, Loadout, Unit } from './types';
 
 /** Engine version stored in every replay. Bump it when a rule change makes old command logs invalid. */
-export const ENGINE_VERSION = '0.1.0';
+export const ENGINE_VERSION = '0.1.1';
 
 /** The state before round 1 starts: the player on its start tile, hazards ready, nothing else. */
 export function createInitialState(c: Content, loadout: Loadout, settings: FightSettings = {}): GameState {
