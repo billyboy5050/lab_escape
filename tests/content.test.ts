@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildContent, defaultContentFiles, ContentError } from '../src/content';
 import { validateContent } from '../src/content/load';
-import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from '../src/content/required';
+import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES, REQUIRED_UTILITY_FIELDS } from '../src/content/required';
 import type { ContentFiles } from '../src/content/types';
 import { actionStatuses } from '../src/engine/commands';
 import { contentWith, run, scenario } from './helpers';
@@ -77,6 +77,16 @@ describe('content validation of required fields', () => {
   it.each(pairs(REQUIRED_UPGRADE_FIELDS))('rejects upgrades.%s without %s', (id, path) => {
     const f = edited((x) => drop(upgrade(x, id), path));
     expect(validateContent(f)).toContain(`upgrades.${id}.${path} is missing`);
+  });
+
+  it.each(pairs(REQUIRED_UTILITY_FIELDS))('rejects utilities.%s without %s', (id, path) => {
+    const f = edited((x) => drop(x.abilities.utilities.find((u) => u.id === id)!, path));
+    expect(validateContent(f)).toContain(`utilities.${id}.${path} is missing`);
+  });
+
+  it.each(['panel_grid', 'gas_vent'])('rejects the area hazard %s without a radius', (id) => {
+    const f = edited((x) => delete x.hazards.find((h) => h.id === id)!.radius);
+    expect(validateContent(f)).toContain(`hazards.${id}.radius is missing`);
   });
 
   it('rejects a proximity mine with no blast, a null blast, or a bad blast radius', () => {

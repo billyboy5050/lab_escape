@@ -1,4 +1,4 @@
-import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES } from './required';
+import { REQUIRED_ABILITY_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES, REQUIRED_UTILITY_FIELDS } from './required';
 import { DAMAGE_TYPES, DIRECTION_NAMES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
 import { hashJson } from '../util/hash';
 import { isTileName, parseTile } from '../util/tiles';
@@ -200,6 +200,7 @@ export function validateContent(f: ContentFiles): string[] {
   }
   for (const u of utilities) {
     int(u.ap, `utilities.${u.id}.ap`);
+    requireFields(u, `utilities.${u.id}`, REQUIRED_UTILITY_FIELDS[u.id]);
     if (u.requiresAbility && !abilityIds.has(u.requiresAbility)) p.push(`utilities.${u.id}.requiresAbility "${u.requiresAbility}" is not an ability`);
   }
 
@@ -237,6 +238,8 @@ export function validateContent(f: ContentFiles): string[] {
     dtype(h.damageType, `hazards.${h.id}`);
     int(h.cooldown, `hazards.${h.id}.cooldown`, 1);
     int(h.cancelCooldown, `hazards.${h.id}.cancelCooldown`, 1);
+    // Every area hazard reads its radius without a fallback.
+    if (h.shape === 'adjacentToTiles') requireFields(h, `hazards.${h.id}`, ['radius']);
   }
   const m = f.map;
   if (!m) return [...p, 'map.json is missing'];
