@@ -9,6 +9,7 @@ import { summarize } from '../telemetry/summary';
 import { contentFor, seedRange, type BatchSpec, type BotKind, type FightRow } from './batch';
 import { recordGolden, verifyGolden, eventsToJsonl, type GoldenFile } from './golden';
 import { parseInteger } from './options';
+import { DEFAULT_PLAYTEST, formatPlaytest, loadTelemetry } from './playtest';
 import { runBatchParallel } from './parallel';
 import { aggregate, formatReport, formatTuneRow, liftToCsv, rowsToCsv } from './report';
 
@@ -23,6 +24,7 @@ Commands
   tune      One tuning value across a list, e.g. --param units.warden.hp --values 12,16,20
   golden    Verify the golden replays, or --record them
   replay    Replay a saved command log (FILE) and print its summary
+  telemetry Playtest metrics from the fights saved under telemetry/ (or DIR), against the spec's targets and alarms
 
 Options
   --bot random|greedy|greedy-naive   Bot to play (default greedy; greedy-naive ignores hazard cues)
@@ -36,6 +38,11 @@ Options
   --csv FILE       Write one row per fight
   --out DIR        Write the report, CSV and winning replays to DIR (default reports/ for presets)
   --record         With golden: re-record the golden replays
+  --informed-from N  With telemetry: the first attempt number counted as informed (default 2)
+  --include-unlabelled  With telemetry: also count fights saved with no tester ID (by default they are skipped)
+  --exclude-tester ID   With telemetry: leave a tester out (repeatable), such as the developer who played round 1
+  --informed-attempts N  With telemetry: how many attempts per tester the informed round has, from --informed-from (default 3)
+  --informed-preset ID  With telemetry: the preset the informed round plays (default hybrid)
 `;
 
 function main(): Promise<void> | void {
@@ -53,6 +60,11 @@ function main(): Promise<void> | void {
       csv: { type: 'string' },
       out: { type: 'string' },
       record: { type: 'boolean', default: false },
+      'informed-from': { type: 'string' },
+      'include-unlabelled': { type: 'boolean', default: false },
+      'exclude-tester': { type: 'string', multiple: true },
+      'informed-attempts': { type: 'string' },
+      'informed-preset': { type: 'string' },
       param: { type: 'string' },
       values: { type: 'string' },
       help: { type: 'boolean', short: 'h', default: false },
@@ -178,6 +190,15 @@ function main(): Promise<void> | void {
       const r = replay(c, rec);
       const s = summarize(r.events, r.state);
       console.log(JSON.stringify({ outcome: s.outcome, cause: s.cause, rounds: s.rounds, loadout: s.loadout, playerDamageTaken: s.playerDamageTaken, kills: s.kills, peakMinions: s.peakMinions, hazardFires: s.hazardFires.length }, null, 2));
+      return;
+    }
+    case 'telemetry': {
+      const dir = positionals[1] ?? 'telemetry';
+      const presetIds = defaultContent().presets.map((p) => p.id);
+      const informedPreset = values['informed-preset'] ?? DEFAULT_PLAYTEST.informedPreset;
+      if (!presetIds.includes(informedPreset)) throw new Error(`--informed-preset must be one of ${presetIds.join(', ')} (got "${informedPreset}")`);
+      const opts = { informedFrom: parseInteger('informed-from', values['informed-from'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedFrom, informedAttempts: parseInteger('informed-attempts', values['informed-attempts'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedAttempts, informedPreset };
+      console.log(formatPlaytest(dir, loadTelemetry(defaultContent(), dir, { includeUnlabelled: values['include-unlabelled'], excludeTesters: values['exclude-tester'] }), opts));
       return;
     }
     default:

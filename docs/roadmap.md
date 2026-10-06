@@ -26,14 +26,13 @@ The simulator's findings (greedy bot, 1,000 seeds per preset) are in [implementa
 
 ## Up next
 
-The spec's next step is playtesting (its "Test plan and tuning" section). The first three items make the playtest rounds possible to run and to measure; the rounds themselves are run by the owner.
+The spec's next step is playtesting (its "Test plan and tuning" section). The first two items make the playtest rounds possible to run and to measure; the rounds themselves are run by the owner.
 
-1. **Telemetry report command.** A `npm run sim -- telemetry [DIR]` command that reads the `summary.json` files under `telemetry/` and prints the spec's playtest metrics against their targets and alarms: first attempts lost, rounds per lost fight, informed win rate pooled by attempt, length of winning fights, median turn time with a full swarm, friendly-fire share, deaths by source and hazard fires per fight. Check first whether the summary records enough to compute turn time "with a full swarm"; it may need the minion count per turn.
-2. **One-page rules sheet** for first-time players (spec, playtest round 2: "a one-page rules sheet and no coaching"). It does not exist yet. Write it from the spec and the rule text in `content/abilities.json`, as a printable page in `docs/`.
-3. **Developer playtest round** (owner; spec round 1): 5 to 10 attempts per preset to catch bugs and obvious balance failures. Telemetry saves itself while `npm run dev` runs. Record findings in [implementation-notes.md](implementation-notes.md) and turn bugs into items here.
-4. **First-time player round** (owner; spec round 2): 5 to 8 people, one at a time, rules sheet only, screen and telemetry recorded, and the three questions after each attempt.
-5. **Informed player round** (owner; spec round 3): the same people after watching a replay of one of their losses, 3 attempts each on the Hybrid preset.
-6. **Tune against the alarms once play confirms them.** Do not tune on bot figures alone: the greedy bot plays one action ahead and is a ceiling, not a player. When a playtest confirms an alarm, use the spec's "Symptom to first knob" table, change values in `content/`, and include before and after simulator reports in the pull request. Candidates today: friendly fire on Hybrid, the Warden rarely reaching the player, hazard fires on Alien, and Tech leaning on turrets (10.5 per fight, because Guards shoot the nearest player-side unit).
+1. **One-page rules sheet** for first-time players (spec, playtest round 2: "a one-page rules sheet and no coaching"). It does not exist yet. Write it from the spec and the rule text in `content/abilities.json`, as a printable page in `docs/`.
+2. **Developer playtest round** (owner; spec round 1): 5 to 10 attempts per preset to catch bugs and obvious balance failures. Telemetry saves itself while `npm run dev` runs. Record findings in [implementation-notes.md](implementation-notes.md) and turn bugs into items here.
+3. **First-time player round** (owner; spec round 2): 5 to 8 people, one at a time, rules sheet only, screen and telemetry recorded, and the three questions after each attempt.
+4. **Informed player round** (owner; spec round 3): the same people after watching a replay of one of their losses, 3 attempts each on the Hybrid preset.
+5. **Tune against the alarms once play confirms them.** Do not tune on bot figures alone: the greedy bot plays one action ahead and is a ceiling, not a player. When a playtest confirms an alarm, use the spec's "Symptom to first knob" table, change values in `content/`, and include before and after simulator reports in the pull request. Candidates today: friendly fire on Hybrid, the Warden rarely reaching the player, hazard fires on Alien, and Tech leaning on turrets (10.5 per fight, because Guards shoot the nearest player-side unit).
 
 ## Decisions waiting on the owner
 
@@ -48,6 +47,7 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 
 ## Smaller items
 
+- **Record the playtest round in telemetry.** The report cannot tell a tester's first-time fights from their informed ones, so it uses one attempt number for everyone (`--informed-from`) and `--exclude-tester` for the developer's round. Testers who needed different numbers of first-time fights are then classified wrongly. Add a round field to the replay's `meta` (set on the loadout screen next to the Tester ID, or by a `?round=` parameter), check it in `recordProblems`, and use it in `src/sim/playtest.ts` in place of the cutoff.
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Phone-width layout.** The narrow breakpoint exists but has not been playtested.
 - **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.
