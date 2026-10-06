@@ -1,0 +1,11 @@
+#!/bin/sh
+# Changes reach main only through pull requests (see CLAUDE.md). Turned on by `npm install`.
+# Git passes one line per ref being pushed: <local ref> <local sha> <remote ref> <remote sha>
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "Pushing to main is blocked. Push your branch and open a pull request:" >&2
+    echo "  git push -u origin HEAD && gh pr create --draft" >&2
+    exit 1
+  fi
+done
+exit 0

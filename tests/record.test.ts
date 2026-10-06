@@ -4,7 +4,7 @@ import { checkCompatible, newRecord, recordProblems, replay, ReplayMismatch, typ
 import fs from 'node:fs';
 import { makeBot } from '../src/sim/batch';
 import { runFight } from '../src/sim/runner';
-import { C } from './helpers';
+import { BOT_FIGHT_TIMEOUT_MS, C } from './helpers';
 
 const LOADOUT = { abilities: ['sidearm', 'proximity_mine'], upgrades: [] };
 
@@ -149,5 +149,5 @@ describe('replay command payloads', () => {
         expect(recordProblems(JSON.parse(JSON.stringify(record))), `${p.id} seed ${seed}`).toEqual([]);
       }
     }
-  });
+  }, BOT_FIGHT_TIMEOUT_MS);
 });

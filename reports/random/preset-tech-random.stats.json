@@ -66,6 +66,7 @@
     "scout_drone": 0.267,
     "auto_turret": 0.526,
     "sprint": 0.092,
+    "pick_up_mine": 0.008,
     "reload": 0.01
   },
   "lift": [],

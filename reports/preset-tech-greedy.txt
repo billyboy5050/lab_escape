@@ -10,7 +10,7 @@ Top killers: guard/shot 182, warden/melee 61, flamer/sweep 15, turret/turret_sho
 Mean damage to the player per fight: player 0.19, minion 0.19, enemy 3.08, hazard 0.15
 Mean friendly-fire share of the player's damage: 14.0%
 Hazard fires per fight: 3.84; peak minions: mean 3.52, max 5
-Uses per fight: auto_turret 10.5, sidearm 4.7, proximity_mine 3.9, barrier_shield 3.4, grapple_hook 1.9, reload 0.8, scout_drone 0.6, sprint 0.0, redeploy 0.0
+Uses per fight: auto_turret 10.5, sidearm 4.7, proximity_mine 3.9, barrier_shield 3.4, grapple_hook 1.9, reload 0.8, scout_drone 0.6, sprint 0.0, pick_up_mine 0.0, redeploy 0.0
 
 Spec metrics (bot proxy):
   [WARN ] Length of winning fights: median 14, mean 14.2  (target 8 to 12; alarm over 16)

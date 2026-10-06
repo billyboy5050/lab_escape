@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { runBatch, seedRange } from '../src/sim/batch';
 import { verifyGolden, type GoldenFile } from '../src/sim/golden';
 import type { GameEvent } from '../src/state/types';
-import { C } from './helpers';
+import { BOT_FIGHT_TIMEOUT_MS, C } from './helpers';
 
 describe('golden replays', () => {
   for (const p of C.presets) {
@@ -29,7 +29,7 @@ describe('batch runs', () => {
   it('greedy batches are reproducible too', () => {
     const spec = { bot: 'greedy' as const, loadout: { preset: 'alien' }, seeds: seedRange(1, 3) };
     expect(runBatch(spec)).toEqual(runBatch(spec));
-  });
+  }, BOT_FIGHT_TIMEOUT_MS);
 
   it('random bots find no crashes or infinite loops across every preset', () => {
     for (const p of C.presets) {

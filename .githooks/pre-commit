@@ -1,0 +1,10 @@
+#!/bin/sh
+# Changes reach main only through pull requests (see CLAUDE.md). Turned on by `npm install`.
+branch=$(git symbolic-ref --short -q HEAD)
+if [ "$branch" = "main" ]; then
+  echo "Commits on main are blocked. Work on a branch and open a pull request:" >&2
+  echo "  git switch -c <type>/<short-slug>" >&2
+  echo "Your staged changes are kept and come with you to the new branch." >&2
+  exit 1
+fi
+exit 0

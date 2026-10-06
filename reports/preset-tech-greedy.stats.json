@@ -73,6 +73,7 @@
     "scout_drone": 0.616,
     "reload": 0.765,
     "sprint": 0.029,
+    "pick_up_mine": 0.008,
     "redeploy": 0.007
   },
   "lift": [],

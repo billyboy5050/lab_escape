@@ -10,7 +10,7 @@ Top killers: warden/melee 44, guard/shot 33, player/poison 29, drone/poison 20, 
 Mean damage to the player per fight: player 1.26, minion 0.50, enemy 1.40, hazard 0.12
 Mean friendly-fire share of the player's damage: 65.6%
 Hazard fires per fight: 3.24; peak minions: mean 4.67, max 5
-Uses per fight: brood_egg 5.0, parasite 4.0, scout_drone 3.6, sidearm 3.2, proximity_mine 2.8, spore_pod 2.6, barrier_shield 2.1, acid_spit 1.3, redeploy 0.1, sprint 0.0
+Uses per fight: brood_egg 5.0, parasite 4.0, scout_drone 3.6, sidearm 3.2, proximity_mine 2.8, spore_pod 2.6, barrier_shield 2.1, acid_spit 1.3, redeploy 0.1, sprint 0.0, pick_up_mine 0.0
 
 Spec metrics (bot proxy):
   [OK   ] Length of winning fights: median 12, mean 12.1  (target 8 to 12; alarm over 16)

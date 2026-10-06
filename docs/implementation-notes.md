@@ -1,6 +1,6 @@
 # Implementation notes
 
-What the implementation had to decide where the rev2 spec is silent or ambiguous, the defaults it took for the spec's open decisions, and what the simulator found. Each interpretation is a call to confirm. If one is wrong, it is a small code change; numbers are already data in `content/`.
+What the implementation had to decide where the [spec](spec.md) (revision 2) is silent or ambiguous, the defaults it took for the spec's open decisions, and what the simulator found. Each interpretation is a call to confirm. If one is wrong, it is a small code change; numbers are already data in `content/`.
 
 The spec says to update it when implementation forces a rule change. Nothing here contradicts the spec, so it is untouched; the items under Interpretations are candidates to fold into it as clarifications.
 
@@ -9,7 +9,7 @@ The spec says to update it when implementation forces a rule change. Nothing her
 | Open decision | Implemented as | Where to change it |
 | --- | --- | --- |
 | Engine, language, platform | TypeScript rules core (runs headless in Node), React web client built with Vite | n/a |
-| Input scheme | Mouse first, a keyboard shortcut for every control (see README); touch is tap to preview, tap again to commit | `src/client/screens/FightScreen.tsx` |
+| Input scheme | Mouse first, a keyboard shortcut for every control (see [Playing](../README.md#playing) in the README); touch is tap to preview, tap again to commit | `src/client/screens/FightScreen.tsx` |
 | Art direction | Flat shapes; units are told apart by shape and letter as well as colour (circles and squares are yours, diamonds and the hexagon are enemies); Okabe-Ito palette; light and dark themes | `src/client/components/Board.tsx`, `styles.css` |
 | Empty room brings the next wave early | Off (fixed schedule) | `rules.earlyWaveWhenEmpty` |
 | Show hazard cooldowns | Hidden | `rules.ui.showHazardCooldowns` |
@@ -119,7 +119,7 @@ The spec says to update it when implementation forces a rule change. Nothing her
 - **Content is checked before it is used.** A hot reload is accepted only if `validateContent` passes, and anything the game reads without a fallback must be present: a missing collection (`map.hazards`, `presets`, `intercom.lines`, `hazards`, ...) or block (`rules.ui`, `rules.eggs.corpseHosts`, an upgrade's `requires`) is a reported problem and not an empty list, because accepting it crashes the next render or damage roll. Fields read with `!` are listed in `src/content/required.ts`.
 - **Saved preferences and replay files are untrusted.** A stored loadout, preset or attempt list that does not have the expected shape is ignored and the defaults are used, so a stale or corrupt value cannot stop the app starting. A replay is checked for its header, the shape of the whole record and the field types of every command before it plays (a debug AP of "oops" would otherwise become NaN), and a `?replay=` file is judged against the content as it is when the response arrives, not when the request went out.
 - **Pick Up Mine** is counted in `abilitiesUsed` as `pick_up_mine`, like Sprint, Reload and Redeploy.
-- **Action shortcuts** run 1 to 9, 0, then `-` and `=`, because a full loadout (8 abilities) plus the four utilities is 12 actions. Ctrl, Cmd and Alt combinations are left to the browser. `E` always ends the turn; `Enter` does too unless a button or link has focus, when Enter operates that control instead (a focused button is focused after a mouse click as well, so Enter after clicking a button presses it again).
+- **Action shortcuts** run 1 to 9, 0, then `-` and `=`, because a full loadout (8 abilities) plus the four utilities is 12 actions. With Ctrl, Cmd or Alt held, the action keys are left to the browser; the other shortcuts do not check modifiers yet (see the roadmap). `E` always ends the turn; `Enter` does too unless a button or link has focus, when Enter operates that control instead (a focused button is focused after a mouse click as well, so Enter after clicking a button presses it again).
 - **Replays stop at a rejected command.** A replay command the engine refuses (a corrupted or edited file) pauses playback there and says which command it was, instead of playing the rest against a state it no longer matches.
 - **Incoming-damage badges** in the intent forecast sit on the unit's current tile, not on the tile where the forecast says it is hit. The badge belongs to the unit the player can see, and a minion's destination is already drawn as its dashed path; the hit tile is used only for things not on the board yet.
 
@@ -140,6 +140,8 @@ The spec says to update it when implementation forces a rule change. Nothing her
 - The client was checked by hand in Chrome at desktop sizes, in light and dark themes. The narrow-layout (phone) breakpoint exists but was not playtested.
 
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
+
+From `npm run sim -- presets --seeds 1000` and `npm run sim -- sweep --seeds 1000`; the full reports are in `reports/`. Rerun them after any rule or content change and update this section with the new figures.
 
 | Preset | Win rate | Median rounds (wins) | Notes |
 | --- | --- | --- | --- |

@@ -9,7 +9,7 @@ Top killers: guard/shot 867, mine/proximity_mine 80, panel/panel_grid 21, gun/wa
 Mean damage to the player per fight: player 1.01, minion 0.13, enemy 6.70, hazard 0.16
 Mean friendly-fire share of the player's damage: 14.2%
 Hazard fires per fight: 0.47; peak minions: mean 0.66, max 3
-Uses per fight: grapple_hook 2.7, barrier_shield 2.0, proximity_mine 1.7, auto_turret 0.5, sidearm 0.3, scout_drone 0.3, sprint 0.1, reload 0.0
+Uses per fight: grapple_hook 2.7, barrier_shield 2.0, proximity_mine 1.7, auto_turret 0.5, sidearm 0.3, scout_drone 0.3, sprint 0.1, reload 0.0, pick_up_mine 0.0
 
 Spec metrics (bot proxy):
   [OK   ] Share of player damage from own effects: 14.2%  (target 5% to 30%; alarm over 35%, or under 3%)

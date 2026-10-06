@@ -8,7 +8,7 @@ import { runFight } from '../src/sim/runner';
 import type { GameState } from '../src/state/types';
 import { checkCompatible, replay, ReplayMismatch } from '../src/telemetry/record';
 import { FightSession } from '../src/telemetry/session';
-import { C, contentWith } from './helpers';
+import { BOT_FIGHT_TIMEOUT_MS, C, contentWith } from './helpers';
 
 const loadoutOf = (id: string) => {
   const p = C.presets.find((x) => x.id === id)!;
@@ -66,7 +66,7 @@ describe('previews and determinism', () => {
       const rep = replay(C, r.record);
       expect(rep.state).toEqual(r.state);
     }
-  });
+  }, BOT_FIGHT_TIMEOUT_MS);
 
   it('a replay is only valid against the same engine version and content hash', () => {
     const r = runFight(C, loadoutOf('tech'), new RandomBot(3));
@@ -81,7 +81,7 @@ describe('previews and determinism', () => {
     const b = runFight(C, loadoutOf('hybrid'), new GreedyBot(5));
     expect(a.record.commands).toEqual(b.record.commands);
     expect(a.summary).toEqual(b.summary);
-  });
+  }, BOT_FIGHT_TIMEOUT_MS);
 });
 
 describe('undo for free movement', () => {

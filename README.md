@@ -1,10 +1,22 @@
 # Lab Escape: Armory Lockdown (MVP prototype)
 
-The playable MVP described in `Lab_Escape_Roguelite_MVP_Prototype_Spec_rev2.md`: one 8x8 room, three hidden waves, the Tech and Alien kits, 12 upgrades, the lab's hazard AI, telemetry, replays and a headless simulator.
+The playable MVP described in the [spec](docs/spec.md): one 8x8 room, three hidden waves, the Tech and Alien kits, 12 upgrades, the lab's hazard AI, telemetry, replays and a headless simulator.
 
-Interpretations the spec left open, and calls to confirm, are listed in [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md).
+Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the first full playtest round has run and its metrics are recorded; that and whatever it turns up is what remains. See the [roadmap](docs/roadmap.md).
+
+## Documents
+
+| Document | What it is for |
+| --- | --- |
+| [docs/spec.md](docs/spec.md) | The design spec (revision 2) and the source of truth for the rules |
+| [docs/implementation-notes.md](docs/implementation-notes.md) | Where the implementation interpreted the spec, the defaults taken for its open decisions, and what the simulator found |
+| [docs/roadmap.md](docs/roadmap.md) | Where things stand, what is next, and the decisions waiting on the owner |
+| [docs/work/](docs/work/) | One note per branch in progress, so anyone can pick the work up |
+| [CLAUDE.md](CLAUDE.md) (also `AGENTS.md`) | How to work in this repo: branches, pull requests, keeping the docs current, and the invariants not to break |
 
 ## Quick start
+
+Needs Node 22.12 or later on the 22 or 24 line, or 26 and up: the range Vitest and Vite support (`engines` in `package.json`). `.nvmrc` picks 22.
 
 ```bash
 npm install
@@ -24,20 +36,33 @@ npm test
 npm run sim -- presets --seeds 1000
 ```
 
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Dev server on port 5173, with content hot reload and the telemetry endpoint |
+| `npm test` | All tests once (Vitest); `npm run test:watch` to keep them running |
+| `npm run typecheck` | TypeScript check with no output |
+| `npm run build` | Typecheck, then a static build in `dist/` (`npm run preview` serves it) |
+| `npm run sim -- <command>` | The headless simulator (below) |
+| `npm run golden:record` | Re-record the golden replays |
+
+`npm install` also points git at the repo's hooks in `.githooks/`, which refuse commits on `main`, merges, resets and rebases that would move it anywhere but `origin/main`, and pushes to it. Changes reach `main` only through pull requests that pass CI, which GitHub's branch protection enforces; see [CLAUDE.md](CLAUDE.md).
+
 ## Playing
 
 - **Move** for free: hover a green tile to see the path and what the enemies would do if you stood there, click to go. Undo free moves with **Z** until you spend AP or step on something.
-- **Act**: pick an ability (click, or keys **1–9**, **0**), hover a highlighted target to preview it, click to commit. Previews show damage after armor, kills, statuses, areas, chain and shot lines, and a red ring with **!** on any of your own units that would be hit. **Esc** cancels.
+- **Act**: pick an ability (click, or keys **1–9**, **0**, **-**, **=** in action-bar order), hover a highlighted target to preview it, click to commit. Previews show damage after armor, kills, statuses, areas, chain and shot lines, and a red ring with **!** on any of your own units that would be hit. **Esc** cancels.
   - Barrier Shield and Lunge take two clicks (second tile, or strike target; click the landing tile again to lunge without striking).
   - Grapple Hook: **Tab** or the button switches between pull unit and pull self.
-- **End turn** with **E**. The status strip warns how much damage you would take if you ended the turn now (minions and enemies only; the lab's hazards stay hidden).
+- **End turn** with **E**, or **Enter** when no button or link has focus (Enter operates a focused control instead). The status strip warns how much damage you would take if you ended the turn now (minions and enemies only; the lab's hazards stay hidden).
 - **Intents**: every enemy and minion shows its planned path and attack, recomputed after each action (toggle with **I**). Hover a unit for its plan in words.
-- **Speed**: 1x, 2x or skip (**F** cycles, **Space** skips the current animation).
+- **Speed**: 1x, 2x or skip (**F** cycles, **Space** skips the current animation unless a control has focus).
 - **L** opens the intercom log. **`** opens the debug overlay.
+
+With Ctrl, Cmd or Alt held, the action keys are left to the browser (Ctrl or Cmd with `-` and `=` zoom the page). The other shortcuts do not check for modifiers yet, so Ctrl or Cmd with Z, E, F or L also triggers the game's undo, end turn, speed or log (see the [roadmap](docs/roadmap.md)). The action keys are defined once in `src/client/actionKeys.ts`.
 
 ## Debug overlay (`)
 
-Unit IDs and tile names, spawn tiles of later waves, the hidden wave timer, every hazard's state and which step of the value rule produced its last decision, the Flamer's scored options, step-through (pause after each action, next action **N**, next phase **Shift+N**), set HP, set AP and movement, spawn a unit, force the next wave, hold back wave 3, load and play a replay, and restart. Debug edits are commands, so they are recorded in the replay.
+The engine version and content hash, unit IDs and tile names, spawn tiles of later waves, the hidden wave timer, every hazard's state and which step of the value rule produced its last decision, the Flamer's scored options, step-through (pause after each action, next action **N**, next phase **Shift+N**), set HP, set AP and movement, spawn a unit, force the next wave, hold back wave 3, load a replay and play or step through it, restart, and a count of triggers the chain rule suppressed. Debug edits are commands, so they are recorded in the replay.
 
 A replay can also be opened from the URL: `http://localhost:5173/?replay=reports/winning-line-hybrid.json`.
 
@@ -61,6 +86,8 @@ With `npm run dev` running, saving a content file hot-reloads it and restarts th
 
 The spec's open decisions are switches in `rules.json`: `earlyWaveWhenEmpty`, `ui.showHazardCooldowns`, `arrivalRound` (`all`, `first`, `none`), `loadout.abilities` (8, or 6 for the informed round), and `statuses.corrode.duration` (0 = rest of the fight).
 
+Any content change alters the content hash, and replays are only valid against the hash they were recorded with. A content change therefore needs every generated file regenerated in the same commit: the golden replays, the preset reports and winning lines, the random-bot reports and the sweep. Otherwise the tests and the `?replay=` links stop working and the committed balance figures go stale. The commands for each are under [Regenerating generated files](CLAUDE.md#regenerating-generated-files) in CLAUDE.md.
+
 ## Headless simulator
 
 ```bash
@@ -76,7 +103,20 @@ npm run sim -- --help
 | `golden [--record]` | Verify (or re-record) the golden replays |
 | `replay FILE` | Replay a saved command log and print its summary |
 
-Options: `--bot random|greedy|greedy-naive`, `--from N`, `--workers N`, `--set path=value` (repeatable, e.g. `--set units.warden.hp=16`), `--hold-wave3`, `--csv FILE`, `--out DIR`.
+| Option | Meaning |
+| --- | --- |
+| `--bot random\|greedy\|greedy-naive` | Bot to play (default greedy) |
+| `--preset tech\|alien\|hybrid` | Preset for `batch` and `tune` (default hybrid) |
+| `--seeds N`, `--from N` | Number of seeds (default 1000) and the first seed (default 1) |
+| `--workers N` | Worker threads (default: CPU count minus 1) |
+| `--size N` | Abilities per random loadout in a sweep (default: the loadout size in `rules.json`) |
+| `--set PATH=VAL` | Content override, repeatable, e.g. `--set units.warden.hp=16` |
+| `--hold-wave3` | Hold back wave 3; clearing wave 2 wins (the first playtest's setup) |
+| `--csv FILE` | Write one row per fight |
+| `--out DIR` | Write the report, CSV and winning replays to DIR (default `reports/` for `presets`) |
+| `--record` | With `golden`: re-record the golden replays |
+
+Counts must be whole numbers, and `--seeds`, `--workers` and `--size` at least 1. A `presets` run at 1,000 seeds takes about two minutes on an 8-core machine; use `--seeds 100` while iterating.
 
 Bots:
 
@@ -90,7 +130,7 @@ The game has no randomness; all variation comes from the bot's seed, stored with
 
 Each fight is a replay file: loadout, settings and the ordered player commands, plus the engine version and content hash it is valid against. Replaying it reproduces the fight exactly.
 
-With the dev server running, every finished fight is saved to `telemetry/<time>-<preset>-<outcome>/` as `replay.json`, `summary.json` (outcome, rounds, damage by source including friendly fire, abilities used, peak minions, hazard fires with victims, cause of death, turn times) and `events.jsonl` (one event per line). The result screen also offers the three files as downloads.
+With the dev server running, every finished fight is saved to `telemetry/<time>-<preset>-<outcome>/` as `replay.json`, `summary.json` (outcome, rounds, damage by source including friendly fire, abilities used, peak minions, hazard fires with victims, cause of death, turn times) and `events.jsonl` (one event per line). The result screen also offers the three files as downloads. `telemetry/` is ignored by git; `src/telemetry/` is source.
 
 Golden replays live in `golden/` (one command log and event log per preset). `npm test` fails if a build changes them; re-record on purpose with `npm run golden:record` after an intended rule or content change.
 
@@ -100,29 +140,21 @@ The rules engine is a deterministic library with no rendering, input or clock de
 
 | Module | Folder | Responsibility |
 | --- | --- | --- |
-| state | `src/state` | Types, grid geometry and symmetric line of sight, initial state |
+| state | `src/state` | Types, grid geometry and symmetric line of sight, initial state, `ENGINE_VERSION` |
 | rules | `src/rules` | The `World` rules context: damage and armor, statuses, deaths and corpses, movement and mines, the chain queue and once-per-chain rule, projectiles, environment steps, waves, intercom |
 | effects | `src/effects` | Ability behaviours and upgrade hooks |
 | ai | `src/ai` | Enemy, minion and hazard AI (the value rule) |
 | engine | `src/engine` | The round and phase loop, `step`, `newGame`, legal commands |
-| content | `src/content` | JSON loading, validation, content hash, overrides |
+| content | `src/content` | JSON loading, validation, content hash, overrides, the list of required fields |
 | preview | `src/preview` | Dry-run previews and intents |
 | telemetry | `src/telemetry` | Replay records, summaries, the client fight session (command log and undo) |
 | sim | `src/sim` | Bots, batch runner, worker pool, reports, golden replays, CLI |
 | client | `src/client` | React UI: loadout, fight and result screens, board, HUD, debug overlay |
+| util | `src/util` | Tile names, canonical JSON hashing, statistics |
+| dev | `src/dev` | Path checks for the dev server's telemetry endpoint (used by `vite.config.ts`) |
 
-Tests are in `tests/` (Vitest): line of sight and its symmetry, combat and timers, the value rule case by case, enemies and waves, both kits, every upgrade, the chain rule, intercom, previews matching results over 100 random states, intents matching the real end of turn, replay determinism, undo, golden replays and batch reproducibility.
+Imports point one way: `util` and `content` at the bottom, then `state`, `rules`, `effects` and `ai`, `engine`, then `preview` and `telemetry`, with `sim` and `client` on top.
 
-## Status against the build order
+Tests are in `tests/` (Vitest): line of sight and its symmetry, combat and timers, the value rule case by case, enemies and waves, both kits, every upgrade, the chain rule, intercom, previews matching results over 100 random states, intents matching the real end of turn, replay determinism and file checks, undo, golden replays and batch reproducibility, plus content validation, CLI options, reports and statistics, telemetry paths, saved preferences and the client's shortcut and formatting helpers.
 
-| Milestone | Status |
-| --- | --- |
-| M0 Foundations | Done: grid, symmetric LOS (with the spec's 88-pair check), content loader with validation and hash, phase loop, movement, command log and replay |
-| M1 Combat core | Done: damage types, armor, deaths and corpses, Sidearm, Guard AI, event queue and once-per-chain rule, win and loss, result screen, previews (verified against 100 random states) |
-| M2 Tech kit | Done: mines, turret and Reload, drone cycle, shields, grapple, minion phase and cap, intents |
-| M3 Enemies and waves | Done: Medic, Flamer, Warden, waves with the arrival round, hidden timer, round cap, intercom feed and log |
-| M4 Lab hazards | Done: gun, panel grid, vents, prime-then-fire, the value rule with the combined kill check, cues, debug explanations |
-| M5 Alien kit | Done: Acid Spit, Lunge, Spore Pod, Brood Egg on floor and corpses, basic, spitter and burster hatchlings, Parasite, poison and spread |
-| M6 Loadout and upgrades | Done: loadout screen, presets, all 12 upgrades |
-| M7 Instrumentation and balance | Tooling done (telemetry, replay, simulator, bots, golden replays); the playtest rounds are yours to run |
-| Stretch | Not built: scrap and Repair, mender hatchling, Creep, search bot, scalable text and remappable keys |
+CI (`.github/workflows/ci.yml`) runs the build and the tests on every pull request.
