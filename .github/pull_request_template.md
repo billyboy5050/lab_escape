@@ -21,4 +21,5 @@
 - [ ] Rule changed: spec updated and `ENGINE_VERSION` bumped
 - [ ] UI changed: checked in the browser, light and dark themes, keyboard shortcuts
 - [ ] Docs updated (README, implementation notes, roadmap, CLAUDE.md as needed), and anything no longer true deleted
+- [ ] `@codex review` requested on the latest push, and every finding fixed or answered and resolved
 - [ ] The branch's note in `docs/work/` is deleted, its lasting content moved into the docs
