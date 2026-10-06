@@ -192,7 +192,10 @@ function main(): Promise<void> | void {
     }
     case 'telemetry': {
       const dir = positionals[1] ?? 'telemetry';
-      const opts = { informedFrom: parseInteger('informed-from', values['informed-from'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedFrom, informedAttempts: parseInteger('informed-attempts', values['informed-attempts'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedAttempts, informedPreset: values['informed-preset'] ?? DEFAULT_PLAYTEST.informedPreset };
+      const presetIds = defaultContent().presets.map((p) => p.id);
+      const informedPreset = values['informed-preset'] ?? DEFAULT_PLAYTEST.informedPreset;
+      if (!presetIds.includes(informedPreset)) throw new Error(`--informed-preset must be one of ${presetIds.join(', ')} (got "${informedPreset}")`);
+      const opts = { informedFrom: parseInteger('informed-from', values['informed-from'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedFrom, informedAttempts: parseInteger('informed-attempts', values['informed-attempts'], { min: 1 }) ?? DEFAULT_PLAYTEST.informedAttempts, informedPreset };
       console.log(formatPlaytest(dir, loadTelemetry(defaultContent(), dir, { includeUnlabelled: values['include-unlabelled'] }), opts));
       return;
     }

@@ -109,7 +109,8 @@ export interface PlaytestOptions {
 
 export const DEFAULT_PLAYTEST: PlaytestOptions = { informedFrom: 2, informedAttempts: 3, informedPreset: 'hybrid' };
 
-const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
+/** One decimal, so a figure never prints as a value that contradicts its status (35.2% beside an alarm at over 35%). */
+const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 const mean = (xs: readonly number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const na = (metric: string, target: string, alarm: string, why: string): MetricCheck => ({ metric, value: why, target, alarm, status: 'n/a' });
 
@@ -139,8 +140,15 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
       : na('First attempts lost', 'about 70% (4 of 5, up to 6 of 8)', 'fewer than half', 'no fights with a tester and attempt 1'),
   );
 
-  if (firstLost.length) {
-    const m = median(firstLost.map((f) => f.rounds));
+  // The first-time round is every attempt before the informed round, so a tester who made several first-time attempts has them all counted.
+  const firstTimeByKey = new Map<string, PlaytestFight>();
+  for (const f of fights) {
+    if (f.tester === undefined || f.attempt === undefined || f.attempt >= opts.informedFrom || f.outcome !== 'lose') continue;
+    if (!firstTimeByKey.has(`${f.tester}\u0000${f.attempt}`)) firstTimeByKey.set(`${f.tester}\u0000${f.attempt}`, f);
+  }
+  const firstTimeLosses = [...firstTimeByKey.values()];
+  if (firstTimeLosses.length) {
+    const m = median(firstTimeLosses.map((f) => f.rounds));
     out.push({
       metric: 'First-time losses that reach wave 2',
       value: `median loss in round ${m}`,
@@ -148,7 +156,7 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
       alarm: 'median loss before round 3',
       status: m < 3 ? 'alarm' : m < 4 ? 'warn' : 'ok',
     });
-  } else out.push(na('First-time losses that reach wave 2', 'most reach round 4', 'median loss before round 3', 'no lost first attempts'));
+  } else out.push(na('First-time losses that reach wave 2', 'most reach round 4', 'median loss before round 3', 'no lost first-time attempts'));
 
   // One fight per tester and attempt number, the earliest, as for first attempts: the number is counted per browser.
   const informedByKey = new Map<string, PlaytestFight>();
@@ -192,6 +200,8 @@ export function playtestChecks(fights: readonly PlaytestFight[], opts: PlaytestO
   if (damaged.length) {
     const ff = mean(damaged.map((f) => f.friendlyFireShare));
     out.push({ metric: 'Share of player damage from own effects', value: `${pct(ff)} (${damaged.length} fights where the player took damage)`, target: '5% to 30%', alarm: 'over 35%, or under 3%', status: ff > 0.35 || ff < 0.03 ? 'alarm' : ff < 0.05 || ff > 0.3 ? 'warn' : 'ok' });
+  } else if (fights.length) {
+    out.push(na('Share of player damage from own effects', '5% to 30%', 'over 35%, or under 3%', 'the player took no damage in any fight'));
   }
 
   if (losses.length) {

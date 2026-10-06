@@ -28,7 +28,7 @@ describe('playtest metrics', () => {
   it('first attempts lost: counts testers at attempt 1 only', () => {
     const four = [1, 2, 3, 4].map((i) => fight({ tester: `P${i}` }));
     const fights = [...four, fight({ tester: 'P5', outcome: 'win' }), fight({ tester: 'P1', attempt: 2, outcome: 'win' })];
-    expect(check(fights, 'First attempts lost')).toMatchObject({ value: '4 of 5 testers (80%); 3 with no fight after the loss', status: 'ok' });
+    expect(check(fights, 'First attempts lost')).toMatchObject({ value: '4 of 5 testers (80.0%); 3 with no fight after the loss', status: 'ok' });
     expect(check(fights.slice(0, 2), 'First attempts lost').status).toBe('warn');
     expect(check([fight({ outcome: 'win' }), fight({ tester: 'P2', outcome: 'win' }), fight({ tester: 'P3' })], 'First attempts lost').status).toBe('alarm');
     expect(check([fight({ tester: undefined })], 'First attempts lost').status).toBe('n/a');
@@ -36,13 +36,19 @@ describe('playtest metrics', () => {
 
   it('first attempts: one per tester (the earliest), and how many testers have no fight after the loss', () => {
     const fights = [fight({ name: '1' }), fight({ name: '2', outcome: 'win' }), fight({ tester: 'P2', name: '3' }), fight({ tester: 'P2', name: '4', attempt: 2, outcome: 'win' })];
-    expect(check(fights, 'First attempts lost').value).toBe('2 of 2 testers (100%); 1 with no fight after the loss');
+    expect(check(fights, 'First attempts lost').value).toBe('2 of 2 testers (100.0%); 1 with no fight after the loss');
   });
 
   it('informed round: only the attempts it has, from the first informed one', () => {
     const fights = [2, 3, 4, 5, 6].map((a) => fight({ attempt: a, outcome: 'win' }));
-    expect(check(fights, 'Informed win rate').value).toBe('3 of 3 (100%); attempt 2: 1/1, attempt 3: 1/1, attempt 4: 1/1');
+    expect(check(fights, 'Informed win rate').value).toBe('3 of 3 (100.0%); attempt 2: 1/1, attempt 3: 1/1, attempt 4: 1/1');
     expect(check(fights, 'Informed win rate', { informedFrom: 2, informedAttempts: 2, informedPreset: 'hybrid' }).value).toContain('2 of 2');
+  });
+
+  it('first-time losses: every lost attempt before the informed round, one per tester and attempt number', () => {
+    const fights = [fight({ rounds: 5 }), fight({ attempt: 2, rounds: 2 }), fight({ attempt: 2, rounds: 9, name: 'dup' }), fight({ attempt: 3, rounds: 1 })];
+    expect(check(fights, 'First-time losses', { informedFrom: 3, informedAttempts: 3, informedPreset: 'hybrid' }).value).toBe('median loss in round 3.5');
+    expect(check(fights, 'First-time losses').value).toBe('median loss in round 5');
   });
 
   it('first-time losses: median round of lost first attempts', () => {
@@ -55,7 +61,7 @@ describe('playtest metrics', () => {
     const informed = [fight({ attempt: 2, outcome: 'win' }), fight({ tester: 'P2', attempt: 2 }), fight({ attempt: 3 }), fight({ tester: 'P2', attempt: 3, outcome: 'win' })];
     const noise = [fight({ attempt: 1, outcome: 'win' }), fight({ attempt: 2, preset: 'tech', outcome: 'win' })];
     const c = check([...informed, ...noise], 'Informed win rate');
-    expect(c.value).toBe('2 of 4 (50%); attempt 2: 1/2, attempt 3: 1/2');
+    expect(c.value).toBe('2 of 4 (50.0%); attempt 2: 1/2, attempt 3: 1/2');
     expect(c.status).toBe('ok');
     expect(check([fight({ attempt: 2, outcome: 'win' })], 'Informed win rate').status).toBe('alarm');
     expect(check(informed, 'Informed win rate', { informedFrom: 3, informedAttempts: 3, informedPreset: 'hybrid' }).value).toContain('attempt 3: 1/2');
@@ -64,7 +70,7 @@ describe('playtest metrics', () => {
 
   it('informed round: one fight per tester and attempt number, the earliest', () => {
     const fights = [fight({ name: '1', attempt: 2, outcome: 'win' }), fight({ name: '2', attempt: 2 }), fight({ name: '3', attempt: 3 })];
-    expect(check(fights, 'Informed win rate').value).toBe('1 of 2 (50%); attempt 2: 1/1, attempt 3: 0/1');
+    expect(check(fights, 'Informed win rate').value).toBe('1 of 2 (50.0%); attempt 2: 1/1, attempt 3: 0/1');
   });
 
   it('winning fights: median rounds', () => {
@@ -88,12 +94,13 @@ describe('playtest metrics', () => {
     expect(check([fight({ friendlyFireShare: 0.04 })], 'Share of player damage').status).toBe('warn');
     // Fights where the player took no damage have no share, and are left out of the mean.
     const flawless = Array.from({ length: 9 }, () => fight({ friendlyFireShare: 0, playerDamage: 0 }));
-    expect(check([fight({ friendlyFireShare: 0.1 }), ...flawless], 'Share of player damage')).toMatchObject({ value: '10% (1 fights where the player took damage)', status: 'ok' });
-    expect(check(flawless, 'Share of player damage')).toBeUndefined();
+    expect(check([fight({ friendlyFireShare: 0.1 }), ...flawless], 'Share of player damage')).toMatchObject({ value: '10.0% (1 fights where the player took damage)', status: 'ok' });
+    expect(check(flawless, 'Share of player damage').status).toBe('n/a');
+    expect(check([fight({ friendlyFireShare: 0.352 })], 'Share of player damage')).toMatchObject({ value: expect.stringContaining('35.2%'), status: 'alarm' });
     const hazard = [fight({ causeCategory: 'hazard' }), fight({ causeCategory: 'hazard' }), fight({ causeCategory: 'enemy' })];
-    expect(check(hazard, 'Share of deaths')).toMatchObject({ value: 'hazard 67%, enemy 33%', status: 'alarm' });
+    expect(check(hazard, 'Share of deaths')).toMatchObject({ value: 'hazard 66.7%, enemy 33.3%', status: 'alarm' });
     expect(check([fight({ causeCategory: 'enemy' }), fight({ causeCategory: 'enemy' }), fight({ causeCategory: 'minion' })], 'Share of deaths').status).toBe('warn');
-    expect(check([fight({ causeCategory: null }), fight({ causeCategory: 'enemy' })], 'Share of deaths').value).toBe('enemy 50%, round cap 50%');
+    expect(check([fight({ causeCategory: null }), fight({ causeCategory: 'enemy' })], 'Share of deaths').value).toBe('enemy 50.0%, round cap 50.0%');
     expect(check([fight({ hazardFires: 0 })], 'Hazard fires').status).toBe('alarm');
     expect(check([fight({ hazardFires: 1 })], 'Hazard fires').status).toBe('warn');
   });
