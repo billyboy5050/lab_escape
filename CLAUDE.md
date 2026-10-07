@@ -30,6 +30,7 @@ Each fact has one home. Link to it rather than copying it.
 | How the code reads the spec where it is silent, defaults for its open decisions, simulator findings, known limitations | [docs/implementation-notes.md](docs/implementation-notes.md) |
 | How to run, play, tune and simulate; the code layout | [README.md](README.md) |
 | Status, what is next, decisions waiting on the owner | [docs/roadmap.md](docs/roadmap.md) |
+| The one-page rules sheet handed to first-time players | [docs/rules-sheet.html](docs/rules-sheet.html) |
 | Work in progress, one note per branch | [docs/work/](docs/work/) |
 | How to work here, and the invariants | this file |
 | Every number in the rules | `content/*.json` |
@@ -64,6 +65,8 @@ The golden replays and the committed reports describe the current rules and cont
 | `reports/sweep-8-greedy.*` | `npm run sim -- sweep --seeds 1000 --out reports` |
 
 Content changes alter the content hash, so until this is done the golden test fails and the winning lines no longer load.
+
+The rules sheet (`docs/rules-sheet.html`) is written by hand, but every value it copies from `content/` carries a `data-c` tag with its content path, and `tests/rulesSheet.test.ts` checks them. If a content change fails that test, change the sheet's text to match, keep the tags, and check that it still prints on one page (print preview in a browser, at A4 and at Letter).
 
 ## How work flows
 
@@ -137,7 +140,7 @@ The spec is the source of truth, and the spec itself says to update it when impl
 
 1. Check with the owner first if the rule is marked Proposed, or is listed under the roadmap's "Decisions waiting on the owner".
 2. Change the rule where the spec states it, and add a row to a "Changes since revision 2" table at the end of the spec saying what changed and why (create the table with the first change).
-3. Update the code and its tests, and remove or rewrite any implementation note the change settles.
+3. Update the code and its tests, remove or rewrite any implementation note the change settles, and correct the [rules sheet](docs/rules-sheet.html) if it states the rule.
 4. Bump `ENGINE_VERSION`, regenerate every generated file (see "Regenerating generated files"), and update the figures in the implementation notes.
 
 ## Tuning
