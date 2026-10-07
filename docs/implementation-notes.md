@@ -164,7 +164,7 @@ The bot sees the same previews and intents a player does, but it checks every ca
 
 ## What the developer playtest round says (spec round 1)
 
-The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtest report counted 21 of them: Alien 10, Tech 6 and Hybrid 5. It left out one custom-loadout fight played with wave 3 held back. Result: 3 wins (Hybrid twice, Alien once) and 18 losses. No bugs turned up: the one reported, the Scout Drone dying at once, is the rules as written (see below).
+The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtest report counted 21 of them: Alien 10, Tech 6 and Hybrid 5. It left out one custom-loadout fight played with wave 3 held back. Result: 3 wins (Hybrid twice, Alien once) and 18 losses. The owner found no major bugs. The one reported, the Scout Drone dying at once, is the rules as written (see below).
 
 **How the figures were gathered.** Round 1 ran on a checkout from before 2026-10-06: engine 0.1.0, with no tester IDs. `main` has been at engine 0.1.1 since PR #3, which changed only how units that die in the same effect as the player are reported. The playtest report refuses a replay from another engine version (invariant 4 in CLAUDE.md), so the owner copied the fights and restamped them as 0.1.1. That is sound for these figures, which do not use what changed. Every replay also ran to its end without a rejected command. The report was then run with `npm run sim -- telemetry <folder> --include-unlabelled`.
 
@@ -211,7 +211,7 @@ The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtes
 - **Alien** won on Spore Pod (8 uses), Brood Egg (7), Parasite (6) and Acid Spit (6), losing 15 hatchlings along the way; Lunge was used once.
 - **Hybrid** won on Sidearm (9), Parasite (8), Spore Pod (4), Brood Egg (3), Acid Spit (3) and Barrier Shield (2), filling the swarm and losing 12 minions; a Proximity Mine was placed once.
 
-**The Scout Drone dies on its first turn.** The owner deployed it a few times, and each time it flew toward the enemies and was shot. That is the rules as written, not a code bug. `droneTurn` flies the drone until the nearest enemy is within its zap range of 2 and in sight, which leaves the drone the nearest of the player's units. Guards shoot the nearest player-side unit in sight for 3, and the drone has 3 HP. Deployed from far back, it may not get within range on its first move, and then it dies without zapping, as the owner saw. The greedy bot's fights (150 per preset) show the same:
+**The Scout Drone dies within a turn or two.** The owner deployed it a few times, and each time it flew toward the enemies and was shot on its first turn. That is the rules as written, not a code bug. `droneTurn` flies the drone until the nearest enemy is within its zap range of 2 and in sight, which leaves the drone the nearest of the player's units. Guards shoot the nearest player-side unit in sight for 3, and the drone has 3 HP. Deployed from far back, it may not get within range on its first move, and then it dies without zapping, as the owner saw. The greedy bot's fights (150 per preset) show it dying almost as fast: 76 of 96 Tech drones (79%) and 402 of 535 Hybrid drones (75%) died in the round they were summoned or the next.
 
 | Preset (bot) | Drones summoned | Died | Died in the round summoned | Killed by Guards | Rounds zapped per drone |
 | --- | --- | --- | --- | --- | --- |
@@ -220,7 +220,7 @@ The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtes
 
 The bot still summons 3.6 drones a Hybrid fight, which suggests a drone is worth 2 AP as a decoy that soaks a Guard shot (and, with Plague Drone, spreads poison), not as a damage dealer.
 
-More HP alone is not a clear fix on the bot's figures (`npm run sim -- tune --param units.drone.hp --values 3,4,5 --seeds 200`, greedy bot, 95% intervals):
+More HP alone is not a clear fix on the bot's figures (greedy bot, 95% intervals), from `npm run sim -- tune --preset tech --param units.drone.hp --values 3,4,5 --seeds 200 --workers 1` and the same with `--preset hybrid`. `--workers 1` is needed while the worker-thread problem on the roadmap stands:
 
 | Drone HP | Tech win rate | Hybrid win rate |
 | --- | --- | --- |
