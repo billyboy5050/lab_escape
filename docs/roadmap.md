@@ -33,11 +33,11 @@ The spec's next step is playtesting (its "Test plan and tuning" section). The to
 1. **First-time player round** (owner; spec round 2): 5 to 8 people, one at a time, with the printed [rules sheet](rules-sheet.html) only, screen and telemetry recorded, and the three questions after each attempt. Run it on an up-to-date `main` with a Tester ID for each person: the playtest report refuses fights recorded on another engine version, and older checkouts have no Tester ID field.
 2. **Informed player round** (owner; spec round 3): the same people after watching a replay of one of their losses, 3 attempts each on the Hybrid preset.
 3. **Tune against the alarms once play confirms them.** Do not tune on bot figures alone: the greedy bot plays one action ahead and is a ceiling, not a player. When a playtest confirms an alarm, use the spec's "Symptom to first knob" table, change values in `content/`, and include before and after simulator reports in the pull request. Candidates today:
-   - **The Scout Drone dies within a turn or two** (on its first turn every time for the owner; in the round summoned or the next for most of the bot's drones): it flies to within zap range of the nearest enemy, Guards shoot the nearest of the player's units for 3, and it has 3 HP. Its fix is a design call for the owner: more HP or zap range in `content/`, or a change to how it moves, which is a rule change.
+   - **The Scout Drone**, whose fix waits on the owner (see [below](#decisions-waiting-on-the-owner)).
    - **Tech's difficulty:** the owner found Tech hard to get a footing in and played it with few turrets, while the bot wins 72% of Tech fights with 10.5 turrets a fight on average. The owner will revisit it.
-   - **Friendly fire:** round 1 tripped the spec's under-3% alarm, not the bot's over-35% one (66% on Hybrid).
-   - **Hazard fires:** under 1 a fight in round 1 (an alarm), largely because most fights ended early; the bot sees 1.9 a fight on Alien.
-   - **Early losses:** half of round 1's losses came by round 3. Round 2's "first-time losses that reach wave 2" metric tests this.
+   - **Friendly fire:** round 1 tripped the spec's alarm for too little, while the bot trips the one for too much on Hybrid.
+   - **Hazard fires:** too few in round 1 (an alarm), largely because most fights ended early, and short of the target for the bot on Alien.
+   - **Early losses** in round 1. Round 2's "first-time losses that reach wave 2" metric tests this.
    - **The Warden** rarely reaching the player (bot 3% to 28%).
 
    Round 1's evidence for each is in the [developer round](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
@@ -49,6 +49,7 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 - **Interpretations to confirm.** Every item under "Interpretations to confirm" in [implementation-notes.md](implementation-notes.md#interpretations-to-confirm). Once confirmed, fold them into the spec as clarifications, since the spec is the source of truth; anything overturned becomes a rule change (see CLAUDE.md for what that involves).
 - **Defaults for the spec's open decisions** in the same file (arrival round on every wave, loadout of 8, Corrode for the whole fight, hazard cooldowns hidden, and the rest).
 - **Unexplained differences from the design document.** Six rows in the spec's "Changes from the design document" table say "Reason not recorded. Confirm it is intended": two hatchlings from a floor egg, no minion commands, armor reducing fire, Barrier Shield fixed once placed, Corrode stripping armor only, and enemies moving then taking one action.
+- **How to fix the Scout Drone.** It dies within a turn or two of being summoned. The [developer round](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1) has the finding, what more HP does in the simulator, and the alternative: changing how the drone moves, which is a rule change.
 - **The Warden's charge range.** The spec reads range 4 as distance moved, so a target 2 to 5 tiles away can be charged, and asks for that reading to be confirmed.
 - **Golden replays.** They are greedy-bot fights frozen into scripts because the hand simulations were only summaries. Replace them with transcribed hand lines if those are ever written.
 - **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order).
