@@ -67,6 +67,8 @@ describe('rules sheet', () => {
   });
 
   it('matches the rule switches its wording assumes', () => {
+    // "The first is there at the start".
+    expect(C.waves[0]?.round).toBe(1);
     // "An enemy that arrived this round only moves": every wave has an arrival round.
     expect(C.rules.arrivalRound).toBe('all');
     // Corrode is "for the rest of the fight".

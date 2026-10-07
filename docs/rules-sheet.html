@@ -13,8 +13,8 @@
   content change that makes the sheet wrong fails the tests. Change the text here to match and keep the tags.
 
   The sheet states the rules and explains the screen. It leaves out what the spec hides on purpose (when waves arrive,
-  which tiles a defence covers and when it may fire, the lab's value rule, the intercom's code words) and gives no
-  advice, because round 2 is "a one-page rules sheet and no coaching".
+  which tiles a defence covers, the value rule that decides when the lab fires one, hazard cooldowns, the intercom's
+  code words) and gives no advice, because round 2 is "a one-page rules sheet and no coaching".
 -->
 <style>
   :root {
@@ -70,6 +70,13 @@
   [data-t="P"], .k.pillar { background: linear-gradient(var(--block), var(--block)) center / 62% 62% no-repeat; }
   [data-t="S"], .k.shutter { background: repeating-linear-gradient(45deg, var(--block) 0 0.6mm, #fff 0.6mm 1.3mm); }
   [data-t="G"], .k.gun { background: var(--shade); }
+  @media screen and (max-width: 640px) {
+    body { padding: 0; font-size: 10pt; }
+    .room { flex-wrap: wrap; }
+    .sheet { padding: 16px; box-shadow: none; }
+    .cols { column-count: 1; }
+    header { display: block; }
+  }
 </style>
 </head>
 <body>
@@ -167,7 +174,7 @@
 <section>
   <h2>Lab defences</h2>
   <p>The wall gun (<span data-c="map.hazards.0.tiles">H5</span>), the floor panels (<span data-c="map.hazards.1.tiles">D5 and E5</span>) and the gas vents (<span data-c="map.hazards.2.tiles">B5</span>, <span data-c="map.hazards.3.tiles">G6</span>) are the lab's, and its AI decides when each fires. A defence that fires hurts whoever is in reach, on either side.</p>
-  <p>It never fires without a cue first: <i data-c="hazardDefs.wall_gun.cue">The gun barrel glows.</i> <i data-c="hazardDefs.panel_grid.cue">The floor panels crackle.</i> <i data-c="hazardDefs.gas_vent.cue">A wisp rises from the vent.</i> It shows at the end of a round; the defence goes off at the end of the next, after your turn. Nothing shows which tiles are at risk.</p>
+  <p>It never fires without a cue first: <i data-c="hazardDefs.wall_gun.cue">The gun barrel glows.</i> <i data-c="hazardDefs.panel_grid.cue">The floor panels crackle.</i> <i data-c="hazardDefs.gas_vent.cue">A wisp rises from the vent.</i> It shows at the end of a round; the defence fires (or stands down) at the end of the next, after your turn. Nothing shows which tiles are at risk.</p>
 </section>
 
 <section>
@@ -190,7 +197,7 @@
     </tbody>
   </table>
   <p>Turrets bring Reload (<span data-c="utilities.reload.ap">1</span> AP, within <span data-c="utilities.reload.range">2</span>), mines Pick Up (<span data-c="utilities.pick_up_mine.ap">1</span> AP) and drones Redeploy (<span data-c="utilities.redeploy.ap">1</span> AP, when docked).</p>
-  <p><b>Minions</b> (at most <span data-c="rules.caps.minions">5</span>: turrets, drones and hatchlings) only aim at enemies, but their blasts and chains hit anyone. Hatchlings: <span class="g">h</span> <span data-c="units.hatchling.hp">2</span> HP, bites an adjacent enemy for <span data-c="units.hatchling.melee.damage">1</span>; <span class="g">s</span> spitter, <span data-c="units.spitter.hp">4</span> HP, <span data-c="units.spitter.attack.damage">1</span> acid at an enemy within <span data-c="units.spitter.attack.range">3</span>; <span class="g">b</span> burster, <span data-c="units.burster.hp">4</span> HP, explodes next to an enemy for <span data-c="units.burster.blast.damage">3</span> explosive to its tile and the 8 around. Any damage can break an egg (<span data-c="rules.eggs.hp">3</span> HP), and then nothing hatches. Medic and Warden corpses cannot hold one.</p>
+  <p><b>Minions</b> (at most <span data-c="rules.caps.minions">5</span>: turrets, drones and hatchlings) only aim at enemies, but their blasts and chains hit anyone. Hatchlings: <span class="g">h</span> basic, <span data-c="units.hatchling.hp">2</span> HP, bites an adjacent enemy for <span data-c="units.hatchling.melee.damage">1</span>; <span class="g">s</span> spitter, <span data-c="units.spitter.hp">4</span> HP, <span data-c="units.spitter.attack.damage">1</span> acid at an enemy within <span data-c="units.spitter.attack.range">3</span>; <span class="g">b</span> burster, <span data-c="units.burster.hp">4</span> HP, explodes next to an enemy for <span data-c="units.burster.blast.damage">3</span> explosive to its tile and the 8 around. Any damage can break an egg (<span data-c="rules.eggs.hp">3</span> HP), and then nothing hatches. Medic and Warden corpses cannot hold one.</p>
 </section>
 
 <section>
@@ -199,7 +206,7 @@
     <li><b>Units.</b> Yours are circles and squares (<span class="g">@</span> you, <span class="g">T</span> turret, <span class="g">D</span> drone, <span class="g">h s b</span> hatchlings), enemies diamonds and a hexagon (<span class="g">G + F W</span>). A shield badge is armor. Eggs and corpses (<span class="g">✕</span>) show rounds left.</li>
     <li><b>Intents</b> (<kbd>I</kbd>). Every enemy and minion shows a dashed path to where it will go and an arrow to what it will hit. <span class="g">▼3</span> is what a unit takes if you end the turn now, <span class="g">KO</span> that it dies. A hollow ring with no arrow: arriving, so it will not attack. Hover a unit for its plan in words.</li>
     <li><b>Previews.</b> Pick an action and hover a target: <span class="g">−2</span> is damage after armor, <span class="g">+PSN +PAR +COR</span> are statuses, <span class="g">KO</span> a kill. A red dashed ring with <span class="g">!</span> marks your own units that would be hit.</li>
-    <li>The status strip's <b>End turn now</b> warning counts minions and enemies, never the lab's defences.</li>
+    <li>The <span class="g">▼</span> badges and the status strip's <b>End turn now</b> warning count minions and enemies, never the lab's defences.</li>
     <li><b>Keys.</b> <kbd>1</kbd>–<kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> actions, <kbd>Esc</kbd> cancel, <kbd>Tab</kbd> grapple mode, <kbd>Z</kbd> undo, <kbd>E</kbd> end turn, <kbd>F</kbd> speed, <kbd>Space</kbd> skip, <kbd>L</kbd> intercom log.</li>
   </ul>
 </section>
