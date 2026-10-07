@@ -220,4 +220,14 @@ The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtes
 
 The bot still summons 3.6 drones a Hybrid fight, which suggests a drone is worth 2 AP as a decoy that soaks a Guard shot (and, with Plague Drone, spreads poison), not as a damage dealer.
 
+More HP alone is not a clear fix on the bot's figures (`npm run sim -- tune --param units.drone.hp --values 3,4,5 --seeds 200`, greedy bot, 95% intervals):
+
+| Drone HP | Tech win rate | Hybrid win rate |
+| --- | --- | --- |
+| 3 (now) | 75.5% (69 to 81) | 83.5% (78 to 88) |
+| 4 | 69.5% (63 to 75) | 80.0% (74 to 85) |
+| 5 | 68.0% (61 to 74) | 93.5% (89 to 96) |
+
+At 4 HP the drone survives one Guard shot, yet neither preset moves beyond noise. At 5 HP Hybrid, already the easiest preset for the owner, wins 93.5%. The bot uses the drone as a decoy, so these figures cannot show whether a player would find a tougher drone useful. The likelier fix for people is how the drone moves: it flies straight into Guard range. Changing that is a rule change for the owner to decide.
+
 **Found along the way:** the result screen lists hazard fires with internal names: `vent_b5→player`, and `gun→object 5` for a shield segment or egg. It is a roadmap item.
