@@ -27,6 +27,20 @@ function lookup(path: string): unknown {
   return at;
 }
 
+/**
+ * The sheet's text with its head, map, key and glyph examples, and every tagged value taken out. Whatever number or
+ * damage type is left was typed in by hand, so a tag dropped from a copied value shows up here.
+ */
+function untaggedText(): string {
+  const html = SHEET.replace(/<head>.*<\/head>/s, ' ')
+    .replace(/<table class="map".*?<\/table>/s, ' ')
+    .replace(/<([a-z0-9]+)\b[^>]*\bdata-c="[^"]+"[^>]*>.*?<\/\1>/gs, ' ')
+    .replace(/<kbd>.*?<\/kbd>/gs, ' ')
+    .replace(/<span class="(?:g|k\b[^"]*)">.*?<\/span>/gs, ' ')
+    .replace(/<[^>]+>/g, ' ');
+  return decode(html).replace(/\s+/g, ' ');
+}
+
 /** How the sheet writes a content value: lists as "a, b and c". */
 function written(value: unknown): string | undefined {
   if (typeof value === 'number' || typeof value === 'string') return String(value);
@@ -57,6 +71,20 @@ describe('rules sheet', () => {
     C.map.hazards.forEach((_, i) => want.push(`map.hazards.${i}.tiles`));
     for (const [id, u] of Object.entries(C.utilities)) if (u.requiresAbility) want.push(`utilities.${id}.ap`);
     expect(want.filter((p) => !paths.has(p))).toEqual([]);
+  });
+
+  it('leaves no number or damage type untagged', () => {
+    // Fixed by the rules, not by content: losing at 0 HP, range counting a diagonal as 1, the 8 tiles around a tile
+    // (radius 1, checked below), a 3x3 area (the same) and Corrode's 1 armor per stack. Armor's complement is checked
+    // below too.
+    const fixed = ['at 0 HP', 'count as 1', 'the 8 tiles around', 'the 8 around', '3x3', '1 less armor', 'Electric, acid, poison and Parasite damage ignore it'];
+    let text = untaggedText();
+    for (const phrase of fixed) {
+      expect(text, `"${phrase}" is no longer on the sheet; drop it from this list`).toContain(phrase);
+      text = text.split(phrase).join(' ');
+    }
+    expect(text.match(/\S*\d\S*/g) ?? [], 'numbers on the sheet without a data-c tag').toEqual([]);
+    expect(text.match(/\b(?:kinetic|explosive|fire|electric|acid)\b/g) ?? [], 'damage types without a data-c tag').toEqual([]);
   });
 
   it('draws the map from content', () => {
@@ -95,6 +123,16 @@ describe('rules sheet', () => {
     // "The elite" is the Warden, which the Grapple Hook cannot pull; the drone is the "flying minion".
     expect(Object.keys(C.units).filter((id) => C.units[id]!.elite)).toEqual(['warden']);
     expect(Object.keys(C.units).filter((id) => C.units[id]!.flying)).toEqual(['drone']);
+    // "Electric, acid, poison and Parasite damage ignore it": every damage type content uses that armor does not reduce.
+    const used = new Set<string>();
+    const walk = (v: unknown): void => {
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) k === 'damageType' && typeof x === 'string' ? used.add(x) : walk(x);
+    };
+    walk(C.files);
+    expect([...used].filter((t) => !(C.rules.armorAppliesTo as string[]).includes(t)).sort()).toEqual(['acid', 'electric', 'parasite', 'poison']);
+    // Pick Up takes "an adjacent mine".
+    expect(C.utilities['pick_up_mine']?.range).toBe(1);
     // The status table gives one duration each for poison and Parasite, whichever ability applies them.
     expect(C.abilities['spore_pod']?.status).toEqual({ id: 'poison', duration: C.rules.statuses.poison.duration });
     expect(C.abilities['parasite']?.status).toEqual({ id: 'parasite', duration: C.rules.statuses.parasite.duration });
