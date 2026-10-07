@@ -11,6 +11,7 @@ Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the
 | [docs/spec.md](docs/spec.md) | The design spec (revision 2) and the source of truth for the rules |
 | [docs/implementation-notes.md](docs/implementation-notes.md) | Where the implementation interpreted the spec, the defaults taken for its open decisions, and what the simulator found |
 | [docs/roadmap.md](docs/roadmap.md) | Where things stand, what is next, and the decisions waiting on the owner |
+| [docs/rules-sheet.html](docs/rules-sheet.html) | The one-page rules sheet for first-time players in playtests; open it in a browser and print it |
 | [docs/work/](docs/work/) | One note per branch in progress, so anyone can pick the work up |
 | [CLAUDE.md](CLAUDE.md) (also `AGENTS.md`) | How to work in this repo: branches, pull requests, keeping the docs current, and the invariants not to break |
 
@@ -140,6 +141,8 @@ After a playtest round, `npm run sim -- telemetry` reads every fight under `tele
 
 For playtests, give each person a tester ID: open the game at `?tester=P3` or type it into the Tester ID field on the loadout screen. The browser remembers it. The replay's `meta` then carries `tester` and `attempt` (1 for their first finished fight, counted per tester in that browser, so abandoned fights do not use a number), and both go into the folder name. Clear the field outside a playtest. `telemetry/` is ignored by git; `src/telemetry/` is source.
 
+First-time players get the one-page rules sheet and no coaching (spec, playtest round 2). Open `docs/rules-sheet.html` in a browser, or http://localhost:5173/docs/rules-sheet.html while the dev server runs, and print it; it fits one A4 or Letter page. It states the rules and explains the screen, and leaves out what the game hides on purpose: when waves arrive, which tiles the lab's defences cover, what makes the lab fire them, and the intercom's code words. Its numbers are tagged with where they come from in `content/`, and `npm test` fails if one no longer matches.
+
 Golden replays live in `golden/` (one command log and event log per preset). `npm test` fails if a build changes them; re-record on purpose with `npm run golden:record` after an intended rule or content change.
 
 ## Code layout
@@ -163,6 +166,6 @@ The rules engine is a deterministic library with no rendering, input or clock de
 
 Imports point one way: `util` and `content` at the bottom, then `state`, `rules`, `effects` and `ai`, `engine`, then `preview` and `telemetry`, with `sim` and `client` on top.
 
-Tests are in `tests/` (Vitest): line of sight and its symmetry, combat and timers, the value rule case by case, enemies and waves, both kits, every upgrade, the chain rule, intercom, previews matching results over 100 random states, intents matching the real end of turn, replay determinism and file checks, undo, golden replays and batch reproducibility, plus content validation, CLI options, reports and statistics, telemetry paths, saved preferences and the client's shortcut and formatting helpers.
+Tests are in `tests/` (Vitest): line of sight and its symmetry, combat and timers, the value rule case by case, enemies and waves, both kits, every upgrade, the chain rule, intercom, previews matching results over 100 random states, intents matching the real end of turn, replay determinism and file checks, undo, golden replays and batch reproducibility, plus content validation, CLI options, reports and statistics, telemetry paths, saved preferences, the client's shortcut and formatting helpers, and the rules sheet against the content.
 
 CI (`.github/workflows/ci.yml`) runs the build and the tests on every pull request.
