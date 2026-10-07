@@ -24,7 +24,7 @@ The code for the MVP in the [spec](spec.md) is built and merged (PR #1), and typ
 
 The simulator's findings (greedy bot, 1,000 seeds per preset) are in [implementation-notes.md](implementation-notes.md#what-the-simulator-says-greedy-bot-1000-seeds-per-preset). In short: Tech wins 72%, Alien 46%, Hybrid 83%; the paper check passes; Hybrid's friendly-fire share (66%) and the sweep's (54%) are over the spec's 35% alarm; the Warden reaches the player in only 3% to 28% of fights that reach round 7; Alien sees 1.9 hazard fires per fight against a target of 2.
 
-The developer round is in [implementation-notes.md](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1). In short: 21 fights on 2026-10-03 and 2026-10-07, 2 wins (Alien and Hybrid); the owner enjoyed it, liked Alien best, found Hybrid easiest and Tech hard to get a footing in. In the four fights reviewed (two Tech, one Alien, one Hybrid), friendly fire was 0% of the player's damage, median turns took 14 to 32 seconds, the Scout Drone was never deployed, and Tech was played with few turrets, unlike the bot.
+The developer round (spec round 1) and what it found are in [implementation-notes.md](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
 
 ## Up next
 
@@ -36,11 +36,13 @@ The spec's next step is playtesting (its "Test plan and tuning" section). The to
 2. **First-time player round** (owner; spec round 2): 5 to 8 people, one at a time, with the printed [rules sheet](rules-sheet.html) only, screen and telemetry recorded, and the three questions after each attempt. Run it on an up-to-date `main` with a Tester ID for each person: the playtest report refuses fights recorded on another engine version, and older checkouts have no Tester ID field.
 3. **Informed player round** (owner; spec round 3): the same people after watching a replay of one of their losses, 3 attempts each on the Hybrid preset.
 4. **Tune against the alarms once play confirms them.** Do not tune on bot figures alone: the greedy bot plays one action ahead and is a ceiling, not a player. When a playtest confirms an alarm, use the spec's "Symptom to first knob" table, change values in `content/`, and include before and after simulator reports in the pull request. Candidates today:
-   - **Tech's difficulty:** the owner found it hard to get a footing in round 1, while the bot wins 72% of Tech fights and places 10.5 turrets a fight on average. The owner will revisit it.
-   - **Friendly fire:** the bot's Hybrid alarm (66%) did not show in round 1. All four fights reviewed, the Hybrid win included, were at 0%, which is under the spec's 3% alarm instead.
-   - **The Scout Drone:** never deployed in the three round 1 fights whose loadout had it, so its upgrades never came into play.
-   - **The Warden** rarely reaching the player (bot 3% to 28%; 1 of 4 in round 1).
-   - **Hazard fires on Alien** (bot 1.9 a fight; 3 in the round 1 Alien win).
+   - **Tech's difficulty:** the owner found Tech hard to get a footing in and played it with few turrets, while the bot wins 72% of Tech fights with 10.5 turrets a fight on average. The owner will revisit it.
+   - **Friendly fire:** the bot's Hybrid alarm (66%) did not show in the round 1 fights reviewed, where the player's share sat under the spec's 3% alarm instead.
+   - **The Scout Drone:** never deployed in the round 1 fights reviewed, so its upgrades never came into play.
+   - **The Warden** rarely reaching the player (bot 3% to 28%).
+   - **Hazard fires on Alien** (bot 1.9 a fight).
+
+   Round 1's evidence for each is in the [developer round](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
 
 ## Decisions waiting on the owner
 
