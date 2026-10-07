@@ -8,7 +8,7 @@ Last reviewed: 2026-10-07.
 
 ## Where things stand
 
-The code for the MVP in the [spec](spec.md) is built and merged (PR #1), and typecheck, build and all tests pass. M7 still needs its playtest round, so not every milestone is done.
+The code for the MVP in the [spec](spec.md) is built and merged (PR #1), and typecheck, build and all tests pass. M7 still needs its first-time player round, so not every milestone is done.
 
 | Milestone | Status |
 | --- | --- |
@@ -19,19 +19,24 @@ The code for the MVP in the [spec](spec.md) is built and merged (PR #1), and typ
 | M4 Lab hazards | Done: gun, panel grid, vents, prime-then-fire, the value rule with the combined kill check, cues, debug explanations |
 | M5 Alien kit | Done: Acid Spit, Lunge, Spore Pod, Brood Egg on floor and corpses, basic, spitter and burster hatchlings, Parasite, poison and spread |
 | M6 Loadout and upgrades | Done: loadout screen, presets, all 12 upgrades |
-| M7 Instrumentation and balance | Tooling done (telemetry, replay, simulator, bots, golden replays). Not done: the first full playtest round and its recorded metrics, which M7's acceptance criteria require |
+| M7 Instrumentation and balance | Tooling done (telemetry, replay, simulator, bots, golden replays), the rules sheet written, and the developer round (spec round 1) played and recorded. Not done: the first-time player round and its recorded metrics, which M7's acceptance criteria require |
 | Stretch | Not built: scrap and Repair, mender hatchling, Creep, search bot, scalable text and remappable keys |
 
 The simulator's findings (greedy bot, 1,000 seeds per preset) are in [implementation-notes.md](implementation-notes.md#what-the-simulator-says-greedy-bot-1000-seeds-per-preset). In short: Tech wins 72%, Alien 46%, Hybrid 83%; the paper check passes; Hybrid's friendly-fire share (66%) and the sweep's (54%) are over the spec's 35% alarm; the Warden reaches the player in only 3% to 28% of fights that reach round 7; Alien sees 1.9 hazard fires per fight against a target of 2.
+
+The developer round is in [implementation-notes.md](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1). In short: 21 fights on 2026-10-03 and 2026-10-07, 2 wins; the owner enjoyed it, liked Alien best, found Hybrid easiest and Tech hard to get a footing in. In the three fights reviewed (two Tech, one Alien), friendly fire was 0% of the player's damage, turns took 14 to 19 seconds, and Tech was played with few turrets and no drone, unlike the bot.
 
 ## Up next
 
 The spec's next step is playtesting (its "Test plan and tuning" section). The tooling for the rounds is built; the rounds themselves are run by the owner.
 
-1. **Developer playtest round** (owner; spec round 1): 5 to 10 attempts per preset to catch bugs and obvious balance failures. Telemetry saves itself while `npm run dev` runs. Record findings in [implementation-notes.md](implementation-notes.md) and turn bugs into items here.
-2. **First-time player round** (owner; spec round 2): 5 to 8 people, one at a time, with the printed [rules sheet](rules-sheet.html) only, screen and telemetry recorded, and the three questions after each attempt.
-3. **Informed player round** (owner; spec round 3): the same people after watching a replay of one of their losses, 3 attempts each on the Hybrid preset.
-4. **Tune against the alarms once play confirms them.** Do not tune on bot figures alone: the greedy bot plays one action ahead and is a ceiling, not a player. When a playtest confirms an alarm, use the spec's "Symptom to first knob" table, change values in `content/`, and include before and after simulator reports in the pull request. Candidates today: friendly fire on Hybrid, the Warden rarely reaching the player, hazard fires on Alien, and Tech leaning on turrets (10.5 per fight, because Guards shoot the nearest player-side unit).
+1. **First-time player round** (owner; spec round 2): 5 to 8 people, one at a time, with the printed [rules sheet](rules-sheet.html) only, screen and telemetry recorded, and the three questions after each attempt.
+2. **Informed player round** (owner; spec round 3): the same people after watching a replay of one of their losses, 3 attempts each on the Hybrid preset.
+3. **Tune against the alarms once play confirms them.** Do not tune on bot figures alone: the greedy bot plays one action ahead and is a ceiling, not a player. When a playtest confirms an alarm, use the spec's "Symptom to first knob" table, change values in `content/`, and include before and after simulator reports in the pull request. Candidates today:
+   - **Tech's difficulty:** the owner found it hard to get a footing in round 1, while the bot wins 72% by placing 10.5 turrets a fight. The owner will revisit it.
+   - **Friendly fire:** the bot's Hybrid alarm (66%) is not yet tested by people. The three round 1 fights reviewed were Tech and Alien, at 0%, which is under the spec's 3% alarm instead.
+   - **The Warden** rarely reaching the player (bot 3% to 28%; 1 of 3 in round 1).
+   - **Hazard fires on Alien** (bot 1.9 a fight; 3 in the round 1 Alien win).
 
 ## Decisions waiting on the owner
 
@@ -48,6 +53,8 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 
 - **Record the playtest round in telemetry.** The report cannot tell a tester's first-time fights from their informed ones, so it uses one attempt number for everyone (`--informed-from`) and `--exclude-tester` for the developer's round. Testers who needed different numbers of first-time fights are then classified wrongly. Add a round field to the replay's `meta` (set on the loadout screen next to the Tester ID, or by a `?round=` parameter), check it in `recordProblems`, and use it in `src/sim/playtest.ts` in place of the cutoff.
 - **Ability rules during a fight.** The action bar's tooltip shows an ability's name, or why it cannot be used, but never its rule text, so in a fight the full rule is only on the loadout screen and the rules sheet carries a short version. Add each ability's `text` to its action button's tooltip.
+- **Finish the round 1 record.** Run `npm run sim -- telemetry --include-unlabelled` on the round 1 telemetry folder (it lives on the owner's machine, and round 1 fights have no tester ID) and add its figures to the [developer round](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1) in the implementation notes.
+- **Readable hazard fires on the result screen.** The fight summary names a hazard by its map ID and an object by its number (`vent_b5→player`, `gun→object 5`), and the result screen prints them as they are. Name them as the board does ("Gas vent B5", "shield segment", "egg") in `src/telemetry/summary.ts` or where `src/client/screens/ResultScreen.tsx` prints them.
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Phone-width layout.** The narrow breakpoint exists but has not been playtested.
 - **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.

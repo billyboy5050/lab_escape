@@ -9,7 +9,7 @@ Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the
 | Document | What it is for |
 | --- | --- |
 | [docs/spec.md](docs/spec.md) | The design spec (revision 2) and the source of truth for the rules |
-| [docs/implementation-notes.md](docs/implementation-notes.md) | Where the implementation interpreted the spec, the defaults taken for its open decisions, and what the simulator found |
+| [docs/implementation-notes.md](docs/implementation-notes.md) | Where the implementation interpreted the spec, the defaults taken for its open decisions, what the simulator found, and what the playtests found |
 | [docs/roadmap.md](docs/roadmap.md) | Where things stand, what is next, and the decisions waiting on the owner |
 | [docs/rules-sheet.html](docs/rules-sheet.html) | The one-page rules sheet for first-time players in playtests; open it in a browser and print it |
 | [docs/work/](docs/work/) | One note per branch in progress, so anyone can pick the work up |

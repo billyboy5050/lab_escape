@@ -27,7 +27,7 @@ Each fact has one home. Link to it rather than copying it.
 | What | Where |
 | --- | --- |
 | The rules of the game (source of truth) | [docs/spec.md](docs/spec.md) |
-| How the code reads the spec where it is silent, defaults for its open decisions, simulator findings, known limitations | [docs/implementation-notes.md](docs/implementation-notes.md) |
+| How the code reads the spec where it is silent, defaults for its open decisions, simulator and playtest findings, known limitations | [docs/implementation-notes.md](docs/implementation-notes.md) |
 | How to run, play, tune and simulate; the code layout | [README.md](README.md) |
 | Status, what is next, decisions waiting on the owner | [docs/roadmap.md](docs/roadmap.md) |
 | The one-page rules sheet handed to first-time players | [docs/rules-sheet.html](docs/rules-sheet.html) |
