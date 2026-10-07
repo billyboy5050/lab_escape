@@ -75,5 +75,15 @@ describe('rules sheet', () => {
     expect(C.rules.statuses.corrode.duration).toBe(0);
     // "On a Guard corpse a spitter, on a Flamer corpse a burster"; "Medic and Warden corpses cannot hold one".
     expect(C.rules.eggs.corpseHosts).toEqual({ guard: 'spitter', flamer: 'burster', medic: null, warden: null });
+    // Mine and burster blasts hit "there and on the 8 tiles around"; Spore Pod poisons "a 3x3 area".
+    expect(C.abilities['proximity_mine']?.blast?.radius).toBe(1);
+    expect(C.units['burster']?.blast?.radius).toBe(1);
+    expect(C.abilities['spore_pod']?.area).toEqual({ shape: 'square', radius: 1 });
+    // Pinned covers "its next phase" and Slowed "its next move".
+    expect(C.rules.statuses.pinned.duration).toBe(1);
+    expect(C.rules.statuses.slowed.duration).toBe(1);
+    // The status table gives one duration each for poison and Parasite, whichever ability applies them.
+    expect(C.abilities['spore_pod']?.status).toEqual({ id: 'poison', duration: C.rules.statuses.poison.duration });
+    expect(C.abilities['parasite']?.status).toEqual({ id: 'parasite', duration: C.rules.statuses.parasite.duration });
   });
 });
