@@ -164,16 +164,17 @@ The bot sees the same previews and intents a player does, but it checks every ca
 
 ## What the developer playtest round says (spec round 1)
 
-The owner played 21 fights to the end: 4 on 2026-10-03 and 17 on 2026-10-07. By preset: Alien 10, Tech 6, Hybrid 4 (one short of the spec's 5 to 10) and one custom loadout. Result: 2 wins and 19 losses, one of the wins on Alien.
+The owner played 21 fights to the end: 4 on 2026-10-03 and 17 on 2026-10-07. By preset: Alien 10, Tech 6, Hybrid 4 (one short of the spec's 5 to 10) and one custom loadout. Result: 2 wins (Alien and Hybrid) and 19 losses.
 
-These figures come from the owner's count of the dev server's `telemetry/` folder and from three result screens they shared (all 2026-10-07). The playtest report has not been run on the folder yet; when it is, add its figures here. Round 1 fights carry no tester ID, so the report needs `--include-unlabelled` to count them and leaves them out of the round 2 figures by default.
+These figures come from the owner's count of the dev server's `telemetry/` folder and from four result screens they shared (all 2026-10-07). The playtest report has not been run on the folder yet; when it is, add its figures here. Round 1 fights carry no tester ID, so the report needs `--include-unlabelled` to count them and leaves them out of the round 2 figures by default.
 
 **The owner's verdict:** the round was a success and the game is fun. The Alien kit was the favourite and Hybrid the easiest. Tech was hard to get a footing in, and the owner will revisit it.
 
-**The three result screens** (times are the telemetry folder names, UTC):
+**The four result screens** (times are the telemetry folder names, UTC):
 
 | Fight | Result | Rounds | Damage to the player (enemies, hazards, own) | Peak minions (lost) | Hazard fires | Warden | Median turn |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| Hybrid, 20:15 | Win | 11 | 3, 2, 0 | 5 (12) | 2: the gun hit a player-side object in round 3; the panels hit the player and a hatchling in round 9 | Never reached the player; killed in round 11 | 32.0 s |
 | Tech, 20:38 | Loss, Warden charge | 13 | 8, 0, 0 | 1 (3) | 1: the gun hit a player-side object in round 4 | Reached the player in round 13 | 18.5 s |
 | Alien, 20:54 | Win | 12 | 6, 1, 0 | 3 (15) | 3: vent B5 hit the player in round 4; the gun and the panels hit hatchlings in rounds 11 and 12 | Never reached the player; killed in round 12 | 13.9 s |
 | Tech, 21:00 | Loss, Guard shot | 12 | 8, 0, 0 | 1 (1) | 2: the gun hit a Guard in rounds 3 and 7 | Never reached the player | 16.3 s |
@@ -181,12 +182,14 @@ These figures come from the owner's count of the dev server's `telemetry/` folde
 **Against the spec's metrics and the simulator:**
 
 - **Win rate.** 2 of 21 against the bot's 46% (Alien) to 83% (Hybrid). A gap was expected, since the bot checks every action exactly; one player learning the room is not yet a measure of difficulty. Rounds 2 and 3 measure it.
-- **Length of winning fights.** The Alien win took 12 rounds, inside the 8 to 12 target.
-- **Turn time.** Medians of 13.9 to 18.5 seconds, far under the 60-second target. The swarm never filled (peak 1 to 3 minions of 5), so the spec's full-swarm turn time has no data yet.
-- **Friendly fire.** 0% of the player's damage in all three fights, under the spec's 3% alarm. The bot's alarm is the other way (66% on Hybrid, 54% across the sweep, over the 35% alarm), but none of the three was a Hybrid fight, so that alarm is not yet tested by people. With previews marking friendly hits, a careful player avoids them. The player's minions and objects took 1 to 6 damage a fight from the player's own effects.
-- **Hazard fires.** 1 to 3 a fight (target at least 2). The gun hit a Guard twice in one fight, the bait play the spec wants ("Acceptable losses" played), and the vent at B5 hit the player once.
-- **The Warden** reached the player in 1 of the 3 fights and killed them with a charge. The bot's figure is 3% to 28% of fights that reach round 7.
-- **Tech is played differently from the bot.** The bot's Tech wins lean on turrets (10.5 a fight). The owner placed 1 to 3 turrets, never deployed the Scout Drone in either Tech fight, and leaned on the Sidearm (16 and 20 shots), Barrier Shield and mines. Whether Tech is too hard for people or only harder to read is open until round 2.
+- **Length of winning fights.** The Hybrid win took 11 rounds and the Alien win 12, both inside the 8 to 12 target.
+- **Turn time.** Medians of 13.9 to 32.0 seconds, under the 60-second target. The swarm filled (5 of 5 minions) only in the Hybrid win, which was also the slowest fight at 32.0 seconds a turn. The spec's metric counts only turns with a full swarm; the playtest report gives that figure.
+- **Friendly fire.** 0% of the player's damage in all four fights, including the Hybrid win, where the bot's figure is 66% (54% across the sweep). So the alarm people trip is the spec's under-3% one, not the bot's over-35% one, at least for a player who knows the rules. With previews marking friendly hits, a careful player avoids them. The player's minions and objects took 1 to 6 damage a fight from the player's own effects.
+- **Hazard fires.** 1 to 3 a fight (target at least 2). The gun hit a Guard twice in one fight, the bait play the spec wants ("Acceptable losses" played). The vent at B5 hit the player once, and the panels once.
+- **The Warden** reached the player in 1 of the 4 fights and killed them with a charge. The bot's figure is 3% to 28% of fights that reach round 7.
+- **Tech is played differently from the bot.** The bot's Tech wins lean on turrets (10.5 a fight). The owner placed 1 to 3 turrets and leaned on the Sidearm (16 and 20 shots), Barrier Shield and mines. Whether Tech is too hard for people or only harder to read is open until round 2.
+- **The Scout Drone went unused.** It was in three of the four loadouts (both Tech fights and the Hybrid win) and was never deployed, so Overcharged Drone and Plague Drone never came into play either.
 - **Alien** won on Spore Pod (8 uses), Brood Egg (7), Parasite (6) and Acid Spit (6), losing 15 hatchlings along the way; Lunge was used once.
+- **Hybrid** won on Sidearm (9), Parasite (8), Spore Pod (4), Brood Egg (3), Acid Spit (3) and Barrier Shield (2), filling the swarm and losing 12 minions; a Proximity Mine was placed once.
 
 **Found along the way:** the result screen lists hazard fires with internal names: `vent_b5→player`, and `gun→object 5` for a shield segment or egg. It is a roadmap item.
