@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { tileName } from '../src/util/tiles';
 import { C } from './helpers';
 
 // The playtest rules sheet copies numbers and text from content/. Each copy is tagged with data-c="<path into the
@@ -92,6 +93,10 @@ describe('rules sheet', () => {
     const rows = Array.from({ length: C.map.height }, (_, y) => cells.slice(y * C.map.width, (y + 1) * C.map.width).join(''));
     expect(cells).toHaveLength(C.map.width * C.map.height);
     expect(rows).toEqual(C.map.rows);
+    // The @ marks "Your start", but the player is placed from map.playerStart.
+    const y = C.map.rows.findIndex((r) => r.includes('@'));
+    expect(y, 'the map has no @').toBeGreaterThanOrEqual(0);
+    expect(tileName({ x: C.map.rows[y]!.indexOf('@'), y })).toBe(C.map.playerStart);
   });
 
   it('matches the content behind its wording', () => {

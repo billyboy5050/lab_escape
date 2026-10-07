@@ -31,7 +31,7 @@
     margin: 0;
     color: var(--ink);
     background: #fff;
-    font: 7.8pt/1.22 Arial, "Liberation Sans", Helvetica, sans-serif;
+    font: 7.8pt/1.2 Arial, "Liberation Sans", Helvetica, sans-serif;
   }
   .sheet { width: 190mm; margin: 0 auto; }
   @media screen {
@@ -144,12 +144,12 @@
 <section class="whole">
   <h2>Enemies</h2>
   <table>
-    <thead><tr><th>Enemy</th><th>HP</th><th>Armor</th><th>Move</th><th>Each round</th></tr></thead>
+    <thead><tr><th>Enemy</th><th>HP</th><th>Armor</th><th>Move</th><th>Action</th></tr></thead>
     <tbody>
       <tr><th><span class="g">G</span> <span data-c="units.guard.name">Guard</span></th><td class="n" data-c="units.guard.hp">6</td><td class="n" data-c="units.guard.armor">0</td><td class="n" data-c="units.guard.move">3</td><td>Shoots one of your units within <span data-c="units.guard.attack.range">5</span> in sight for <span data-c="units.guard.attack.damage">3</span> <span data-c="units.guard.attack.damageType">kinetic</span>. Anything of yours in the line takes the shot.</td></tr>
       <tr><th><span class="g">+</span> <span data-c="units.medic.name">Medic</span></th><td class="n" data-c="units.medic.hp">5</td><td class="n" data-c="units.medic.armor">0</td><td class="n" data-c="units.medic.move">3</td><td>Heals a hurt ally within <span data-c="units.medic.heal.range">3</span> in sight for <span data-c="units.medic.heal.amount">2</span>. No attack.</td></tr>
-      <tr><th><span class="g">F</span> <span data-c="units.flamer.name">Flamer</span></th><td class="n" data-c="units.flamer.hp">6</td><td class="n" data-c="units.flamer.armor">1</td><td class="n" data-c="units.flamer.move">2</td><td>Sweeps a line of <span data-c="units.flamer.sweep.length">3</span> tiles from beside it, cut short by walls and pillars: <span data-c="units.flamer.sweep.damage">3</span> <span data-c="units.flamer.sweep.damageType">fire</span> to everything there, allies too.</td></tr>
-      <tr><th><span class="g">W</span> <span data-c="units.warden.name">Warden</span></th><td class="n" data-c="units.warden.hp">20</td><td class="n" data-c="units.warden.armor">2</td><td class="n" data-c="units.warden.move">3</td><td>The elite. Charges up to <span data-c="units.warden.charge.maxMove">4</span> tiles straight, <span data-c="units.warden.charge.damage">4</span> <span data-c="units.warden.charge.damageType">kinetic</span> to what stops it; else hits an adjacent unit for <span data-c="units.warden.melee.damage">3</span>. Clears its poison, at most every <span data-c="units.warden.purge.cooldown">2</span> rounds.</td></tr>
+      <tr><th><span class="g">F</span> <span data-c="units.flamer.name">Flamer</span></th><td class="n" data-c="units.flamer.hp">6</td><td class="n" data-c="units.flamer.armor">1</td><td class="n" data-c="units.flamer.move">2</td><td>Sweeps a line of <span data-c="units.flamer.sweep.length">3</span> tiles from beside it, cut short by walls, pillars, the shutter and the gun: <span data-c="units.flamer.sweep.damage">3</span> <span data-c="units.flamer.sweep.damageType">fire</span> to everything there, allies too.</td></tr>
+      <tr><th><span class="g">W</span> <span data-c="units.warden.name">Warden</span></th><td class="n" data-c="units.warden.hp">20</td><td class="n" data-c="units.warden.armor">2</td><td class="n" data-c="units.warden.move">3</td><td>The elite. Charges up to <span data-c="units.warden.charge.maxMove">4</span> tiles straight, <span data-c="units.warden.charge.damage">4</span> <span data-c="units.warden.charge.damageType">kinetic</span> to what stops it. Else hits you for <span data-c="units.warden.melee.damage">3</span> if adjacent, or closes in (hitting a minion only if it can't get closer). Purges its poison, immune for that round, at most every <span data-c="units.warden.purge.cooldown">2</span> rounds.</td></tr>
     </tbody>
   </table>
   <p>Enemies take the shortest path and do not avoid your mines.</p>
@@ -164,7 +164,7 @@
   </ul>
   <table>
     <tbody>
-      <tr><th><span class="g">P3</span> Poison</th><td><span data-c="rules.statuses.poison.damage">1</span> damage a round for <span data-c="rules.statuses.poison.duration">3</span> rounds. Each tick it spreads to unpoisoned neighbours (at most <span data-c="rules.statuses.poison.spreadCap">3</span> new a round in the room), who get the rounds left.</td></tr>
+      <tr><th><span class="g">P3</span> Poison</th><td><span data-c="rules.statuses.poison.damage">1</span> damage a round for <span data-c="rules.statuses.poison.duration">3</span> rounds. After a tick that leaves rounds, it spreads to unpoisoned neighbours (at most <span data-c="rules.statuses.poison.spreadCap">3</span> new a round in the room), who get the rounds left.</td></tr>
       <tr><th><span class="g">X3</span> Parasite</th><td><span data-c="rules.statuses.parasite.damage">2</span> damage a round for <span data-c="rules.statuses.parasite.duration">3</span> rounds; cannot be removed. If the host dies, a hatchling of yours bursts out (minion cap allowing).</td></tr>
       <tr><th><span class="g">C2</span> Corrode</th><td>Each stack is 1 less armor for the rest of the fight.</td></tr>
       <tr><th><span class="g">PIN</span> Pinned</th><td>Cannot move in its next phase.</td></tr>
@@ -199,17 +199,16 @@
     </tbody>
   </table>
   <p>Turrets bring Reload (<span data-c="utilities.reload.ap">1</span> AP, within <span data-c="utilities.reload.range">2</span>), mines Pick Up (<span data-c="utilities.pick_up_mine.ap">1</span> AP, an adjacent mine) and drones Redeploy (<span data-c="utilities.redeploy.ap">1</span> AP, a docked drone back beside you).</p>
-  <p><b>Minions</b> (at most <span data-c="rules.caps.minions">5</span>: turrets, drones and hatchlings) only aim at enemies, but their blasts and chains hit anyone. Hatchlings: <span class="g">h</span> basic, <span data-c="units.hatchling.hp">2</span> HP, bites an adjacent enemy for <span data-c="units.hatchling.melee.damage">1</span>; <span class="g">s</span> spitter, <span data-c="units.spitter.hp">4</span> HP, <span data-c="units.spitter.attack.damage">1</span> <span data-c="units.spitter.attack.damageType">acid</span> at an enemy within <span data-c="units.spitter.attack.range">3</span> in sight; <span class="g">b</span> burster, <span data-c="units.burster.hp">4</span> HP, explodes next to an enemy for <span data-c="units.burster.blast.damage">3</span> <span data-c="units.burster.blast.damageType">explosive</span> to its tile and the 8 around, and dies. Any damage can break an egg (<span data-c="rules.eggs.hp">3</span> HP), and then nothing hatches. Medic and Warden corpses cannot hold one.</p>
+  <p><b>Minions</b> (at most <span data-c="rules.caps.minions">5</span>: turrets, drones and hatchlings) only aim at enemies, but their blasts and chains hit anyone. Hatchlings: <span class="g">h</span> basic, <span data-c="units.hatchling.hp">2</span> HP, bites an adjacent enemy for <span data-c="units.hatchling.melee.damage">1</span> <span data-c="units.hatchling.melee.damageType">kinetic</span>; <span class="g">s</span> spitter, <span data-c="units.spitter.hp">4</span> HP, <span data-c="units.spitter.attack.damage">1</span> <span data-c="units.spitter.attack.damageType">acid</span> at an enemy within <span data-c="units.spitter.attack.range">3</span> in sight; <span class="g">b</span> burster, <span data-c="units.burster.hp">4</span> HP, explodes next to an enemy for <span data-c="units.burster.blast.damage">3</span> <span data-c="units.burster.blast.damageType">explosive</span> to its tile and the 8 around, and dies. Any damage can break an egg (<span data-c="rules.eggs.hp">3</span> HP), and then nothing hatches. Medic and Warden corpses cannot hold one.</p>
 </section>
 
 <section>
   <h2>Reading the screen</h2>
   <ul>
     <li><b>Units.</b> Yours are circles and squares (<span class="g">@</span> you, <span class="g">T</span> turret, <span class="g">D</span> drone, <span class="g">h s b</span> hatchlings), enemies diamonds and a hexagon (<span class="g">G + F W</span>). A shield badge is armor. Eggs and corpses (<span class="g">✕</span>) show rounds left.</li>
-    <li><b>Intents</b> (<kbd>I</kbd>). Every enemy and minion shows a dashed path to where it will go and an arrow to what it will hit. <span class="g">▼3</span> is what a unit takes if you end the turn now, <span class="g">KO</span> that it dies. A hollow ring with no arrow: arriving, so it will not attack. Hover a unit for its plan in words.</li>
+    <li><b>Intents</b> (<kbd>I</kbd>). Every enemy and minion shows a dashed path to where it will go and an arrow to what it will hit. <span class="g">▼3</span> is what a unit takes if you end the turn now, <span class="g">KO</span> that it dies; like the status strip's <b>End turn now</b> warning, it leaves out the lab's defences. A hollow ring with no arrow: arriving, so it will not attack.</li>
     <li><b>Previews.</b> Pick an action and hover a target: <span class="g">−2</span> is damage after armor, <span class="g">+PSN +PAR +COR</span> are statuses, <span class="g">KO</span> a kill. A red dashed ring with <span class="g">!</span> marks your own units that would be hit.</li>
-    <li>The <span class="g">▼</span> badges and the status strip's <b>End turn now</b> warning count minions and enemies, never the lab's defences.</li>
-    <li><b>Keys.</b> <kbd>1</kbd>–<kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> actions, <kbd>Esc</kbd> cancel, <kbd>Tab</kbd> grapple mode, <kbd>Z</kbd> undo, <kbd>E</kbd> end turn, <kbd>F</kbd> speed, <kbd>Space</kbd> skip, <kbd>L</kbd> intercom log.</li>
+    <li><b>Keys.</b> <kbd>1</kbd>–<kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> actions, <kbd>Esc</kbd> cancel, <kbd>Tab</kbd> grapple mode, <kbd>Z</kbd> undo, <kbd>E</kbd> end turn, <kbd>F</kbd> speed, <kbd>Space</kbd> skip, <kbd>L</kbd> log.</li>
   </ul>
 </section>
 
