@@ -66,7 +66,7 @@ describe('rules sheet', () => {
     expect(rows).toEqual(C.map.rows);
   });
 
-  it('matches the rule switches its wording assumes', () => {
+  it('matches the content behind its wording', () => {
     // "The first is there at the start".
     expect(C.waves[0]?.round).toBe(1);
     // "An enemy that arrived this round only moves": every wave has an arrival round.
@@ -82,6 +82,19 @@ describe('rules sheet', () => {
     // Pinned covers "its next phase" and Slowed "its next move".
     expect(C.rules.statuses.pinned.duration).toBe(1);
     expect(C.rules.statuses.slowed.duration).toBe(1);
+    // The legend: walls and pillars block movement, sight and shots; the shutter and wall gun block movement and shots,
+    // not sight; panels and vents block nothing. "Only walls and pillars block" sight, and they end the Flamer's sweep.
+    const blocks = (t: string) => {
+      const def = C.map.terrain[t];
+      return def && { move: def.blocksMove, sight: def.blocksSight, shots: def.blocksProjectile };
+    };
+    for (const t of ['wall', 'pillar']) expect(blocks(t), t).toEqual({ move: true, sight: true, shots: true });
+    for (const t of ['shutter', 'gun']) expect(blocks(t), t).toEqual({ move: true, sight: false, shots: true });
+    for (const t of ['floor', 'panel', 'vent']) expect(blocks(t), t).toEqual({ move: false, sight: false, shots: false });
+    expect(Object.keys(C.map.terrain).sort()).toEqual(['floor', 'gun', 'panel', 'pillar', 'shutter', 'vent', 'wall']);
+    // "The elite" is the Warden, which the Grapple Hook cannot pull; the drone is the "flying minion".
+    expect(Object.keys(C.units).filter((id) => C.units[id]!.elite)).toEqual(['warden']);
+    expect(Object.keys(C.units).filter((id) => C.units[id]!.flying)).toEqual(['drone']);
     // The status table gives one duration each for poison and Parasite, whichever ability applies them.
     expect(C.abilities['spore_pod']?.status).toEqual({ id: 'poison', duration: C.rules.statuses.poison.duration });
     expect(C.abilities['parasite']?.status).toEqual({ id: 'parasite', duration: C.rules.statuses.parasite.duration });
