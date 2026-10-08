@@ -164,13 +164,31 @@ The bot sees the same previews and intents a player does, but it checks every ca
 
 ## What the developer playtest round says (spec round 1)
 
-The owner played 21 fights to the end: 4 on 2026-10-03 and 17 on 2026-10-07. By preset: Alien 10, Tech 6, Hybrid 4 (one short of the spec's 5 to 10) and one custom loadout. Result: 2 wins (Alien and Hybrid) and 19 losses.
+The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtest report counted 21 of them: Alien 10, Tech 6 and Hybrid 5. It left out one custom-loadout fight played with wave 3 held back. Result: 3 wins (Hybrid twice, Alien once) and 18 losses. The owner found no major bugs. The one reported, the Scout Drone dying at once, is the rules as written (see below).
 
-These figures come from the owner's count of the dev server's `telemetry/` folder and from four result screens they shared (all 2026-10-07). Round 1 ran on a checkout from before 2026-10-06: engine 0.1.0, with no tester IDs. `main` has been at engine 0.1.1 since PR #3, which changed only how units that die in the same effect as the player are reported. The playtest report therefore refuses these fights, as invariant 4 in CLAUDE.md intends, and the figures for all 21 have to come from each fight's `summary.json` and `replay.json`.
+**How the figures were gathered.** Round 1 ran on a checkout from before 2026-10-06: engine 0.1.0, with no tester IDs. `main` has been at engine 0.1.1 since PR #3, which changed only how units that die in the same effect as the player are reported. The playtest report refuses a replay from another engine version (invariant 4 in CLAUDE.md), so the owner copied the fights and restamped them as 0.1.1. That is sound for these figures, which do not use what changed. Every replay also ran to its end without a rejected command. The report was then run with `npm run sim -- telemetry <folder> --include-unlabelled`.
 
-**The owner's verdict:** the round was a success and the game is fun. The Alien kit was the favourite and Hybrid the easiest. Tech was hard to get a footing in, and the owner will revisit it.
+**The owner's verdict:** the round was a success and the game is fun. The Alien kit was the favourite. Hybrid was the easiest, and won again in its fifth fight. Tech was hard to get a footing in, and the owner will revisit it.
 
-**The four result screens** (times are the telemetry folder names, UTC):
+**The playtest report** (spec metrics; the first-time and informed metrics need tester IDs and belong to rounds 2 and 3):
+
+| Metric | Round 1 | Target | Status |
+| --- | --- | --- | --- |
+| Length of winning fights | Median 12 rounds (11, 12 and 15) | 8 to 12 | OK |
+| Median turn time with a full swarm | 16.2 s, over the one turn that ended with a full swarm | Under 60 s | OK |
+| Share of player damage from own effects | 0.6% | 5% to 30% | Alarm: under 3% |
+| Share of deaths from one source | Enemies 100% | No source above 60% | Warning |
+| Hazard fires per fight | 0.62 | At least 2 | Alarm: under 1 |
+
+**By preset:**
+
+| Preset | Fights | Wins (round) | Rounds of the losses |
+| --- | --- | --- | --- |
+| Alien | 10 | 1 (12) | 2, 3, 3, 3, 3, 4, 4, 4, 5 |
+| Tech | 6 | 0 | 3, 6, 6, 6, 12, 13 |
+| Hybrid | 5 | 2 (11, 15) | 2, 2, 2 |
+
+**Four result screens** the owner shared (times are the telemetry folder names, UTC):
 
 | Fight | Result | Rounds | Damage to the player (enemies, hazards, own) | Peak minions (lost) | Hazard fires | Warden | Median turn |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -179,17 +197,39 @@ These figures come from the owner's count of the dev server's `telemetry/` folde
 | Alien, 20:54 | Win | 12 | 6, 1, 0 | 3 (15) | 3: vent B5 hit the player in round 4; the gun and the panels hit hatchlings in rounds 11 and 12 | Never reached the player; killed in round 12 | 13.9 s |
 | Tech, 21:00 | Loss, Guard shot | 12 | 8, 0, 0 | 1 (1) | 2: the gun hit a Guard in rounds 3 and 7 | Never reached the player | 16.3 s |
 
-**Against the spec's metrics and the simulator:**
+**What it says:**
 
-- **Win rate.** 2 of 21 against the bot's 46% (Alien) to 83% (Hybrid). A gap was expected, since the bot checks every action exactly; one player learning the room is not yet a measure of difficulty. Rounds 2 and 3 measure it.
-- **Length of winning fights.** The Hybrid win took 11 rounds and the Alien win 12, both inside the 8 to 12 target.
-- **Turn time.** Median turns over whole fights took 13.9 to 32.0 seconds. The spec's target (under 60 seconds) counts only turns with a full swarm, and only the Hybrid win had one (5 of 5 minions). Its full-swarm turns were not measured separately, so the target is not yet checked. That fight was also the slowest, at 32.0 seconds a turn.
-- **Friendly fire.** 0% of the player's damage in all four fights, including the Hybrid win, where the bot's figure is 66% (54% across the sweep). So the alarm people trip is the spec's under-3% one, not the bot's over-35% one, at least for a player who knows the rules. With previews marking friendly hits, a careful player avoids them. The player's minions and objects took 1 to 6 damage a fight from the player's own effects.
-- **Hazard fires.** 1 to 3 a fight (target at least 2). The gun hit a Guard twice in one fight, the bait play the spec wants ("Acceptable losses" played). The vent at B5 hit the player once, and the panels once.
-- **The Warden** reached the player in 1 of the 4 fights and killed them with a charge. The bot's figure is 3% to 28% of fights that reach round 7.
-- **Tech is played differently from the bot.** The bot places 10.5 turrets a Tech fight on average, over wins and losses together. The owner placed 1 to 3 turrets and leaned on the Sidearm (16 and 20 shots), Barrier Shield and mines. Whether Tech is too hard for people or only harder to read is open until round 2.
-- **The Scout Drone went unused.** It was in three of the four loadouts (both Tech fights and the Hybrid win) and was never deployed, so Overcharged Drone and Plague Drone never came into play either.
+- **Win rate.** 3 of 21, against the bot's 46% (Alien) to 83% (Hybrid). A gap was expected, since the bot checks every action exactly; one player learning the room is not yet a measure of difficulty. Rounds 2 and 3 measure it.
+- **Most losses come early.** Half the losses (9 of 18) came by round 3, four of them in round 2, when wave 1's three Guards first fire. Only the two Tech losses in rounds 12 and 13 reached wave 3. All three Hybrid losses came in round 2. The median loss came in round 3.5. Round 2's matching metric is "first-time losses that reach wave 2", with a target that most reach round 4 and an alarm if the median loss comes before round 3. On 2026-10-08 the owner chose to keep early losses as a round-2 watch item, with no tuning yet: one developer's repeated attempts do not settle first-time difficulty.
+- **Length of winning fights.** Median 12 rounds, on target; the 15-round Hybrid win is past the target but under the 16-round alarm.
+- **Turn time.** Only one turn in the whole round ended with a full swarm (16.2 s). Over whole fights, the four screens' median turns took 13.9 to 32.0 seconds.
+- **Friendly fire** was 0.6% of the player's damage across all 21 fights, under the spec's 3% alarm. The bot's alarm points the other way (66% on Hybrid, 54% across the sweep, over 35%). With previews marking friendly hits, a player who knows the rules avoids them. Whether first-time players do is a round 2 question.
+- **Deaths.** Every loss came from enemies; hazards and the player's own effects killed nobody.
+- **Hazard fires** averaged 0.62 a fight, under the alarm of 1. Short fights account for much of it: a hazard first fires in round 2, a round after its cue, and 12 of the 21 fights were over by round 4. The four longer fights on the screens saw 1 to 3 each. The gun hit a Guard twice in one fight, the bait play the spec wants ("Acceptable losses" played).
+- **The Warden** reached the player in 1 of the 4 fights on the screens and killed them with a charge. The bot's figure is 3% to 28% of fights that reach round 7.
+- **Tech is played differently from the bot.** The bot places 10.5 turrets a Tech fight on average, over wins and losses together. On the two Tech screens the owner placed 1 to 3 turrets and leaned on the Sidearm (16 and 20 shots), Barrier Shield and mines. Whether Tech is too hard for people or only harder to read is open until round 2.
 - **Alien** won on Spore Pod (8 uses), Brood Egg (7), Parasite (6) and Acid Spit (6), losing 15 hatchlings along the way; Lunge was used once.
 - **Hybrid** won on Sidearm (9), Parasite (8), Spore Pod (4), Brood Egg (3), Acid Spit (3) and Barrier Shield (2), filling the swarm and losing 12 minions; a Proximity Mine was placed once.
+
+**The Scout Drone often dies within a turn or two.** The owner deployed it a few times, and each time it flew toward the enemies and was shot on its first turn. That is the rules as written, not a code bug. `droneTurn` flies the drone until the nearest enemy is within its zap range of 2 and in sight, which can leave the drone the nearest of the player's units. Guards shoot the nearest player-side unit in sight for 3, and the drone has 3 HP. Deployed from far back, it may not get within range on its first move, and then it dies without zapping, as the owner saw. The greedy bot's fights (150 per preset) show frequent short lifetimes: 76 of 96 Tech drones (79%) and 402 of 535 Hybrid drones (75%) died in the round they were summoned or the next.
+
+| Preset (bot) | Drones summoned | Died | Died in the round summoned | Killed by Guards | Rounds zapped per drone |
+| --- | --- | --- | --- | --- | --- |
+| Tech | 96 | 84 (88%) | 56 of 96 summoned | 74 of 84 | 1.4 |
+| Hybrid | 535 | 410 (77%) | 75 of 535 summoned (327 more the next round) | 358 of 410 | 1.8 |
+
+The bot still summons 3.6 drones a Hybrid fight. Absorbing a Guard shot is a plausible benefit alongside chain damage and, with Plague Drone, poison. Summon frequency alone does not establish why the bot chooses the drone or whether players find it worth 2 AP. Most Hybrid drones survive the summon round; short lifetimes are not universal first-turn failure.
+
+More HP alone is not a clear fix on the bot's figures (greedy bot, 95% intervals), from `npm run sim -- tune --preset tech --param units.drone.hp --values 3,4,5 --seeds 200 --workers 1` and the same with `--preset hybrid`. `--workers 1` is needed while the worker-thread problem on the roadmap stands:
+
+| Drone HP | Tech win rate | Hybrid win rate |
+| --- | --- | --- |
+| 3 (now) | 75.5% (69 to 81) | 83.5% (78 to 88) |
+| 4 | 69.5% (63 to 75) | 80.0% (74 to 85) |
+| 5 | 68.0% (61 to 74) | 93.5% (89 to 96) |
+
+At 4 HP the drone survives one Guard shot, yet neither preset moves beyond noise. At 5 HP Hybrid, already the easiest preset for the owner, wins 93.5%. These figures do not establish whether a player would find a tougher drone useful; a longer zap range was not tested.
+
+**Owner decision, 2026-10-08.** For round 2, retain the current drone rules and values and evaluate it as a fragile decoy with chain-damage utility. Decoy usefulness remains a hypothesis to validate with players, not a guarantee that it draws fire: Guards still choose targets by their normal rules. Watch whether players understand its movement and find it useful. Revisit movement if they understand the behaviour and still find it unhelpful; that would be a rule change requiring a spec update and an engine-version bump.
 
 **Found along the way:** the result screen lists hazard fires with internal names: `vent_b5→player`, and `gun→object 5` for a shield segment or egg. It is a roadmap item.
