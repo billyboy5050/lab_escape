@@ -200,7 +200,7 @@ The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtes
 **What it says:**
 
 - **Win rate.** 3 of 21, against the bot's 46% (Alien) to 83% (Hybrid). A gap was expected, since the bot checks every action exactly; one player learning the room is not yet a measure of difficulty. Rounds 2 and 3 measure it.
-- **Most losses come early.** Half the losses (9 of 18) came by round 3, four of them in round 2, when wave 1's three Guards first fire. Only the two Tech losses in rounds 12 and 13 reached wave 3. All three Hybrid losses came in round 2. The median loss came in round 3.5. Round 2's matching metric is "first-time losses that reach wave 2", with a target that most reach round 4 and an alarm if the median loss comes before round 3. Watch it there.
+- **Most losses come early.** Half the losses (9 of 18) came by round 3, four of them in round 2, when wave 1's three Guards first fire. Only the two Tech losses in rounds 12 and 13 reached wave 3. All three Hybrid losses came in round 2. The median loss came in round 3.5. Round 2's matching metric is "first-time losses that reach wave 2", with a target that most reach round 4 and an alarm if the median loss comes before round 3. On 2026-10-08 the owner chose to keep early losses as a round-2 watch item, with no tuning yet: one developer's repeated attempts do not settle first-time difficulty.
 - **Length of winning fights.** Median 12 rounds, on target; the 15-round Hybrid win is past the target but under the 16-round alarm.
 - **Turn time.** Only one turn in the whole round ended with a full swarm (16.2 s). Over whole fights, the four screens' median turns took 13.9 to 32.0 seconds.
 - **Friendly fire** was 0.6% of the player's damage across all 21 fights, under the spec's 3% alarm. The bot's alarm points the other way (66% on Hybrid, 54% across the sweep, over 35%). With previews marking friendly hits, a player who knows the rules avoids them. Whether first-time players do is a round 2 question.
@@ -211,14 +211,14 @@ The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtes
 - **Alien** won on Spore Pod (8 uses), Brood Egg (7), Parasite (6) and Acid Spit (6), losing 15 hatchlings along the way; Lunge was used once.
 - **Hybrid** won on Sidearm (9), Parasite (8), Spore Pod (4), Brood Egg (3), Acid Spit (3) and Barrier Shield (2), filling the swarm and losing 12 minions; a Proximity Mine was placed once.
 
-**The Scout Drone dies within a turn or two.** The owner deployed it a few times, and each time it flew toward the enemies and was shot on its first turn. That is the rules as written, not a code bug. `droneTurn` flies the drone until the nearest enemy is within its zap range of 2 and in sight, which leaves the drone the nearest of the player's units. Guards shoot the nearest player-side unit in sight for 3, and the drone has 3 HP. Deployed from far back, it may not get within range on its first move, and then it dies without zapping, as the owner saw. The greedy bot's fights (150 per preset) show it dying almost as fast: 76 of 96 Tech drones (79%) and 402 of 535 Hybrid drones (75%) died in the round they were summoned or the next.
+**The Scout Drone often dies within a turn or two.** The owner deployed it a few times, and each time it flew toward the enemies and was shot on its first turn. That is the rules as written, not a code bug. `droneTurn` flies the drone until the nearest enemy is within its zap range of 2 and in sight, which can leave the drone the nearest of the player's units. Guards shoot the nearest player-side unit in sight for 3, and the drone has 3 HP. Deployed from far back, it may not get within range on its first move, and then it dies without zapping, as the owner saw. The greedy bot's fights (150 per preset) show frequent short lifetimes: 76 of 96 Tech drones (79%) and 402 of 535 Hybrid drones (75%) died in the round they were summoned or the next.
 
 | Preset (bot) | Drones summoned | Died | Died in the round summoned | Killed by Guards | Rounds zapped per drone |
 | --- | --- | --- | --- | --- | --- |
-| Tech | 96 | 84 (88%) | 56 of 84 | 74 of 84 | 1.4 |
-| Hybrid | 535 | 410 (77%) | 75 of 410 (327 more the next round) | 358 of 410 | 1.8 |
+| Tech | 96 | 84 (88%) | 56 of 96 summoned | 74 of 84 | 1.4 |
+| Hybrid | 535 | 410 (77%) | 75 of 535 summoned (327 more the next round) | 358 of 410 | 1.8 |
 
-The bot still summons 3.6 drones a Hybrid fight, which suggests a drone is worth 2 AP as a decoy that soaks a Guard shot (and, with Plague Drone, spreads poison), not as a damage dealer.
+The bot still summons 3.6 drones a Hybrid fight. Absorbing a Guard shot is a plausible benefit alongside chain damage and, with Plague Drone, poison. Summon frequency alone does not establish why the bot chooses the drone or whether players find it worth 2 AP. Most Hybrid drones survive the summon round; short lifetimes are not universal first-turn failure.
 
 More HP alone is not a clear fix on the bot's figures (greedy bot, 95% intervals), from `npm run sim -- tune --preset tech --param units.drone.hp --values 3,4,5 --seeds 200 --workers 1` and the same with `--preset hybrid`. `--workers 1` is needed while the worker-thread problem on the roadmap stands:
 
@@ -228,6 +228,8 @@ More HP alone is not a clear fix on the bot's figures (greedy bot, 95% intervals
 | 4 | 69.5% (63 to 75) | 80.0% (74 to 85) |
 | 5 | 68.0% (61 to 74) | 93.5% (89 to 96) |
 
-At 4 HP the drone survives one Guard shot, yet neither preset moves beyond noise. At 5 HP Hybrid, already the easiest preset for the owner, wins 93.5%. The bot uses the drone as a decoy, so these figures cannot show whether a player would find a tougher drone useful. The likelier fix for people is how the drone moves: it flies straight into Guard range. Changing that is a rule change for the owner to decide.
+At 4 HP the drone survives one Guard shot, yet neither preset moves beyond noise. At 5 HP Hybrid, already the easiest preset for the owner, wins 93.5%. These figures do not establish whether a player would find a tougher drone useful; a longer zap range was not tested.
+
+**Owner decision, 2026-10-08.** For round 2, retain the current drone rules and values and evaluate it as a fragile decoy with chain-damage utility. Decoy usefulness remains a hypothesis to validate with players, not a guarantee that it draws fire: Guards still choose targets by their normal rules. Watch whether players understand its movement and find it useful. Revisit movement if they understand the behaviour and still find it unhelpful; that would be a rule change requiring a spec update and an engine-version bump.
 
 **Found along the way:** the result screen lists hazard fires with internal names: `vent_b5→player`, and `gun→object 5` for a shield segment or egg. It is a roadmap item.
