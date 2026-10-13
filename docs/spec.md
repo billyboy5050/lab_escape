@@ -2,13 +2,13 @@
 
 Oct 2, 2026 · @Dave
 
-Revision 2. This version applies the review of Oct 2, 2026. Every change is listed under Review changes at the end, tagged as a fix, a clarification, or a Proposed design call to confirm.
+Revision 2. This version applies the review of Oct 2, 2026. Every change is listed under Review changes at the end, tagged as a fix, a clarification, or a Proposed design call. On 2026-10-13 the owner confirmed every Proposed call, every decision the draft left Open, and every reading the implementation took where this spec was silent. The readings that concern the rules and what the player sees are now the Clarifications at the end of the sections they belong to; how the tooling reads this spec stays in the implementation notes. Later changes are listed under Changes since revision 2.
 
 ## Goals and scope
 
 The MVP is one playable room, Armory Lockdown, built to answer whether a single fight in this game is fun before any depth is added. Everything in the design document so far came from hand-run simulations, so this prototype exists to replace opinion with play.
 
-This spec is the implementation reference. The companion design document (Lab Escape Roguelite: Design Doc v0.1) holds the intent behind each system. Every number here is a starting value that lives in a tuning table, and items marked Open are decisions for the implementation session.
+This spec is the implementation reference. The companion design document (Lab Escape Roguelite: Design Doc v0.1) holds the intent behind each system. Every number here is a starting value that lives in a tuning table. The decisions this draft left Open are recorded under Decisions taken, in Risks and decisions.
 
 **Questions the prototype must answer**
 
@@ -29,7 +29,7 @@ This spec is the implementation reference. The companion design document (Lab Es
 - An intercom text feed, previews for every player action, and debug tools.
 - Telemetry, replay from a command log, and a headless simulation runner.
 
-**Stretch (Proposed)**
+**Stretch**
 
 These are specified below so nothing is lost, but none of them helps answer the seven questions. Build them after the first full playtest round, and only if a finding calls for one.
 
@@ -48,11 +48,11 @@ These are specified below so nothing is lost, but none of them helps answer the 
 - Part mods, Wrecked units and the wider scrap economy beyond Repair.
 - Story, memory fragments, audio polish, final art, saving and a tutorial.
 
-**Branch choice (Proposed)**
+**Branch choice**
 
 The MVP uses Tech plus Alien. Tech gives readable, set-up-then-trigger tools. Alien adds autonomous swarms and eggs, the most distinctive system, so together they test minion chaos, friendly fire and hazards in one room. Occult's debt rule needs several rooms to test properly, so it waits for phase 2.
 
-**Success criteria (Proposed)**
+**Success criteria**
 
 | Measure | Target |
 | --- | --- |
@@ -105,7 +105,7 @@ The prototype is a loop of loadout, fight and result on a single room, with noth
 
 - The fight is fully deterministic. Ties are broken by rule, not by chance, so a recorded command log replays exactly.
 - Placeholder art is fine: flat colored shapes and icons. Readability matters more than polish.
-- Engine and platform are Open, and the architecture section keeps the rules engine independent of both.
+- The rules engine is independent of the engine and platform that present it (see Technical architecture and data).
 
 ## Core rules
 
@@ -170,7 +170,7 @@ Armor subtracts from damage of the types marked Yes, to a minimum of 0. Each Cor
 | Status | Effect | Duration |
 | --- | --- | --- |
 | Poison | 1 damage per round at the poison tick. After the tick it spreads to adjacent units that are not poisoned, up to 3 new infections per round across the whole board. A spread infection takes the remaining duration of its source, not a fresh 3 | 3 rounds, refreshed to 3 on direct reapplication |
-| Parasite | 2 damage per round. Cannot be removed. A unit carries at most one Parasite, and reapplying it restarts the 3 rounds without stacking (Proposed). When the host dies, a basic hatchling spawns on its tile if the minion cap allows | 3 rounds |
+| Parasite | 2 damage per round. Cannot be removed. A unit carries at most one Parasite, and reapplying it restarts the 3 rounds without stacking. When the host dies, a basic hatchling spawns on its tile if the minion cap allows | 3 rounds |
 | Corrode | Each stack reduces armor by 1 | Rest of the fight |
 | Pinned (upgrade) | Cannot move during its next phase | 1 round |
 | Slowed (upgrade) | Has 1 less movement during its next move | 1 round |
@@ -195,6 +195,20 @@ Poison follows the universal friendly-fire rule, so it can spread to the player 
 **Tie-breaks**
 
 Whenever something picks a target, it chooses the nearest, then the lowest current HP, then the lowest unit ID. The player has ID 0, and every other unit takes the next ID when it spawns. Units in a wave take IDs in the order the wave table lists them. "Nearest" is path length for ground melee units and Chebyshev distance for ranged and flying units.
+
+**Clarifications**
+
+- **Flying units** pass over units only. Shield segments, eggs, walls, pillars, the shutter and the wall gun block them like everyone else.
+- **Path ties.** Breadth-first search expands north, east, south, west in that order, so equal-length paths always resolve the same way. Enemies ignore mines and walk that path.
+- **"Nearest" for ground melee units** (hatchlings, bursters, the Warden, and the Flamer, which is treated as melee) is the path length to a tile adjacent to the target. It is computed ignoring units, which move, but respecting terrain, shield segments and eggs. If nothing is reachable it falls back to range distance.
+- **"Move toward" or "as close as possible"** picks the reachable tile with the smallest key: path distance to a tile adjacent to the target, then range distance, then steps, then row, then column.
+- **One tick per status.** Every status present at the start of the tick step ticks once.
+- **Death effects wait for the spread.** Effects set off by deaths during the tick step (Spore Burst, Parasite Jump, a Parasite hatchling) run after poison spreads, so anything they apply first ticks next round.
+- **The dead keep their statuses.** A unit killed by a tick keeps its statuses, so a Poison that would have expired on that tick still triggers Spore Burst.
+- **Pinned and Slowed** count down at the status step, so they cover exactly the unit's next phase.
+- **Death hook order:** upgrade hooks in table order (Spore Burst, Acid Brood, Parasite Jump), then the base Parasite hatchling. A host's Spore Burst therefore does not poison the hatchling that bursts out of it.
+- **Effect instance keys** for the once-per-chain rule: the dead unit, for its death hooks; the mine, for its blast; the shield segment, for a reflection; the player, for Grapple Pin.
+- **Corpses.** A new corpse replaces an older one on the same tile.
 
 ## Armory Lockdown
 
@@ -240,7 +254,7 @@ Waves arrive on a hidden timer, at the start of rounds 1, 4 and 7, whether or no
 
 The debug overlay shows the wave timer. Players never see it.
 
-**Arrival round (Proposed)**
+**Arrival round**
 
 In the round a wave arrives, its units move but do not act. Each uses only the movement part of its plan: a Guard walks to its firing tile, the Medic to its ally, the Flamer to its best-scoring tile, and the Warden makes its approach move. They attack from the following round.
 
@@ -251,7 +265,14 @@ Without this rule the opening has no safe tile. Guards cover 8 tiles of reach (3
 - Win: wave 3 has spawned and every enemy is dead.
 - Lose: the player's HP reaches 0.
 - Safety cap: if round 30 ends with the fight unresolved, the attempt is a loss.
-- Open: if the room is empty at the start of a round, the next wave could arrive early so players do not wait. The default is a fixed schedule. Test both.
+- An empty room does not bring the next wave early. The schedule stays fixed, so every fight's timing is the same and the room can be learned, and clearing a wave early earns free setup turns.
+
+**Clarifications**
+
+- **Crowded spawns.** "Nearest free tile" is by range distance. Every unit of a wave, or every hatchling of an egg, is placed before any mine under one goes off.
+- **Simultaneous win and loss.** The player's death ends the fight at once, even mid-chain, and a loss beats a simultaneous win. Killing every enemy before the last wave has spawned is not a win.
+- **A win waits for the action to finish.** The win is checked once per root action, after the action and the chain's queued effects have both completed. If a mine or another immediate effect kills the last enemy partway through an action, the rest of the action still happens: a multi-tile move crosses its second mine, and the status tick finishes the rest of its units. The player's death is the exception and ends the fight on the spot, so a loss in the same action beats the win. Ending the fight at the first kill was tried and dropped, because a committed path could then skip a mine that would have killed the player and score the move as a win.
+- **The last enemy's death effects.** A win is declared only after the chain's queued death effects have played, so the last enemy's Spore Burst, Acid Brood, Parasite Jump or Parasite hatchling still happens and is in the event log. If one of them adds an enemy, the fight goes on; if one kills the player, the fight is lost.
 
 ## Player and abilities
 
@@ -284,7 +305,7 @@ Reload is a utility action, always available when it has a valid target. It cost
 | Ability | AP | Targeting | Effect |
 | --- | --- | --- | --- |
 | Acid Spit | 1 | Projectile, range 5 | 1 acid damage and 2 Corrode stacks to the first unit hit |
-| Lunge | 1 | Straight orthogonal line, up to 3 tiles (Proposed) | The player leaps over units, not over pillars, walls or shields, and lands on a free tile. Then they may hit one adjacent unit for 2 kinetic damage. Can be used purely to move |
+| Lunge | 1 | Straight orthogonal line, up to 3 tiles | The player leaps over units, not over pillars, walls or shields, and lands on a free tile. Then they may hit one adjacent unit for 2 kinetic damage. Can be used purely to move |
 | Spore Pod | 1 | Lob, range 5 | Bursts on the target tile and poisons every unit in the 3x3 area, friend or foe |
 | Brood Egg | 2 | Empty tile or enemy corpse within 3 | Places an egg. See Minions, eggs and mines |
 | Parasite | 1 | Projectile, range 5 | Applies Parasite to the first unit hit |
@@ -295,7 +316,20 @@ Reload is a utility action, always available when it has a valid target. It cost
 - An ability that finds no valid target at cast time cannot be committed.
 - Every ability must support a dry-run preview from the same code that resolves it, so the preview can never disagree with the result.
 - Friendly units that would be hit are listed in the preview and highlighted in the UI.
-- AP costs, ranges and damage values are Proposed starting values stored in data. See the tuning table in the test plan.
+- AP costs, ranges and damage values are starting values stored in data. See the tuning table in the test plan.
+
+**Clarifications**
+
+- **"Empty tile"** for placement means passable terrain with no unit and no object (mine, egg, shield or corpse). Brood Egg also accepts a tile whose only object is a corpse that can host.
+- **Projectile targets.** Projectile abilities can target any unit in range and sight, friendly ones included, and the shot hits the first unit or blocking object on the line. A target is not offered if the shot would stop in the shutter or the wall gun.
+- **Grapple Hook:**
+  - Pull self accepts any tile in range and sight, including a wall or pillar to pull toward. The player stops on the last free tile before a blocker.
+  - Pull unit is offered only when the first thing on the line is a pullable unit with at least one tile of room.
+  - The hook is not reflected by Reflective Shield and does not damage objects.
+- **Lunge** cannot leap over eggs, the shutter or the wall gun, the same as shields and pillars. Landing on a mine sets it off. The strike on an adjacent unit is optional.
+- **Spore Pod** can land on any tile within 5 (it is lobbed, so sight is not needed). It is offered only where its 3x3 area holds at least one unit.
+- **Barrier Shield** "adjacent" includes diagonal pairs. A placement counts toward the cap of 2 while either of its segments survives.
+- **Pick Up** removes the mine with no refund. "Returns to hand" means it can be placed again for 1 AP.
 
 ## Minions, eggs and mines
 
@@ -313,7 +347,7 @@ Minions act on their own with one readable behaviour each, and the player steers
 | Minion | HP | Armor | Move | Action and behaviour |
 | --- | --- | --- | --- | --- |
 | Auto-Turret | 4 | 0 | 0 | Fires at the nearest enemy within range 5 and line of sight: 2 kinetic, uses 1 ammo of 4. At 0 ammo it stays as a blocker |
-| Scout Drone | 3 | 0 | 3, flying | Moves toward the nearest enemy until it is within range 2 with line of sight, then zaps it: 1 electric, chaining 1 electric to every other unit adjacent to the target. The chain never hits the drone that fired it (Proposed). See the drone cycle below |
+| Scout Drone | 3 | 0 | 3, flying | Moves toward the nearest enemy until it is within range 2 with line of sight, then zaps it: 1 electric, chaining 1 electric to every other unit adjacent to the target. The chain never hits the drone that fired it. See the drone cycle below |
 | Hatchling | 2 | 0 | 3 | Moves toward the nearest enemy and hits one adjacent enemy for 1 kinetic |
 | Spitter hatchling | 4 | 0 | 3 | Moves until an enemy is within 3 with line of sight, then fires 1 acid damage |
 | Mender hatchling (stretch) | 4 | 0 | 3 | Moves toward the most damaged hatchling and heals one adjacent damaged hatchling for 1 HP. No attack |
@@ -349,6 +383,14 @@ An egg is an object with 3 HP that blocks movement. Any damage can hit it, frien
 - A mine is visible to everyone. The Pick Up action returns a mine to the player's hand.
 - Projectiles pass over mines. With Shot-Triggered Mines, the Sidearm can target a mine directly (see Loadout and upgrades).
 
+**Clarifications**
+
+- **No per-type limits** on turrets or drones. Only the minion cap limits them.
+- **Redeploy** names the docked drone by ID and restores its charges to the upgrade-adjusted maximum.
+- **Docked drones** are off the board, so their statuses do not tick until they redeploy.
+- **Mines don't interrupt movement.** A unit that sets one off keeps walking if it survives. This applies to the Warden's charge and to pulls too.
+- **Spawning counts as entering.** A ground unit that appears on a mine sets it off: wave units, hatchlings and debug spawns. This rewards learning the spawn tiles, but your own mine next to your egg can kill both hatchlings. The egg preview shows where they will land.
+
 ## Enemies
 
 Four enemy types are enough to test the shape of the fight: a ranged soldier, a healer, an area-denial unit and an armored elite. Each acts once per round, moving first and then acting.
@@ -359,8 +401,6 @@ Four enemy types are enough to test the shape of the fight: a ranged soldier, a 
 | Medic | Support | 5 | 0 | 3 | Heals one damaged ally within 3 and line of sight for 2 HP. No attack |
 | Flamer | Area | 6 | 1 | 2 | Sweep: 3 fire damage to every unit and object in a straight line of 3 tiles starting adjacent, allies included. Walls and pillars end the line |
 | Warden | Elite | 20 | 2 | 3 | Charge: up to 4 tiles in a straight line, then 4 kinetic damage to what it stopped against. Melee: 3 kinetic to an adjacent unit. Purge: every other round clears its own Poison |
-
-The Flamer's 6 HP and armor 1, and the Warden's armor 2, are Proposed.
 
 **Shared behaviour**
 
@@ -403,6 +443,30 @@ This makes the Flamer a counter to clustered swarms. With armor 1, basic hatchli
 
 The Warden always heads for the player. Armor 2 stops the Sidearm, turret shots, Lunge and hatchling bites outright and cuts a mine to 1. The answers are Corrode, Piercing Rounds, and damage that ignores armor: acid, electric, poison and Parasite. One Acid Spit removes the armor for the rest of the fight. If that makes Acid Spit a fixture of every win, the first knob is to let Corrode expire.
 
+**Clarifications**
+
+- **Guard:**
+  - A tile gives a shot only if the first thing on the line is on the player's side: a player-side unit, a shield segment or an egg. An enemy ally, the shutter or the wall gun first on the line spoils it.
+  - Step 2's "closest to the target" uses the unit the Guard would shoot from that tile.
+  - After moving, it shoots the nearest valid target from where it stands.
+- **Medic:**
+  - "Ally" excludes itself.
+  - It prefers tiles at least 4 from the nearest player-side unit, taking the one with the fewest steps; with none available, it takes the farthest tile.
+  - With nobody hurt, it follows the nearest Guard (any ally if no Guard is left).
+  - After moving, it heals the lowest-HP damaged ally in range and sight.
+- **Flamer:**
+  - Walls, pillars, the shutter and the wall gun end the sweep line. Shield segments and eggs on the line are hit but do not stop it.
+  - Direction ties resolve north, east, south, west.
+  - It scores the directions again from the tile it ends on before sweeping.
+- **Warden:**
+  - A charge lane is blocked by terrain or an enemy ally. A body or object directly in front means no charge in that direction, since the charge must move at least one tile.
+  - Among several open lanes, it chooses by the unit that opened the lane: nearest, then lowest HP, then lowest ID.
+  - Pinned stops its charge. Slowed shortens it by 1 tile.
+  - Step 4 considers only tiles strictly closer to the player (path distance to an adjacent tile). Among those, it prefers tiles that line up a clear lane at the player for next round, and it does not attack after an approach move.
+  - Step 5: when no tile is closer, it melees an adjacent player-side unit (lowest HP, then lowest ID).
+  - In its arrival round it makes only the approach move: no Purge, charge or melee.
+  - Purge happens before the Warden's action. Its 2-round cooldown ticks at step 5, so it is available every other round.
+
 ## Lab hazards and intercom
 
 The lab's defences are controlled by an AI that decides when to fire, gives a subtle cue first, and values its own units in a fixed order. Hazards never show a danger zone. They give a cue and nothing more.
@@ -419,7 +483,7 @@ The lab's defences are controlled by an AI that decides when to fire, gives a su
 
 1. Ready: the hazard is off cooldown.
 2. Prime: at Environment step 2, the lab AI checks the value rule against the current positions. If it allows firing, the hazard becomes primed and shows its cue: a wisp from a vent, a glowing gun barrel, or crackling panels.
-3. Fire: at Environment step 1 of the next round, a primed hazard is committed (Proposed). It fires on everything then in its area, soldiers included, and starts its cooldown. It cancels, with a 1-round cooldown, only if an elite would be hit or if nothing would be hit.
+3. Fire: at Environment step 1 of the next round, a primed hazard is committed. It fires on everything then in its area, soldiers included, and starts its cooldown. It cancels, with a 1-round cooldown, only if an elite would be hit or if nothing would be hit.
 
 This gives the player one full round to react to a cue, and nothing tells them exactly which tiles are at risk.
 
@@ -436,7 +500,7 @@ The lab ranks targets as elite, then your life, then soldier, then minion. A sol
 
 The combined kill check is computed once per priming step, so no hazard's decision depends on another's. Take every ready hazard whose V contains the player and no elite, in the fixed order gun, panel grid, vent B5, vent G6, and add the damage each would deal to the player. If the total is at least the player's current HP, all of those hazards pass step 2 together.
 
-For the panel grid and the vents, V counts units only, not objects. For the wall gun, V is the first unit or blocking object in its lane, and a player-side object there (a shield segment or an egg) ranks as a minion (Proposed). A shield in row 5 therefore draws the gun's fire. Without this, one shield segment would leave the gun with no victim and switch it off for the whole fight.
+For the panel grid and the vents, V counts units only, not objects. For the wall gun, V is the first unit or blocking object in its lane, and a player-side object there (a shield segment or an egg) ranks as a minion. A shield in row 5 therefore draws the gun's fire. Without this, one shield segment would leave the gun with no victim and switch it off for the whole fight.
 
 The gun only hits the first thing in its lane, so its V never holds both the player and a soldier. The debug overlay must show which step produced each decision.
 
@@ -470,6 +534,14 @@ Staff are truthful and speak in one or two sentences. Each line plays at most on
 | Warden dies | "Warden is down. The armory is compromised." |
 | Player dies | "Intruder neutralised." |
 
+**Clarifications**
+
+- **Wall gun.** The gun's shot is a projectile from H5 travelling west. Reflective Shield sends it back into the gun, which absorbs it.
+- **Panel grid and vents** cover the 3x3 around each of their tiles and damage units only.
+- **Order and checks.** Hazards prime and fire in the order they are listed in `map.json` (gun, panel grid, vent B5, vent G6). The firing-time checks use the same targeting as priming.
+- **Intercom timing within an action.** Lines raised during one action wait until it finishes, then the first in table order plays. The rest queue to later phases, so "at most one line per phase" holds. The player's death line plays at once and clears the queue.
+- **Low-HP lines** ("Warden, report.", "The intruder is wounded.") fire when a unit drops below the threshold and survives the hit.
+
 ## Loadout and upgrades
 
 Before each fight the player builds a small loadout, and the upgrades change rules, not numbers, so builds differ in how they play. The loadout screen stands in for the run's upgrade choices, which the MVP does not have.
@@ -479,7 +551,7 @@ Before each fight the player builds a small loadout, and the upgrades change rul
 - Choose up to 8 abilities from the 11 in the pool (6 Tech, 5 Alien).
 - Choose up to 3 upgrades from the 12 below. An upgrade can only be chosen if the loadout contains the abilities it requires.
 - No duplicates. Reload is available automatically whenever the loadout has a turret. Repair (stretch) would come with a turret, drone or shield.
-- Loadout size is Open. At 8 of 11, any two builds share at least 5 abilities, which weakens the test of whether loadouts play differently. Try 6 of 11 in the informed playtest round.
+- Loadout size is 8 of 11. At that size any two builds share at least 5 abilities, which weakens the test of whether loadouts play differently, so 6 of 11 is tried in the simulator's loadout sweep. The informed playtest round keeps 8 and plays the Hybrid preset as it is, so its results compare with the first-time round.
 - The loadout is locked once the fight starts.
 
 **Presets**
@@ -492,16 +564,18 @@ Presets are quick starts and also the regression fixtures for the headless simul
 | Alien | Acid Spit, Lunge, Spore Pod, Brood Egg, Parasite | Spore Burst, Parasite Jump, Acid Brood | Strong early, short of burst |
 | Hybrid | Sidearm, Proximity Mine, Scout Drone, Barrier Shield, Acid Spit, Spore Pod, Brood Egg, Parasite | Spore Mines, Plague Drone, Parasite Jump | Unknown. The nearest hand-simulated build, Plague Engine, lost, and every hand-simulated win used Occult or live capture |
 
-**Paper check before M0 (Proposed)**
+**Paper check before M0**
 
 No build made only of Tech and Alien tools has won this room on paper. In the design document's results, every win used Occult or live capture, and the enemies here are the boosted versions that were tuned against those builds. Before any content is built, re-run the three presets by hand under this spec's rules. The check passes when the Hybrid preset has a written winning line. If it does not, lower Warden HP, then cut wave 3 to one Guard, until it does. Once the simulator exists, the bots repeat the check after every tuning change.
+
+The check has passed: the greedy bot found a winning line for every preset with no Warden HP cut, and the lines are saved as `reports/winning-line-*.json`.
 
 **Upgrades**
 
 | Id | Upgrade | Requires | Rule |
 | --- | --- | --- | --- |
 | T1 | Piercing Rounds | Sidearm or Auto-Turret | Kinetic damage from your Sidearm and turrets ignores 2 armor |
-| T2 | Shot-Triggered Mines | Proximity Mine and Sidearm | The Sidearm can target one of your mines within range and line of sight, and a shot that reaches the mine detonates it. Other projectiles still pass over mines (Proposed). |
+| T2 | Shot-Triggered Mines | Proximity Mine and Sidearm | The Sidearm can target one of your mines within range and line of sight, and a shot that reaches the mine detonates it. Other projectiles still pass over mines. |
 | T3 | Suppressing Fire | Auto-Turret | An enemy hit by a turret shot is Slowed |
 | T4 | Grapple Pin | Grapple Hook | A unit pulled by the grapple takes 1 kinetic damage on landing and is Pinned for 1 round |
 | T5 | Reflective Shield | Barrier Shield | The first projectile to hit a shield segment each round is reflected back along its line |
@@ -519,6 +593,10 @@ Every upgrade follows the universal friendly-fire rule. Reflected shots, spores 
 
 The upgrade list is deliberately small. If playtesters keep picking the same three, or if one build wins almost every attempt, the fix is in the upgrade rules and not in the enemy numbers. Log every loadout with its result so the pattern is visible.
 
+**Clarifications**
+
+- **Utilities** (Sprint always; Reload, Pick Up and Redeploy with their ability) do not count toward the 8 abilities.
+
 ## UI and feedback
 
 The interface has one job: let the player predict the chaos before they commit to it. Everything the player does is previewed, enemy and minion intentions are visible, and only the lab's hazards stay deliberately hard to read.
@@ -531,7 +609,7 @@ The interface has one job: let the player predict the chaos before they commit t
 - A minion panel lists every minion with HP, turret ammo pips and drone charge state.
 - An intercom panel shows the latest line, with a button to open the log of earlier lines.
 - Controls: End Turn, Undo Movement, and a fast-forward toggle with 1x, 2x and skip.
-- Platform and input are Open. Design mouse-first with keyboard shortcuts for every control.
+- Input is mouse first, with a keyboard shortcut for every control (listed in the README). On touch, tap to preview and tap again to commit.
 
 **Previews for every player action**
 
@@ -552,7 +630,7 @@ The interface has one job: let the player predict the chaos before they commit t
 **Hazard cues**
 
 - A primed hazard shows only its cue: a wisp from a vent, a glowing barrel on the gun, crackling on the panels. No danger zone is drawn.
-- Whether to show a hazard's cooldown to the player is Open. The default is not to show it.
+- A hazard's cooldown is not shown to the player, only in the debug overlay. Showing it is the fallback if hazards feel cheap.
 
 **Status display**
 
@@ -588,6 +666,13 @@ Toggled by a key and hidden by default. It shows:
 - Step-through controls for phases and single actions, replay playback, and the ability to set HP and AP, spawn a unit or force a wave.
 - Hot reload of the data files, so tuning does not need a rebuild. A reload restarts the current fight.
 
+**Clarifications**
+
+- **Intents** are the minion and enemy phases dry-run on a copy of the state, so each unit's intent already accounts for the units that act before it. The environment phase is not run, so hazards stay hidden.
+- **Hover previews** also show the intents as they would be after the hovered action.
+- **Incoming-damage badges** in the intent forecast sit on the unit's current tile, not on the tile where the forecast says it is hit. The badge belongs to the unit the player can see, and a minion's destination is already drawn as its dashed path; the hit tile is used only for things not on the board yet.
+- **Default player path.** The client's default path for a free move avoids stepping on mines when the movement budget allows. Commands carry explicit paths.
+
 ## Technical architecture and data
 
 The rules engine is a deterministic library that knows nothing about rendering, input or time, and every number in the rules comes from data. This is what makes previews reliable, balance testable in bulk, and bugs replayable.
@@ -614,9 +699,9 @@ The rules engine is a deterministic library that knows nothing about rendering, 
 | sim | Headless runner, bots and batch statistics | all of the above |
 | client | Rendering, input, animation, HUD and debug overlay | preview, telemetry |
 
-**Engine and language (Open)**
+**Engine and language**
 
-The spec only requires that the core can run headless for tests and simulations, load JSON, and use integer math. Two reasonable paths are a TypeScript core with a web client, which makes headless simulation in Node easy, or a game engine with the core kept as an engine-independent module. Choose by team skill.
+The spec only requires that the core can run headless for tests and simulations, load JSON, and use integer math. The prototype uses a TypeScript core that runs headless in Node, with a React web client built with Vite.
 
 **State model**
 
@@ -630,7 +715,7 @@ The spec only requires that the core can run headless for tests and simulations,
 - Commands from the player: Move, Sprint, UseAbility (with target tiles and mode), Reload, PickUpMine, Redeploy and EndTurn, plus Repair if it is built.
 - Events include PhaseStarted, UnitMoved, DamageDealt (with source, type, amount and armor absorbed), UnitDied, StatusApplied, StatusTick, ObjectPlaced, ObjectTriggered, EggHatched, HazardPrimed, HazardFired, HazardHeld, WaveSpawned, IntercomLine and ChainSuppressed.
 
-**Abilities and upgrades in code (Proposed)**
+**Abilities and upgrades in code**
 
 For the MVP, each ability and upgrade is a small code behaviour keyed by its id. It is built from shared helpers (damage, heal, applyStatus, move, pull, spawn, placeObject, area, line, chain) and reads every number from data. This is the split the spec already uses for AI.
 
@@ -676,6 +761,12 @@ Each root action opens a chain. The engine keeps a set of effect instances (sour
 - Table-driven tests for line of sight corner cases and symmetry, armor and Corrode math, the value rule (one test per case), a committed hazard hitting a baited soldier, wave spawn collisions, the arrival round, the minion cap, and poison spread (the cap, the fixed order, and dying out in a cluster).
 - Golden replays for the three presets. Their event logs must not change between builds unless a rule change is intended. They are re-recorded on purpose whenever content values change.
 
+**Clarifications**
+
+- **Summaries count HP actually lost** (no overkill). Events carry both the hit size (`amount`) and HP lost (`hpLost`).
+- **Pick Up Mine** is counted in the summary's abilities used as `pick_up_mine`, like Sprint, Reload and Redeploy.
+- **The M6 loop test.** The rules as written cannot loop: Spore Burst and Acid Brood never deal damage directly. The test for the M6 criterion "the once-per-chain rule suppresses a loop built from Spore Burst and Acid Brood" therefore adds a test-only hook that re-raises the same deaths, and checks that the repeats are suppressed. A second test checks the depth cap of 20.
+
 ## Test plan and tuning
 
 The prototype succeeds if it answers the seven questions in Goals and scope, and the answers come from telemetry and observation, not impressions. Testing runs in three rounds, with a headless simulator running alongside to find dominant strategies and bugs at scale.
@@ -695,7 +786,7 @@ The prototype succeeds if it answers the seven questions in Goals and scope, and
 - Whether friendly fire feels like a choice or a punishment.
 - Whether the hazards feel reactive and whether the cues were noticed.
 
-**Metrics and alarms (Proposed)**
+**Metrics and alarms**
 
 | Metric | Source | Target | Alarm |
 | --- | --- | --- | --- |
@@ -763,10 +854,15 @@ The simulator runs the core without a client and uses the same content files.
 
 1. Random legal bot: finds crashes, infinite loops and exploits. It draws from a seeded generator.
 2. Greedy bot: each action maximises its immediate preview score, which is a weak baseline. One action in ten is a random legal action from a seeded generator, so a batch is a spread of fights and not one fight repeated.
-3. Scripted bots: command scripts that reproduce the earlier hand simulations for each preset, used as regression tests. Each is a single deterministic fight, run once per build.
+3. Scripted bots: command scripts for each preset, used as regression tests (the golden replays). Each is a single deterministic fight, run once per build. The hand simulations survive only as summaries, not move-by-move lines, so the scripts are greedy-bot fights frozen into command lists, and they stay that way.
 4. Search bot (stretch): searches action sequences within a turn using the preview engine, to show the ceiling for a loadout.
 
 The game has no randomness, so all variation comes from the bot's seed, which is stored with each fight. Batch reports run 1,000 seeds per preset for the random and greedy bots, and sweep random valid loadouts and tuning values to find dominant abilities and upgrades. Each report gives win rate, rounds, causes of death, damage by source and the win-rate lift of every pick, and exports to CSV. Running the same batch with the same seeds must give identical results.
+
+**Clarifications**
+
+- **Turn times** measure the player's own time. A turn's clock starts when the client has finished animating and the player can act (the opening, or the enemy and environment phases after End Turn), and stops at End Turn or at the action that ends the fight, so the last turn of a fight is counted. Without a client (the simulator, tests), a turn is timed from the end of the previous one.
+- **"Full swarm" means the minion cap.** A turn counts toward the median turn time when the player had the maximum number of minions (5) alive when they ended it. The turn that ends the fight counts like any other.
 
 ## Build order
 
@@ -794,7 +890,7 @@ Build in eight milestones, each ending in something runnable and tested. The pap
 
 The Tech kit is the most readable and testable, so it comes first and lets playtesting start early. That first session stops at wave 2, because both documents expect the Tech kit to struggle against the Warden and a first playtest should not be an unwinnable fight. The event queue and chain bookkeeping are built in M1, because the mines, drone chains and death triggers of M2 already depend on them. Hazards need enemies and minions to react to, so they follow. The Alien kit adds the most complex interactions (eggs, poison spread, corpses), so it arrives once the combat core is stable. Telemetry and the simulator are listed last, but their event stream and replay support should be built in from M0, because retrofitting determinism is painful.
 
-## Risks and open decisions
+## Risks and decisions
 
 The main risk is that the numbers and AI rules here come from hand simulation, so the first playtests may overturn some of them. The spec is built so those changes are data edits, not rewrites.
 
@@ -816,7 +912,7 @@ The main risk is that the numbers and AI rules here come from hand simulation, s
 
 **Changes from the design document**
 
-The MVP makes some choices that differ from, or are new to, the design document. Review these first.
+The MVP makes some choices that differ from, or are new to, the design document. Review these first. The owner confirmed every row on 2026-10-13.
 
 | Area | Design document | This spec | Reason |
 | --- | --- | --- | --- |
@@ -830,30 +926,34 @@ The MVP makes some choices that differ from, or are new to, the design document.
 | Wave arrival | Not specified | Units move but do not act in the round they arrive | Round 1 had no safe tile |
 | Warden armor | 3 | 2 | At 3, every kinetic and explosive source in the game dealt 0 |
 | Flamer | 8 HP, no armor | 6 HP, armor 1 | Exercises armor, Corrode and Piercing Rounds before round 7 |
-| Floor eggs | One basic hatchling | Two basic hatchlings | Reason not recorded. Confirm it is intended |
-| Minion commands | Optional AP commands (focus target, trigger special) | None. Placement only | Reason not recorded. Confirm it is intended |
-| Armor | Reduces kinetic and explosive damage | Also reduces fire | Reason not recorded. Confirm it is intended |
-| Barrier Shield | Can be pushed or pulled | Fixed once placed | Reason not recorded. Confirm it is intended |
-| Corrode | Strips armor and shields | Strips armor only | Reason not recorded. Confirm it is intended |
-| Enemy turns | Same movement and AP rules as the player | Move, then one action | Reason not recorded. Confirm it is intended |
+| Floor eggs | One basic hatchling | Two basic hatchlings | An egg costs 2 of the 3 AP, and one hatchling that hits for 1 would not repay it |
+| Minion commands | Optional AP commands (focus target, trigger special) | None. Placement only | Autonomous minions are what question 2 tests, and commands would add a decision to every turn |
+| Armor | Reduces kinetic and explosive damage | Also reduces fire | Only the Flamer deals fire, and only the Flamer and the Warden have armor, so this matters only when a sweep hits one of them |
+| Barrier Shield | Can be pushed or pulled | Fixed once placed | Nothing in the MVP moves objects: the Grapple Hook pulls units only |
+| Corrode | Strips armor and shields | Strips armor only | No enemy has a shield in the MVP; the only shields are the player's |
+| Enemy turns | Same movement and AP rules as the player | Move, then one action | Each enemy's whole turn shows as one intent: a destination and a target line |
 
-**Open decisions for the implementation session**
+**Decisions taken**
 
-- Engine, language and platform.
-- Input scheme and keyboard shortcuts.
-- Art direction. Placeholder shapes are fine for the MVP.
-- Whether an empty room brings the next wave early.
-- Whether to show hazard cooldowns.
-- Whether player-side units should leave corpses.
-- Whether Creep is included or left as a stretch.
-- How many levels of undo for free movement.
-- Exact enemy and hatchling spawn placement rules in crowded rooms.
-- Whether a primed hazard commits. The default is that it does.
-- Whether player-side objects draw the wall gun's fire. The default is that they do.
-- Whether the arrival round applies to every wave or only to wave 1. The default is every wave.
-- Loadout size: 8 of 11, or 6 of 11.
-- Whether Corrode lasts the whole fight. The default is that it does.
-- Which stretch items, if any, get built.
+The first draft left these Open for the implementation session. The implementation took a default for each, and the owner confirmed them all on 2026-10-13. Where a decision is a switch in `content/rules.json`, the last column names it.
+
+| Decision | Taken | Switch |
+| --- | --- | --- |
+| Engine, language and platform | TypeScript rules core that runs headless in Node, and a React web client built with Vite | |
+| Input scheme and keyboard shortcuts | Mouse first, with a keyboard shortcut for every control (see the README); on touch, tap to preview and tap again to commit | |
+| Art direction | Flat shapes. Units are told apart by shape and letter as well as colour (circles and squares are the player's side, diamonds and the hexagon are enemies), with the Okabe-Ito palette and light and dark themes | |
+| Whether an empty room brings the next wave early | No: a fixed schedule | `earlyWaveWhenEmpty` |
+| Whether to show hazard cooldowns | No | `ui.showHazardCooldowns` |
+| Whether player-side units leave corpses | No | |
+| Whether Creep is included | No, it stays a stretch item | |
+| Levels of undo for free movement | Unlimited, back to the last commit (AP spent or something set off) | |
+| Spawn placement in crowded rooms | The nearest free tile by range distance (see Waves and its Clarifications) | |
+| Whether a primed hazard commits | Yes | |
+| Whether player-side objects draw the wall gun's fire | Yes | |
+| Whether the arrival round applies to every wave | Yes, every wave | `arrivalRound` (`all`, `first`, `none`) |
+| Loadout size | 8 of 11, in every playtest round; 6 of 11 is tried in the simulator's sweep | `loadout.abilities` |
+| Whether Corrode lasts the whole fight | Yes | `statuses.corrode.duration` (0 = rest of the fight) |
+| Which stretch items get built | None yet. One is built only when a playtest finding calls for it | |
 
 **After the MVP**
 
@@ -863,7 +963,7 @@ The companion document is [Lab Escape Roguelite: Design Doc v0.1](https://claude
 
 ## Review changes
 
-Revision 2 applies the review of Oct 2, 2026, which read this spec against Design Doc v0.1. A fix repairs a rule that did not work as first written. A clarification pins down something the first draft left open. A Proposed change is a design call and needs confirming.
+Revision 2 applies the review of Oct 2, 2026, which read this spec against Design Doc v0.1. A fix repairs a rule that did not work as first written. A clarification pins down something the first draft left open. A Proposed change is a design call; the owner confirmed all of them on 2026-10-13.
 
 | Change | Section | Kind | Why |
 | --- | --- | --- | --- |
@@ -890,15 +990,16 @@ Revision 2 applies the review of Oct 2, 2026, which read this spec against Desig
 | Vent gas is one hit of poison-type damage, not the Poison status | Lab hazards and intercom | Clarification | Follows the design document's "1 damage in a 3x3 area" |
 | Parasite does not stack, the drone zaps at range 2 and cannot hit itself, Lunge is orthogonal, Grapple follows the sight line | Core rules, Player and abilities, Minions | Clarification, values Proposed | Each was unspecified |
 | The mender targets hatchlings, undo stops at a triggered move, intercom lines queue | Minions, Core rules, Lab hazards and intercom | Clarification | Each was inconsistent or unspecified |
-| Six unlisted differences from the design document added to the changes table | Risks and open decisions | Clarification | The table asks to be reviewed first, so it should be complete |
+| Six unlisted differences from the design document added to the changes table | Risks and decisions | Clarification | The table asks to be reviewed first, so it should be complete |
 
 Two notes on the evidence behind these changes:
 
 - The round-1 figures come from a short script of the Enemy phase under this spec's Guard rule, not from a build. Treat them as indicative until the M3 tests reproduce them.
-- The first draft described the Warden's charge two ways: "within 4 tiles" and "up to 4 tiles". This revision reads range 4 as distance moved, so a target 2 to 5 tiles away can be charged. Confirm that reading.
+- The first draft described the Warden's charge two ways: "within 4 tiles" and "up to 4 tiles". This revision reads range 4 as distance moved, so a target 2 to 5 tiles away can be charged. The owner confirmed that reading on 2026-10-13.
 
 ## Changes since revision 2
 
 | Date | Change | Why |
 | --- | --- | --- |
 | 2026-10-06 | Units that die in the same effect as the player are reported and leave corpses; their death effects and intercom lines are skipped. The loss itself is unchanged. | The engine stopped at the player's death (unit ID 0), so enemies killed by the same blast went unreported and telemetry undercounted kills in lost fights. |
+| 2026-10-13 | No rule changed. The owner confirmed every Proposed call, the Warden's charge range, the six differences from the design document, and a decision for every Open item (now under Decisions taken). The readings of the rules that the implementation took where the spec was silent moved into this spec from the implementation notes, as the Clarifications at the end of each section. | After the developer round and further play by the owner and others, the owner settled every question the spec and the implementation had left open. |

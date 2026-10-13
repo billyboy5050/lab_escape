@@ -26,8 +26,8 @@ Each fact has one home. Link to it rather than copying it.
 
 | What | Where |
 | --- | --- |
-| The rules of the game (source of truth) | [docs/spec.md](docs/spec.md) |
-| How the code reads the spec where it is silent, defaults for its open decisions, simulator and playtest findings, known limitations | [docs/implementation-notes.md](docs/implementation-notes.md) |
+| The rules of the game (source of truth), with their clarifications and the decisions taken for the spec's open items | [docs/spec.md](docs/spec.md) |
+| How the tooling reads the spec where it is silent, simulator and playtest findings, known limitations | [docs/implementation-notes.md](docs/implementation-notes.md) |
 | How to run, play, tune and simulate; the code layout | [README.md](README.md) |
 | Status, what is next, decisions waiting on the owner | [docs/roadmap.md](docs/roadmap.md) |
 | The one-page rules sheet handed to first-time players | [docs/rules-sheet.html](docs/rules-sheet.html) |
@@ -153,7 +153,7 @@ The spec is the source of truth, and the spec itself says to update it when impl
 
 - merging, or anything that changes `main` directly;
 - changing repository settings (branch protection, secrets, Actions);
-- changing a spec rule, a Proposed design call or a default for an open decision;
+- changing a spec rule, one of its clarifications or a decision it records;
 - adding a dependency (the app has two at runtime, React and React DOM);
 - deleting content, reports or replays you did not generate in this task.
 

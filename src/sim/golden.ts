@@ -25,8 +25,8 @@ export const GOLDEN_SEED = 1;
 
 /**
  * The scripted fight for a preset. The hand simulations behind the design document were summaries,
- * not move-by-move logs, so the script is a greedy-bot fight frozen into a command list; replace it
- * with a transcribed hand line when one exists.
+ * not move-by-move logs, so the script is a greedy-bot fight frozen into a command list (spec,
+ * Headless simulation).
  */
 export function recordGolden(c: Content, presetId: string): { golden: GoldenFile; events: GameEvent[] } {
   const p = c.presets.find((x) => x.id === presetId);

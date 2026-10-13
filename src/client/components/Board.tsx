@@ -117,7 +117,7 @@ export function Board(p: BoardProps) {
       {s.hazards.map((h) => (
         <HazardCue key={`hz${h.id}`} h={h} />
       ))}
-      {/* Open decision: cooldowns are hidden from players unless rules.ui.showHazardCooldowns is set */}
+      {/* Cooldowns are hidden from players (spec, Hazard cues) unless rules.ui.showHazardCooldowns is set */}
       {c.rules.ui.showHazardCooldowns &&
         !p.debug?.hazards &&
         s.hazards
