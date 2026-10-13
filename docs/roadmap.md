@@ -4,7 +4,7 @@ Where the project stands, what comes next, and what is waiting on a decision. Wo
 
 Keep this file current. A pull request that finishes an item deletes it here, and one that turns up new work adds it; git history keeps the record of what was done. Order within "Up next" is priority order.
 
-Last reviewed: 2026-10-08.
+Last reviewed: 2026-10-13.
 
 ## Where things stand
 
@@ -46,16 +46,12 @@ The spec's next step is playtesting (its "Test plan and tuning" section). The to
 
 Agents should not settle these on their own. Ask, and record the answer in the spec or the notes.
 
-- **Interpretations to confirm.** Every item under "Interpretations to confirm" in [implementation-notes.md](implementation-notes.md#interpretations-to-confirm). Once confirmed, fold them into the spec as clarifications, since the spec is the source of truth; anything overturned becomes a rule change (see CLAUDE.md for what that involves).
-- **Defaults for the spec's open decisions** in the same file (arrival round on every wave, loadout of 8, Corrode for the whole fight, hazard cooldowns hidden, and the rest).
-- **Unexplained differences from the design document.** Six rows in the spec's "Changes from the design document" table say "Reason not recorded. Confirm it is intended": two hatchlings from a floor egg, no minion commands, armor reducing fire, Barrier Shield fixed once placed, Corrode stripping armor only, and enemies moving then taking one action.
-- **The Warden's charge range.** The spec reads range 4 as distance moved, so a target 2 to 5 tiles away can be charged, and asks for that reading to be confirmed.
-- **Golden replays.** They are greedy-bot fights frozen into scripts because the hand simulations were only summaries. Replace them with transcribed hand lines if those are ever written.
-- **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order).
+- **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order). None had been called for by 2026-10-13.
 
 ## Smaller items
 
 - **Record the playtest round in telemetry.** The report cannot tell a tester's first-time fights from their informed ones, so it uses one attempt number for everyone (`--informed-from`) and `--exclude-tester` for the developer's round. Testers who needed different numbers of first-time fights are then classified wrongly. Add a round field to the replay's `meta` (set on the loadout screen next to the Tester ID, or by a `?round=` parameter), check it in `recordProblems`, and use it in `src/sim/playtest.ts` in place of the cutoff.
+- **Loadout size in the sweep.** At 8 of 11 any two builds share at least 5 abilities, which weakens the test of whether loadouts play differently. The owner kept 8 for every playtest round (2026-10-13), so 6 of 11 is tried in the simulator instead: run `npm run sim -- sweep --size 6 --seeds 1000 --out <scratch folder>`, compare the win-rate lift and the spread of winning loadouts with the committed 8-ability sweep (`reports/sweep-8-greedy.txt`), and add the findings to the implementation notes.
 - **Ability rules during a fight.** The action bar's tooltip shows an ability's name, or why it cannot be used, but never its rule text, so in a fight the full rule is only on the loadout screen and the rules sheet carries a short version. Add each ability's `text` to its action button's tooltip.
 - **Simulator worker threads.** In a fresh container (Node 22.22.0, tsx 4.23.15), `npm run sim` with more than one worker fails with "Cannot find module .../src/sim/batch" from `src/sim/worker.ts`, though the parent passes its tsx flags to the workers. `--workers 1` works, and no test runs the real worker pool. Find out whether it also fails on the owner's machine, fix how workers load TypeScript, and add a test that runs a small batch on two workers.
 - **Readable hazard fires on the result screen.** The fight summary names a hazard by its map ID and an object by its number (`vent_b5→player`, `gun→object 5`), and the result screen prints them as they are. Name them as the board does ("Gas vent B5", "shield segment", "egg") in `src/telemetry/summary.ts` or where `src/client/screens/ResultScreen.tsx` prints them.

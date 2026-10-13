@@ -9,7 +9,7 @@ Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the
 | Document | What it is for |
 | --- | --- |
 | [docs/spec.md](docs/spec.md) | The design spec (revision 2) and the source of truth for the rules |
-| [docs/implementation-notes.md](docs/implementation-notes.md) | Where the implementation interpreted the spec, the defaults taken for its open decisions, what the simulator found, and what the playtests found |
+| [docs/implementation-notes.md](docs/implementation-notes.md) | How the tooling reads the spec where it is silent, known limitations, what the simulator found, and what the playtests found |
 | [docs/roadmap.md](docs/roadmap.md) | Where things stand, what is next, and the decisions waiting on the owner |
 | [docs/rules-sheet.html](docs/rules-sheet.html) | The one-page rules sheet for first-time players in playtests; open it in a browser and print it |
 | [docs/work/](docs/work/) | One note per branch in progress, so anyone can pick the work up |
@@ -85,7 +85,7 @@ Every number lives in `content/*.json`:
 
 With `npm run dev` running, saving a content file hot-reloads it and restarts the fight (a fight log never mixes two sets of values). Invalid content is rejected with the reason and the old values stay.
 
-The spec's open decisions are switches in `rules.json`: `earlyWaveWhenEmpty`, `ui.showHazardCooldowns`, `arrivalRound` (`all`, `first`, `none`), `loadout.abilities` (8, or 6 for the informed round), and `statuses.corrode.duration` (0 = rest of the fight).
+Several of the spec's decisions are switches in `rules.json`, so a playtest can try the other answer: `earlyWaveWhenEmpty`, `ui.showHazardCooldowns`, `arrivalRound` (`all`, `first`, `none`), `loadout.abilities`, and `statuses.corrode.duration` (0 = rest of the fight). The spec's "Decisions taken" table gives the value chosen for each.
 
 Any content change alters the content hash, and replays are only valid against the hash they were recorded with. A content change therefore needs every generated file regenerated in the same commit: the golden replays, the preset reports and winning lines, the random-bot reports and the sweep. Otherwise the tests and the `?replay=` links stop working and the committed balance figures go stale. The commands for each are under [Regenerating generated files](CLAUDE.md#regenerating-generated-files) in CLAUDE.md.
 
