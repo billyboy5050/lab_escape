@@ -267,11 +267,13 @@ kbd {
 /* ------------------------------------------------------------------ shared */
 .panel {
   position: relative;
-  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  background-color: var(--panel);
+  background-image: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
+/* Scanlines replace a panel's gradient but keep its solid colour, so a panel never turns see-through. */
 /* Corner ticks: the terminal frame around every panel */
 .panel::before,
 .panel::after {
@@ -600,7 +602,7 @@ kbd {
 .terminal {
   font: 14px/1.7 var(--mono);
   color: var(--term);
-  background: var(--chip-bg);
+  background-color: var(--chip-bg);
   border: 1px solid var(--line-2);
   border-radius: 4px;
   padding: 14px 16px;
@@ -675,7 +677,7 @@ kbd {
   color: var(--amber);
   border-left: 3px solid var(--amber);
   padding: 10px 14px;
-  background: var(--chip-bg);
+  background-color: var(--chip-bg);
   min-height: 5.4em;
 }
 .dossier h4 {
@@ -1213,6 +1215,7 @@ kbd {
 .actions {
   padding: 10px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 .action-row {
@@ -1311,6 +1314,8 @@ kbd {
   min-width: 0;
 }
 .controls .hint {
+  /* A long hint must never widen the panel: it is cut to one line, and the scanner shows it in full. */
+  contain: inline-size;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1406,7 +1411,7 @@ kbd {
   color: var(--amber);
   padding: 9px 11px;
   border-left: 3px solid var(--amber);
-  background: var(--chip-bg);
+  background-color: var(--chip-bg);
   border-radius: 0 3px 3px 0;
   min-height: 3.4em;
 }
