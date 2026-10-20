@@ -1,59 +1,96 @@
-import { Fragment, useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef, type ReactNode } from 'react';
 import type { Content } from '../../content/types';
 import type { ActionStatus } from '../../engine/commands';
 import type { CommandPreview, Intent, IntentReport } from '../../preview/preview';
 import type { GameObject, GameState, Unit } from '../../state/types';
 import { tileName } from '../../util/tiles';
 import { actionKeyLabel } from '../actionKeys';
+import { Icon } from '../art/icons';
+import { UnitPortrait } from '../art/units';
 import { describeObject, describeUnit, unitName, type LogLine } from '../format';
+import { useTypewriter } from '../useTypewriter';
 
-export function Pips({ n, max, cls, round }: { n: number; max: number; cls: string; round?: boolean }) {
+/** A row of segments, filled up to n: the HUD's vitals, action points and movement. */
+function Segments({ n, max, cls, label }: { n: number; max: number; cls: string; label: string }) {
   return (
-    <span className={`pips ${cls}`} aria-label={`${n} of ${max}`}>
+    <span className={cls} role="img" aria-label={`${label}: ${n} of ${max}`}>
       {Array.from({ length: Math.max(max, n) }, (_, i) => (
-        <span key={i} className={`pip ${round ? 'round' : ''} ${i < n ? 'full' : ''}`} />
+        <i key={i} className={i < n ? 'full' : ''} />
       ))}
     </span>
+  );
+}
+
+/** AP cost as small slanted cells, as on the HUD. */
+export function ApPips({ n }: { n: number }) {
+  return (
+    <span className="ap-pips" aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => (
+        <i key={i} />
+      ))}
+    </span>
+  );
+}
+
+export function PanelTitle({ icon, children, led = '', right }: { icon?: string; children: ReactNode; led?: string; right?: ReactNode }) {
+  return (
+    <h3>
+      <span className="title-left">
+        {icon ? <Icon name={icon} size={16} /> : <span className={`led ${led}`} />}
+        {children}
+      </span>
+      {right}
+    </h3>
   );
 }
 
 export function StatusStrip({ c, s, intents, busy }: { c: Content; s: GameState; intents: IntentReport | null; busy: boolean }) {
   const p = s.units.find((u) => u.id === 0);
   const hp = p?.hp ?? 0;
+  const maxHp = p?.maxHp ?? c.units['player']!.hp;
   const incoming = intents?.playerDamage ?? 0;
   const lethal = !!intents?.playerDies;
   const phaseName: Record<string, string> = { roundStart: 'Round start', player: 'Your turn', minion: 'Minions', enemy: 'Enemies', environment: 'Environment', ended: 'Fight over' };
   return (
-    <div className="panel status-strip" role="status">
-      <div className="stat">
+    <div className="panel hud crt" role="status">
+      <div className={`cell hp-cell ${hp <= maxHp / 3 ? 'low' : ''}`}>
+        <Icon name="heart" size={22} />
         <span className="label">HP</span>
-        <Pips n={hp} max={p?.maxHp ?? c.units['player']!.hp} cls="hp-color" round />
-        <span className="mono">
-          {hp}/{p?.maxHp ?? c.units['player']!.hp}
+        <Segments n={hp} max={maxHp} cls="vitals" label="HP" />
+        <span className="value mono" style={{ fontSize: 17, fontFamily: 'var(--mono)', paddingTop: 0 }}>
+          {hp}/{maxHp}
         </span>
-        {p?.statuses.poison && <span className="pill" style={{ color: 'var(--poison)' }}>Poisoned {p.statuses.poison.remaining}</span>}
-        {p?.statuses.parasite && <span className="pill" style={{ color: 'var(--parasite)' }}>Parasite {p.statuses.parasite.remaining}</span>}
+        {p?.statuses.poison && (
+          <span className="pill" style={{ color: 'var(--poison)', borderColor: 'var(--poison)' }}>
+            <Icon name="poison" size={13} /> Poisoned {p.statuses.poison.remaining}
+          </span>
+        )}
+        {p?.statuses.parasite && (
+          <span className="pill" style={{ color: 'var(--parasite)', borderColor: 'var(--parasite)' }}>
+            <Icon name="parasite" size={13} /> Parasite {p.statuses.parasite.remaining}
+          </span>
+        )}
       </div>
-      <div className="stat">
+      <div className="cell">
+        <Icon name="ap" size={18} />
         <span className="label">AP</span>
-        <Pips n={s.ap} max={c.rules.turn.ap} cls="ap-color" />
+        <Segments n={s.ap} max={c.rules.turn.ap} cls="cells ap" label="AP" />
       </div>
-      <div className="stat">
+      <div className="cell">
         <span className="label">Move</span>
-        <Pips n={s.movement} max={c.rules.turn.movement} cls="mv-color" />
+        <Segments n={s.movement} max={c.rules.turn.movement} cls="cells mv" label="Movement" />
       </div>
-      <div className="stat">
+      <div className="cell">
         <span className="label">Round</span>
-        <span className="mono" style={{ fontWeight: 700 }}>
-          {s.round}
-        </span>
+        <span className="value">{String(s.round).padStart(2, '0')}</span>
       </div>
-      <div className="stat">
+      <div className="cell">
         <span className="label">Phase</span>
-        <span>{phaseName[s.phase] ?? s.phase}</span>
+        <span className="value small">{phaseName[s.phase] ?? s.phase}</span>
       </div>
       {!busy && s.phase === 'player' && intents && (
-        <div className={`incoming ${incoming > 0 ? 'bad' : ''}`} title="Damage you would take from minions and enemies if you ended the turn now (hazards excluded)">
+        <div className={`cell incoming ${incoming > 0 ? 'bad' : ''} ${lethal ? 'lethal' : ''}`} title="Damage you would take from minions and enemies if you ended the turn now (hazards excluded)">
+          {(lethal || incoming > 0) && <Icon name="alert" size={18} />}
           {lethal ? 'Ending the turn now is lethal' : incoming > 0 ? `End turn now: −${incoming} HP` : 'No incoming attacks'}
         </div>
       )}
@@ -62,6 +99,7 @@ export function StatusStrip({ c, s, intents, busy }: { c: Content; s: GameState;
 }
 
 export function ActionBar(props: {
+  c: Content;
   statuses: ActionStatus[];
   selected: string | null;
   onSelect: (id: string) => void;
@@ -74,18 +112,24 @@ export function ActionBar(props: {
       {props.statuses.map((st, i) => {
         const keyLabel = actionKeyLabel(i);
         const showModes = st.id === 'grapple_hook' && props.selected === st.id;
+        const kit = props.c.abilities[st.id]?.kit ?? 'utility';
         return (
           <Fragment key={st.id}>
             <button
-              className={`action-btn ${props.selected === st.id ? 'selected' : ''}`}
+              className={`action-btn ${kit} ${props.selected === st.id ? 'selected' : ''}`}
               disabled={props.disabled || !st.usable}
               onClick={() => props.onSelect(st.id)}
               title={st.reason ?? st.name}
               aria-pressed={props.selected === st.id}
             >
+              <span className="ab-icon">
+                <Icon name={st.id} size={22} />
+              </span>
+              <span className="name">{st.name}</span>
               <span className="key">{keyLabel}</span>
-              <span>{st.name}</span>
-              <span className="cost">{st.ap} AP</span>
+              <span className="cost">
+                <ApPips n={st.ap} /> {st.ap} AP
+              </span>
               {!st.usable && st.reason && <span className="why">{st.reason}</span>}
             </button>
             {showModes && (
@@ -120,7 +164,7 @@ export function InfoPanel(props: {
   const name = (kind: 'unit' | 'object', id: number, def: string) => (kind === 'unit' ? unitName(c, def, id) : def === 'shield' ? 'Shield segment' : def === 'egg' ? 'Egg' : def);
   return (
     <div className="panel">
-      <h3>{preview ? 'Preview' : props.hoverUnit ? 'Unit' : props.hoverObjects.length || props.hoverNote ? 'Tile' : 'Info'}</h3>
+      <PanelTitle icon="scan">{preview ? 'Preview' : props.hoverUnit ? 'Scan: unit' : props.hoverObjects.length || props.hoverNote ? 'Scan: tile' : 'Scanner'}</PanelTitle>
       <div className="info-body">
         {preview && preview.ok && (
           <>
@@ -166,8 +210,12 @@ export function InfoPanel(props: {
         {preview && !preview.ok && <div className="warn-line">{preview.error}</div>}
         {!preview && props.hoverUnit && (
           <>
-            <div style={{ fontWeight: 600 }}>
-              {unitName(c, props.hoverUnit.def, props.hoverUnit.id)} <span className="faint mono">{tileName(props.hoverUnit.pos)}</span>
+            <div className="info-head">
+              <UnitPortrait def={props.hoverUnit.def} team={props.hoverUnit.team} size={44} />
+              <div>
+                <div className="name">{unitName(c, props.hoverUnit.def, props.hoverUnit.id)}</div>
+                <span className="faint mono">{tileName(props.hoverUnit.pos)}</span>
+              </div>
             </div>
             <div className="muted">{describeUnit(c, props.hoverUnit, props.s.round)}</div>
             {props.intent && <div>Intent: {props.intent.label}</div>}
@@ -190,19 +238,21 @@ export function MinionPanel({ c, s }: { c: Content; s: GameState }) {
   const minions = s.units.filter((u) => u.kind === 'minion' && !u.dead);
   return (
     <div className="panel">
-      <h3>
-        Minions{' '}
-        <span className="mono faint">
-          {minions.length}/{c.rules.caps.minions}
-        </span>
-      </h3>
+      <PanelTitle
+        icon="minion"
+        right={
+          <span className="mono faint" style={{ fontSize: 12, letterSpacing: 0 }}>
+            {minions.length}/{c.rules.caps.minions}
+          </span>
+        }
+      >
+        Minions
+      </PanelTitle>
       <div className="minion-list">
-        {!minions.length && <div className="muted" style={{ padding: '0 2px 4px' }}>None yet.</div>}
+        {!minions.length && <div className="muted" style={{ padding: '0 2px 4px' }}>None deployed.</div>}
         {minions.map((m) => (
           <div className="minion" key={m.id}>
-            <span className="mono" style={{ fontWeight: 700, textAlign: 'center' }}>
-              {m.def === 'turret' ? 'T' : m.def === 'drone' ? 'D' : m.def === 'spitter' ? 's' : m.def === 'burster' ? 'b' : 'h'}
-            </span>
+            <UnitPortrait def={m.def} team={m.team} size={30} />
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
                 <span>
@@ -228,15 +278,36 @@ export function MinionPanel({ c, s }: { c: Content; s: GameState }) {
 
 export function IntercomPanel({ s, onOpenLog }: { s: GameState; onOpenLog: () => void }) {
   const last = s.intercom.log[s.intercom.log.length - 1];
+  const text = last ? `“${last.text}”` : '';
+  const { shown, done } = useTypewriter([text], 60);
   return (
     <div className="panel">
-      <h3>
+      <PanelTitle
+        led="amber blink"
+        right={
+          <button className="btn small" onClick={onOpenLog} title="Open the transmission log (L)">
+            Log ({s.intercom.log.length}) <kbd>L</kbd>
+          </button>
+        }
+      >
         Intercom
-        <button className="btn small" onClick={onOpenLog} title="Open the transmission log (L)">
-          Log ({s.intercom.log.length})
-        </button>
-      </h3>
-      <div className="intercom">{last ? <div className="line">“{last.text}”</div> : <div className="muted">Static.</div>}</div>
+        <span className={`speaker ${last && !done ? 'live' : ''}`} aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+      </PanelTitle>
+      <div className="intercom">
+        {last ? (
+          <div className="line crt">
+            <span aria-hidden="true">{shown[0]}</span>
+            <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{text}</span>
+          </div>
+        ) : (
+          <div className="line crt muted">Static.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -244,16 +315,19 @@ export function IntercomPanel({ s, onOpenLog }: { s: GameState; onOpenLog: () =>
 export function IntercomLogModal({ s, onClose }: { s: GameState; onClose: () => void }) {
   return (
     <div className="modal-back" onClick={onClose}>
-      <div className="panel modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Transmission log">
+      <div className="panel modal crt" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Transmission log">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <h2 style={{ fontSize: 16 }}>Transmission log</h2>
+          <h2 className="display" style={{ fontSize: 22, color: 'var(--term)' }}>
+            Transmission log
+          </h2>
           <button className="btn small" onClick={onClose}>
-            Close
+            Close <kbd>Esc</kbd>
           </button>
         </div>
         {s.intercom.log.map((l, i) => (
-          <div key={i} style={{ padding: '6px 0', borderTop: '1px solid var(--line)' }}>
-            <span className="faint mono">Round {l.round} · </span>“{l.text}”
+          <div key={i} style={{ padding: '7px 0', borderTop: '1px solid var(--line)', fontFamily: 'var(--mono)', fontSize: 13 }}>
+            <span className="faint">R{String(l.round).padStart(2, '0')} · </span>
+            <span style={{ color: 'var(--amber)' }}>“{l.text}”</span>
           </div>
         ))}
       </div>
@@ -269,8 +343,8 @@ export function CombatLog({ lines }: { lines: LogLine[] }) {
   }, [lines.length]);
   return (
     <div className="panel">
-      <h3>Combat log</h3>
-      <div className="log" ref={ref} aria-live="polite">
+      <PanelTitle icon="log">Combat log</PanelTitle>
+      <div className="log crt" ref={ref} aria-live="polite">
         {lines.map((l) => (
           <div key={l.id} className={l.kind === 'round' ? 'round' : l.kind === 'phase' ? 'phase' : `ev ${l.kind}`}>
             {l.text}

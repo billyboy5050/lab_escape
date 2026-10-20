@@ -4,10 +4,13 @@ import type { Category } from '../../telemetry/summary';
 import type { FightSession } from '../../telemetry/session';
 import { eventsToJsonl } from '../../telemetry/record';
 import { median } from '../../util/stats';
+import { Icon } from '../art/icons';
+import { PanelTitle } from '../components/Panels';
 import { download } from '../telemetry';
 
 const CAT_LABEL: Record<Category, string> = { enemy: 'Enemies', hazard: 'Lab hazards', player: 'Your own abilities', minion: 'Your own minions' };
 const CAT_COLOR: Record<Category, string> = { enemy: 'var(--enemy)', hazard: 'var(--hazard)', player: 'var(--player)', minion: 'var(--minion)' };
+const CAT_ICON: Record<Category, string> = { enemy: 'target', hazard: 'alert', player: 'sidearm', minion: 'minion' };
 const ORDER: Category[] = ['enemy', 'hazard', 'player', 'minion'];
 
 function Bars({ data }: { data: Record<Category, number> }) {
@@ -16,7 +19,12 @@ function Bars({ data }: { data: Record<Category, number> }) {
     <div className="bars">
       {ORDER.map((k) => (
         <div className="bar-row" key={k}>
-          <span>{CAT_LABEL[k]}</span>
+          <span className="who">
+            <span style={{ color: CAT_COLOR[k] }}>
+              <Icon name={CAT_ICON[k]} size={15} />
+            </span>
+            {CAT_LABEL[k]}
+          </span>
           <div className="bar-track">
             <div className="bar-fill" style={{ width: `${(100 * data[k]) / max}%`, background: CAT_COLOR[k] }} />
           </div>
@@ -60,21 +68,35 @@ export function ResultScreen(props: { c: Content; session: FightSession; save: P
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   return (
     <div className="screen">
-      <div className="panel result-hero">
-        <div className={`outcome ${won ? 'win' : 'lose'}`}>{won ? 'Victory' : 'Defeat'}</div>
+      <div className="screen-head">
         <div>
-          <div style={{ fontWeight: 600 }}>{won ? 'The armory is compromised.' : `Cause of death: ${s.causeOfDeath ? `${s.causeOfDeath.source} (${s.causeOfDeath.via}), ${CAT_LABEL[s.causeOfDeath.category].toLowerCase()}` : s.cause}`}</div>
-          <div className="muted">
-            {won ? 'Won' : 'Survived'} {s.rounds} round{s.rounds === 1 ? '' : 's'} · waves seen {s.wavesSpawned}/{c.waves.length} · friendly-fire share of your damage {ffShare.toFixed(0)}%
+          <div className="kicker">Incident report · {c.map.name}</div>
+          <h2>{won ? 'Lockdown broken' : 'Intruder down'}</h2>
+        </div>
+      </div>
+      <div className="panel result-hero crt">
+        <div className={`stamp ${won ? 'win' : 'lose'}`}>{won ? 'Victory' : 'Defeat'}</div>
+        <div style={{ minWidth: 0, flex: '1 1 340px' }}>
+          <div className="verdict">{won ? 'The armory is compromised.' : `Cause of death: ${s.causeOfDeath ? `${s.causeOfDeath.source} (${s.causeOfDeath.via}), ${CAT_LABEL[s.causeOfDeath.category].toLowerCase()}` : s.cause}`}</div>
+          <div className="facts">
+            <span className="pill">
+              {won ? 'Won' : 'Survived'} {s.rounds} round{s.rounds === 1 ? '' : 's'}
+            </span>
+            <span className="pill">
+              Waves seen {s.wavesSpawned}/{c.waves.length}
+            </span>
+            <span className="pill" style={ffShare > 35 ? { color: 'var(--danger)', borderColor: 'var(--danger)' } : undefined}>
+              Friendly-fire share of your damage {ffShare.toFixed(0)}%
+            </span>
           </div>
-          <div className="muted">
+          <div className="muted" style={{ marginTop: 8 }}>
             Loadout: {s.loadout.abilities.map(name).join(', ')}
             {s.loadout.upgrades.length ? ` · ${s.loadout.upgrades.map(name).join(', ')}` : ''}
           </div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="btn primary" onClick={props.onRetry}>
-            Retry this loadout
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn primary big" onClick={props.onRetry} autoFocus>
+            <Icon name="retry" size={16} /> Retry this loadout
           </button>
           <button className="btn" onClick={props.onChange}>
             Change loadout
@@ -83,25 +105,25 @@ export function ResultScreen(props: { c: Content; session: FightSession; save: P
       </div>
       <div className="result-grid">
         <div className="panel">
-          <h3>Damage you took, by source</h3>
+          <PanelTitle icon="heart">Damage you took, by source</PanelTitle>
           <Bars data={s.playerDamageTaken} />
           <div style={{ padding: '0 12px 12px' }} className={ffShare > 35 ? 'warn-line' : 'muted'}>
             Friendly fire: {s.friendlyFireToPlayer} of {playerTotal} ({ffShare.toFixed(0)}%)
           </div>
         </div>
         <div className="panel">
-          <h3>Damage dealt to enemies, by source</h3>
+          <PanelTitle icon="target">Damage dealt to enemies, by source</PanelTitle>
           <Bars data={s.enemyDamageTaken} />
         </div>
         <div className="panel">
-          <h3>Damage your side took (minions, shields, eggs)</h3>
+          <PanelTitle icon="minion">Damage your side took (minions, shields, eggs)</PanelTitle>
           <Bars data={s.sideDamageTaken} />
           <div style={{ padding: '0 12px 12px' }} className="muted">
             Friendly fire to your side: {s.friendlyFireToSide}
           </div>
         </div>
         <div className="panel">
-          <h3>Fight</h3>
+          <PanelTitle icon="round">Fight</PanelTitle>
           <div className="kv">
             <span className="muted">Kills</span>
             <span>{Object.entries(s.kills).map(([k, v]) => `${v} ${c.units[k]?.name ?? k}`).join(', ') || 'none'}</span>
@@ -123,7 +145,7 @@ export function ResultScreen(props: { c: Content; session: FightSession; save: P
           </div>
         </div>
         <div className="panel">
-          <h3>Telemetry</h3>
+          <PanelTitle icon="log">Telemetry</PanelTitle>
           <div className="info-body">
             <div className="muted">{saved === undefined ? 'Saving…' : saved ? `Saved to ${saved}/` : 'Not saved automatically (no dev server). Download the files below.'}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -141,7 +163,7 @@ export function ResultScreen(props: { c: Content; session: FightSession; save: P
           </div>
         </div>
         <div className="panel">
-          <h3>Intercom</h3>
+          <PanelTitle icon="intercom">Intercom</PanelTitle>
           <div className="info-body">
             {session.state.intercom.log.map((l, i) => (
               <div key={i}>
