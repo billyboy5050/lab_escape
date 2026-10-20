@@ -3,6 +3,8 @@ import type { Content } from '../../content/types';
 import { upgradeAllowed } from '../../content/load';
 import { describeRequires, loadoutProblems } from '../../engine/step';
 import type { FightSettings, Loadout } from '../../state/types';
+import { Icon } from '../art/icons';
+import { ApPips, PanelTitle } from '../components/Panels';
 import { loadAttempts } from '../telemetry';
 
 export function LoadoutScreen(props: {
@@ -43,51 +45,64 @@ export function LoadoutScreen(props: {
 
   return (
     <div className="screen">
-      <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontSize: 22 }}>Loadout</h2>
-        <div className="muted">
-          Choose up to {maxA} of {c.abilityOrder.length} abilities and up to {maxU} upgrades, then fight Armory Lockdown. Nothing carries between attempts.
+      <div className="screen-head">
+        <div>
+          <div className="kicker">Requisition · {c.map.name}</div>
+          <h2>Loadout</h2>
+        </div>
+        <div className="muted" style={{ maxWidth: 560 }}>
+          Choose up to {maxA} of {c.abilityOrder.length} abilities and up to {maxU} upgrades, then fight {c.map.name}. Nothing carries between attempts.
         </div>
       </div>
       <div className="loadout-grid">
         <div className="panel">
-          <h3>
-            Abilities{' '}
-            <span className="mono">
-              {loadout.abilities.length}/{maxA}
-            </span>
-          </h3>
+          <PanelTitle
+            led=""
+            right={
+              <span className="mono" style={{ fontSize: 13, letterSpacing: 0 }}>
+                {loadout.abilities.length}/{maxA}
+              </span>
+            }
+          >
+            Abilities
+          </PanelTitle>
           <div className="presets">
             {c.presets.map((p) => (
               <button
                 key={p.id}
-                className={`btn ${props.presetId === p.id ? 'primary' : ''}`}
+                className={`preset-btn ${props.presetId === p.id ? 'on' : ''}`}
                 title={p.expected}
+                aria-pressed={props.presetId === p.id}
                 onClick={() => {
                   props.setPresetId(p.id);
                   props.setLoadout({ abilities: [...p.abilities], upgrades: [...p.upgrades] });
                 }}
               >
-                {p.name} preset
+                <Icon name={`kit-${p.id}`} size={16} /> {p.name} preset
               </button>
             ))}
-            <button className="btn" onClick={() => setAbilities([])}>
+            <button className="preset-btn" onClick={() => setAbilities([])}>
               Clear
             </button>
           </div>
-          <div className="choice-list">
+          <div className="choice-list cards">
             {c.abilityOrder.map((id) => {
               const a = c.abilities[id]!;
               const on = loadout.abilities.includes(id);
               const full = !on && loadout.abilities.length >= maxA;
               return (
-                <button key={id} className={`choice ${on ? 'on' : ''}`} disabled={full} onClick={() => toggleAbility(id)} aria-pressed={on}>
-                  <span className="check">{on ? '✓' : ''}</span>
+                <button key={id} className={`choice ${a.kit} ${on ? 'on' : ''}`} disabled={full} onClick={() => toggleAbility(id)} aria-pressed={on}>
+                  {on && <span className="check">✓</span>}
+                  <span className="badge">
+                    <Icon name={id} size={26} />
+                  </span>
                   <span>
-                    <span className="title">{a.name}</span> <span className={`kit-tag ${a.kit}`}>{a.kit}</span>
+                    <span className="title">{a.name}</span>
+                    <span className={`kit-tag ${a.kit}`}>{a.kit}</span>
                     <div className="rule">{a.text}</div>
                   </span>
-                  <span className="mono" style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                  <span className="cost">
+                    <ApPips n={a.ap} />
                     {a.ap} AP
                   </span>
                 </button>
@@ -100,12 +115,16 @@ export function LoadoutScreen(props: {
         </div>
         <div style={{ display: 'grid', gap: 16 }}>
           <div className="panel">
-            <h3>
-              Upgrades{' '}
-              <span className="mono">
-                {loadout.upgrades.length}/{maxU}
-              </span>
-            </h3>
+            <PanelTitle
+              led="amber"
+              right={
+                <span className="mono" style={{ fontSize: 13, letterSpacing: 0 }}>
+                  {loadout.upgrades.length}/{maxU}
+                </span>
+              }
+            >
+              Upgrades
+            </PanelTitle>
             <div className="choice-list">
               {c.upgradeOrder.map((id) => {
                 const u = c.upgrades[id]!;
@@ -113,10 +132,16 @@ export function LoadoutScreen(props: {
                 const allowed = upgradeAllowed(u.requires, loadout.abilities);
                 const full = !on && loadout.upgrades.length >= maxU;
                 return (
-                  <button key={id} className={`choice ${on ? 'on' : ''}`} disabled={(!allowed && !on) || full} onClick={() => toggleUpgrade(id)} aria-pressed={on}>
-                    <span className="check">{on ? '✓' : ''}</span>
+                  <button key={id} className={`choice small ${u.kit} ${on ? 'on' : ''}`} disabled={(!allowed && !on) || full} onClick={() => toggleUpgrade(id)} aria-pressed={on}>
+                    {on && <span className="check">✓</span>}
+                    <span className="badge">
+                      <Icon name={`kit-${u.kit}`} size={20} />
+                    </span>
                     <span>
-                      <span className="title">{u.name}</span> <span className={`kit-tag ${u.kit}`}>{u.code}</span>
+                      <span className="title" style={{ fontSize: 16 }}>
+                        {u.name}
+                      </span>
+                      <span className={`kit-tag ${u.kit}`}>{u.code}</span>
                       <div className="rule">{u.text}</div>
                       {!allowed && <div className="rule faint">Needs {describeRequires(c, u.requires)}</div>}
                     </span>
@@ -127,43 +152,47 @@ export function LoadoutScreen(props: {
             </div>
           </div>
           <div className="panel">
-            <h3>Fight</h3>
-            <div style={{ padding: '0 12px 8px' }}>
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <PanelTitle led="red">Deployment</PanelTitle>
+            <div className="form-row">
+              <label>
                 <input type="checkbox" checked={props.settings.maxWaves === 2} onChange={(e) => props.setSettings(e.target.checked ? { ...props.settings, maxWaves: 2 } : { ...props.settings, maxWaves: undefined })} />
                 Hold back wave 3: clearing wave 2 wins (the first playtest's setup)
               </label>
             </div>
-            <div style={{ padding: '0 12px 8px' }}>
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div className="form-row">
+              <label>
                 Tester ID (playtests)
                 <input type="text" value={props.tester ?? ''} maxLength={20} placeholder="P3" onChange={(e) => props.setTester(e.target.value)} style={{ width: '8em' }} />
               </label>
               <span className="muted">{props.tester ? 'Fights are labelled with this ID and an attempt number.' : 'Leave empty outside a playtest.'}</span>
             </div>
-            <div className="start-bar">
-              <button className="btn primary" disabled={problems.length > 0 || loadout.abilities.length === 0} onClick={props.onStart}>
-                Start fight
-              </button>
-              <span className={problems.length ? 'warn-line' : 'muted'}>{problems.length ? problems.join('; ') : loadout.abilities.length === 0 ? 'Pick at least one ability.' : 'Ready.'}</span>
-            </div>
           </div>
           {attempts.length > 0 && (
             <div className="panel">
-              <h3>Recent attempts (this browser)</h3>
-              <div className="info-body">
+              <PanelTitle icon="log">Recent attempts (this browser)</PanelTitle>
+              <div className="info-body mono" style={{ fontSize: 12.5 }}>
                 {attempts.map((a, i) => (
                   <div key={i} className="info-row">
                     <span>
                       <strong style={{ color: a.outcome === 'win' ? 'var(--good)' : 'var(--danger)' }}>{a.outcome === 'win' ? 'Won' : 'Lost'}</strong> in round {a.rounds} · {a.preset ?? 'custom'}
                     </span>
-                    <span className="faint mono">{new Date(a.at).toLocaleTimeString()}</span>
+                    <span className="faint">{new Date(a.at).toLocaleTimeString()}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
         </div>
+      </div>
+      <div className="panel deploy-dock">
+        <span className="mono faint">
+          Abilities {loadout.abilities.length}/{maxA} · upgrades {loadout.upgrades.length}/{maxU}
+        </span>
+        <span className={problems.length ? 'warn-line' : 'muted'}>{problems.length ? problems.join('; ') : loadout.abilities.length === 0 ? 'Pick at least one ability.' : 'Ready.'}</span>
+        <span style={{ flex: 1 }} />
+        <button className="btn primary big" disabled={problems.length > 0 || loadout.abilities.length === 0} onClick={props.onStart}>
+          <Icon name="play" size={15} /> Start fight
+        </button>
       </div>
     </div>
   );

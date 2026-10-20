@@ -24,6 +24,8 @@ The code for the MVP in the [spec](spec.md) is built and merged (PR #1), and typ
 
 The simulator's findings (greedy bot, 1,000 seeds per preset) are in [implementation-notes.md](implementation-notes.md#what-the-simulator-says-greedy-bot-1000-seeds-per-preset). In short: Tech wins 72%, Alien 46%, Hybrid 83%; the paper check passes; Hybrid's friendly-fire share (66%) and the sweep's (54%) are over the spec's 35% alarm; the Warden reaches the player in only 3% to 28% of fights that reach round 7; Alien sees 1.9 hazard fires per fight against a target of 2.
 
+On 2026-10-20 the client was restyled toward the final look (an industrial sci-fi lab, with combat effects, sound, a title screen and a briefing; spec, Changes since revision 2) because playtesters found the game promising but did not engage with its placeholder presentation. Fights recorded before then, round 1 included, were played on the placeholder look, so a difference between them and later fights may come from the presentation as well as the players.
+
 The developer round (spec round 1) and what it found are in [implementation-notes.md](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
 
 ## Up next

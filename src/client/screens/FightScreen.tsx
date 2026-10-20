@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Content } from '../../content/types';
 import { actionStatuses, commandFor, moveCommand, moveOptions, type ActionStatus } from '../../engine/commands';
 import type { TargetOption } from '../../effects/abilities';
@@ -12,8 +12,13 @@ import { Board, type Highlight } from '../components/Board';
 import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/DebugPanel';
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
 import { actionIndexForKey, endsTurn, spaceSkips } from '../actionKeys';
+import { frameMood } from '../art/fx';
+import { playSfx, sfxForEvents } from '../sfx';
 import { saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
+
+/** Colour of each phase banner, by the label the fight hook shows. */
+const BANNER_CLASS: Record<string, string> = { 'Minion phase': 'minion', 'Enemy phase': 'enemy', Environment: 'environment' };
 
 interface Mode {
   id: string | null;
@@ -135,7 +140,10 @@ export function FightScreen(props: {
     (cmd: Command) => {
       const r = fight.apply(cmd);
       if (!r.ok) props.toast(r.error ?? 'Not allowed');
-      else setMode({ id: null, first: null });
+      else {
+        if (cmd.type === 'endTurn') playSfx(['endTurn']);
+        setMode({ id: null, first: null });
+      }
     },
     [fight, props],
   );
@@ -150,6 +158,7 @@ export function FightScreen(props: {
       }
       if (id === 'sprint') return commit({ type: 'sprint' });
       if (mode.id === id) return setMode({ id: null, first: null });
+      playSfx(['select']);
       setMode({ id, first: null });
       if (id === 'grapple_hook') setGrappleMode(a.options.some((o) => o.mode === 'unit') ? 'unit' : 'self');
     },
@@ -217,6 +226,49 @@ export function FightScreen(props: {
     // on purpose: it is a new object every render, so depending on it would restart the 120 ms timer on every hover.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.replay, replayPlaying, fight.busy, fight.apply, cursor, props.toast]);
+
+  // Each animation frame plays its sounds and shakes or flashes the board; a new wave also raises an alert.
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [alert, setAlert] = useState<string | null>(null);
+  // The alert's timer outlives the frame that raised it, so it is kept here and not in the effect's cleanup.
+  const alertTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (alertTimer.current !== null) window.clearTimeout(alertTimer.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    const events = fight.frameEvents;
+    if (!events.length) return;
+    playSfx(sfxForEvents(events));
+    const mood = frameMood(events);
+    const el = boardRef.current;
+    if (el) {
+      const restart = (target: Element | null, cls: string, on: boolean) => {
+        if (!target || !on) return;
+        target.classList.remove(cls);
+        void (target as HTMLElement).offsetWidth;
+        target.classList.add(cls);
+      };
+      el.classList.remove('shake-light', 'shake-heavy');
+      if (mood.shake) {
+        void el.offsetWidth;
+        el.classList.add(`shake-${mood.shake}`);
+      }
+      restart(el.querySelector('.board-alarm'), 'on', mood.alarm);
+      restart(el.querySelector('.board-hurt'), 'on', mood.hurt);
+    }
+    const wave = events.find((e) => e.t === 'WaveSpawned');
+    if (wave && wave.t === 'WaveSpawned' && wave.wave > 1) {
+      setAlert('Reinforcements');
+      if (alertTimer.current !== null) window.clearTimeout(alertTimer.current);
+      alertTimer.current = window.setTimeout(() => {
+        alertTimer.current = null;
+        setAlert(null);
+      }, 1600);
+    }
+  }, [fight.frameKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save telemetry once the fight is over and the last animation has played.
   useEffect(() => {
@@ -334,7 +386,7 @@ export function FightScreen(props: {
     <div className="fight">
       <div className="fight-main">
       <StatusStrip c={c} s={shown} intents={idle ? intents : null} busy={fight.busy} />
-      <div className="panel board-wrap">
+      <div className="panel board-wrap" ref={boardRef} style={{ ['--fx' as string]: fight.speed === 2 ? 0.55 : 1 }}>
         <Board
           c={c}
           s={shown}
@@ -349,20 +401,35 @@ export function FightScreen(props: {
           intents={idle ? intents : null}
           showIntents={showIntents}
           debug={debugBoard}
+          speed={fight.speed}
         />
-        {fight.banner && <div className="banner">{fight.banner}</div>}
+        <div className="board-scan" />
+        <div className="board-alarm" />
+        <div className="board-hurt" />
+        {fight.banner && !live.outcome && (
+          <div className={`banner ${BANNER_CLASS[fight.banner] ?? ''}`} key={fight.banner}>
+            <div className="band">{fight.banner}</div>
+          </div>
+        )}
+        {alert && !live.outcome && (
+          <div className="banner alarm" role="alert">
+            <div className="band">{alert}</div>
+          </div>
+        )}
         {live.outcome && !fight.busy && (
-          <div className="banner" style={{ pointerEvents: 'auto', textTransform: 'none', letterSpacing: 0, display: 'grid', gap: 10, justifyItems: 'center' }}>
-            <div style={{ fontSize: 22, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{live.outcome.result === 'win' ? 'Victory' : 'Defeat'}</div>
-            <div style={{ fontWeight: 400 }}>{live.outcome.cause}</div>
-            <button className="btn primary" onClick={() => props.onFinished(fight.session, save)}>
-              See results
-            </button>
+          <div className={`banner outcome ${live.outcome.result}`}>
+            <div className="band">{live.outcome.result === 'win' ? 'Victory' : 'Defeat'}</div>
+            <div className="sub">
+              <div>{live.outcome.cause}</div>
+              <button className="btn primary" onClick={() => props.onFinished(fight.session, save)} autoFocus>
+                See results
+              </button>
+            </div>
           </div>
         )}
       </div>
       <div className="panel actions">
-        <ActionBar statuses={statuses} selected={mode.id} onSelect={selectAction} disabled={!idle} grappleMode={grappleMode} onGrappleMode={setGrappleMode} />
+        <ActionBar c={c} statuses={statuses} selected={mode.id} onSelect={selectAction} disabled={!idle} grappleMode={grappleMode} onGrappleMode={setGrappleMode} />
         <div className="controls">
           <button className="btn" onClick={() => fight.undo() || props.toast('Nothing to undo')} disabled={!idle || !fight.session.canUndo} title="Undo free movement (Z)">
             Undo move <kbd>Z</kbd>
@@ -375,7 +442,9 @@ export function FightScreen(props: {
               Skip <kbd>Space</kbd>
             </button>
           )}
-          <span className="spacer" />
+          <span className="hint spacer" title={hint}>
+            {hint}
+          </span>
           <span className="seg" role="group" aria-label="Animation speed (F)">
             {([1, 2, 0] as Speed[]).map((sp) => (
               <button key={sp} className={fight.speed === sp ? 'on' : ''} onClick={() => fight.setSpeed(sp)}>
@@ -387,7 +456,6 @@ export function FightScreen(props: {
             <input type="checkbox" checked={showIntents} onChange={(e) => setShowIntents(e.target.checked)} /> Intents <kbd>I</kbd>
           </label>
         </div>
-        <div className="hint">{hint}</div>
       </div>
       </div>
       <div className="side">
@@ -435,7 +503,7 @@ export function FightScreen(props: {
         />
         <MinionPanel c={c} s={shown} />
         <CombatLog lines={fight.log} />
-        <div className="faint" style={{ fontSize: 12 }}>
+        <div className="fight-foot">
           {props.presetId ? `Preset: ${props.presetId}. ` : ''}
           {settings.maxWaves === 2 ? 'Wave 3 held back: clearing wave 2 wins. ' : ''}
           Hover {tileName({ x: 0, y: 0 })}–{tileName({ x: 7, y: 7 })} for previews. <kbd>`</kbd> debug · <kbd>L</kbd> intercom log ·{' '}

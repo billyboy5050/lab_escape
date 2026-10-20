@@ -3,20 +3,27 @@ import { loadoutProblems } from '../engine/step';
 import type { FightSettings, Loadout } from '../state/types';
 import { checkCompatible, type FightRecord } from '../telemetry/record';
 import type { FightSession } from '../telemetry/session';
+import { ArtDefs } from './art/defs';
+import { Icon } from './art/icons';
 import { useContent } from './contentHot';
 import { isLoadout, isPresetId, loadoutToRetry, reconcileLoadout } from './loadoutSync';
 import { FightScreen } from './screens/FightScreen';
 import { LoadoutScreen } from './screens/LoadoutScreen';
+import { BriefingScreen } from './screens/BriefingScreen';
 import { ResultScreen } from './screens/ResultScreen';
+import { TitleScreen } from './screens/TitleScreen';
+import { isMuted, onMutedChange, playSfx, setMuted } from './sfx';
 import { loadPref, loadTester, savePref } from './telemetry';
 import { cleanTester } from '../telemetry/label';
 
-type Screen = 'loadout' | 'fight' | 'result';
+type Screen = 'title' | 'loadout' | 'briefing' | 'fight' | 'result';
 
 export function App() {
   const { content: c, error } = useContent();
   const hybrid = c.presets.find((p) => p.id === 'hybrid') ?? c.presets[0]!;
-  const [screen, setScreen] = useState<Screen>('loadout');
+  // A replay link goes straight to the fight; anything else opens on the title.
+  const [screen, setScreen] = useState<Screen>(() => (new URLSearchParams(window.location.search).get('replay') ? 'loadout' : 'title'));
+  const [muted, setMutedState] = useState(isMuted);
   const [loadout, setLoadoutState] = useState<Loadout>(() => loadPref('loadout', { abilities: [...hybrid.abilities], upgrades: [...hybrid.upgrades] }, isLoadout));
   const [presetId, setPresetIdState] = useState<string | null>(() => loadPref('preset', hybrid.id, isPresetId));
   const [tester, setTesterState] = useState<string | undefined>(() => loadTester());
@@ -57,7 +64,7 @@ export function App() {
   const current = reconcileLoadout(c, loadout, presetId);
   const fightLoadout = replay ? replay.loadout : current.loadout;
   const canFight = loadoutProblems(c, fightLoadout).length === 0;
-  const view: Screen = screen === 'fight' && !canFight ? 'loadout' : screen;
+  const view: Screen = (screen === 'fight' || screen === 'briefing') && !canFight ? 'loadout' : screen;
 
   // Hot reload of content: the fight restarts with the new values (a log never spans two sets of values).
   useEffect(() => {
@@ -107,6 +114,18 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sound: M mutes on every screen. Modified keys stay the browser's (Cmd+M minimises a window).
+  useEffect(() => onMutedChange(setMutedState), []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) return;
+      if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey) setMuted(!isMuted());
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // The debug overlay key works on every screen (the fight screen handles it during fights).
   useEffect(() => {
     if (screen === 'fight') return;
@@ -137,19 +156,41 @@ export function App() {
 
   return (
     <>
-      <header className="app-header">
-        <div className="brand">
-          <h1>Lab Escape · Armory Lockdown</h1>
-          <span className="faint">MVP prototype</span>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {debugOpen && <span className="pill mono">content {c.hash}</span>}
-          <button className="btn small" onClick={() => setDebugOpen(!debugOpen)} title="Toggle the debug overlay (`)">
-            Debug <kbd>`</kbd>
-          </button>
-        </div>
-      </header>
-      {view === 'loadout' && <LoadoutScreen c={c} loadout={loadout} setLoadout={setLoadout} presetId={presetId} setPresetId={setPresetId} settings={settings} setSettings={setSettings} tester={tester} setTester={setTester} onStart={start} />}
+      <ArtDefs />
+      {view === 'title' && (
+        <TitleScreen
+          c={c}
+          onBegin={() => {
+            playSfx(['ui']);
+            setScreen('loadout');
+          }}
+        />
+      )}
+      {view !== 'title' && (
+        <header className="app-header">
+          <div className="brand">
+            <svg viewBox="0 0 24 24" className="logo-mark" aria-hidden="true">
+              <path d="M12 2l8.66 5v10L12 22l-8.66-5V7z" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M8 8v8h4M14 8h3M14 12h2.5M14 16h3M14 8v8" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            </svg>
+            <h1>Lab Escape</h1>
+            <span className="room">// {c.map.name}</span>
+          </div>
+          <div className="tools">
+            {debugOpen && <span className="pill mono">content {c.hash}</span>}
+            <button className={`btn small icon-btn ${muted ? '' : 'on'}`} onClick={() => setMuted(!muted)} title={muted ? 'Sound off: turn it on (M)' : 'Sound on: mute (M)'} aria-pressed={!muted} aria-label="Sound">
+              <Icon name={muted ? 'sound-off' : 'sound-on'} size={16} /> <kbd>M</kbd>
+            </button>
+            <button className="btn small" onClick={() => setDebugOpen(!debugOpen)} title="Toggle the debug overlay (`)">
+              Debug <kbd>`</kbd>
+            </button>
+          </div>
+        </header>
+      )}
+      {view === 'loadout' && (
+        <LoadoutScreen c={c} loadout={loadout} setLoadout={setLoadout} presetId={presetId} setPresetId={setPresetId} settings={settings} setSettings={setSettings} tester={tester} setTester={setTester} onStart={() => setScreen('briefing')} />
+      )}
+      {view === 'briefing' && <BriefingScreen c={c} loadout={current.loadout} onDeploy={start} onBack={() => setScreen('loadout')} />}
       {view === 'fight' && (
         <div className="screen">
           <FightScreen
