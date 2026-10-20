@@ -27,7 +27,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173, pick a preset or build a loadout, and fight.
+Open http://localhost:5173, press Begin, pick a preset or build a loadout, read the briefing and fight.
 
 ```bash
 npm test
@@ -50,7 +50,9 @@ npm run sim -- presets --seeds 1000
 
 ## Playing
 
-- **Move** for free: hover a green tile to see the path and what the enemies would do if you stood there, click to go. Undo free moves with **Z** until you spend AP or step on something.
+The game opens on a title screen; Begin (or **Enter**) goes to the loadout. Start fight shows a briefing (the room, the lab's opening intercom line, the goal and your kit), and Enter the armory starts the fight. The fight and its turn clock start only then, so time on the briefing is not counted as turn time. Retry from the result screen goes straight back into the fight; a `?replay=` link skips the title.
+
+- **Move** for free: hover a highlighted tile to see the path and what the enemies would do if you stood there, click to go. Undo free moves with **Z** until you spend AP or step on something.
 - **Act**: pick an ability (click, or keys **1–9**, **0**, **-**, **=** in action-bar order), hover a highlighted target to preview it, click to commit. Previews show damage after armor, kills, statuses, areas, chain and shot lines, and a red ring with **!** on any of your own units that would be hit. **Esc** cancels.
   - Barrier Shield and Lunge take two clicks (second tile, or strike target; click the landing tile again to lunge without striking).
   - Grapple Hook: **Tab** or the button switches between pull unit and pull self.
@@ -58,8 +60,9 @@ npm run sim -- presets --seeds 1000
 - **Intents**: every enemy and minion shows its planned path and attack, recomputed after each action (toggle with **I**). Hover a unit for its plan in words.
 - **Speed**: 1x, 2x or skip (**F** cycles, **Space** skips the current animation unless a control has focus).
 - **L** opens the intercom log. **`** opens the debug overlay.
+- **Sound**: **M** (or the speaker button in the header) mutes and unmutes on every screen, and the browser remembers the choice. Sounds are synthesised in the browser; a primed hazard makes none, so its cue stays visual only.
 
-With Ctrl, Cmd or Alt held, the action keys are left to the browser (Ctrl or Cmd with `-` and `=` zoom the page). The other shortcuts do not check for modifiers yet, so Ctrl or Cmd with Z, E, F or L also triggers the game's undo, end turn, speed or log (see the [roadmap](docs/roadmap.md)). The action keys are defined once in `src/client/actionKeys.ts`.
+With Ctrl, Cmd or Alt held, the action keys and **M** are left to the browser (Ctrl or Cmd with `-` and `=` zoom the page). The other shortcuts do not check for modifiers yet, so Ctrl or Cmd with Z, E, F or L also triggers the game's undo, end turn, speed or log (see the [roadmap](docs/roadmap.md)). The action keys are defined once in `src/client/actionKeys.ts`.
 
 ## Debug overlay (`)
 
@@ -160,7 +163,7 @@ The rules engine is a deterministic library with no rendering, input or clock de
 | preview | `src/preview` | Dry-run previews and intents |
 | telemetry | `src/telemetry` | Replay records, summaries, the client fight session (command log and undo) |
 | sim | `src/sim` | Bots, batch runner, worker pool, reports, golden replays, CLI |
-| client | `src/client` | React UI: loadout, fight and result screens, board, HUD, debug overlay |
+| client | `src/client` | React UI: title, loadout, briefing, fight and result screens, board, HUD, debug overlay, sound (`sfx.ts`); the art and combat effects, all SVG drawn in code, are in `src/client/art` |
 | util | `src/util` | Tile names, canonical JSON hashing, statistics |
 | dev | `src/dev` | Path checks for the dev server's telemetry endpoint (used by `vite.config.ts`) |
 

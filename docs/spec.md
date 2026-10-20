@@ -46,7 +46,7 @@ These are specified below so nothing is lost, but none of them helps answer the 
 - The armored hatchling. It needs the Warden's corpse and an egg that hatches a round later, by which time the fight is usually over.
 - The run map, events, other rooms, wings, bosses beyond the Warden, and meta-progression (Alpha, Omega, unlocks).
 - Part mods, Wrecked units and the wider scrap economy beyond Repair.
-- Story, memory fragments, audio polish, final art, saving and a tutorial.
+- Story, memory fragments, audio polish, final art, saving and a tutorial. The prototype has a first pass at the look and sound (see Changes since revision 2), not final art or audio.
 
 **Branch choice**
 
@@ -104,7 +104,7 @@ The prototype is a loop of loadout, fight and result on a single room, with noth
 **Constraints**
 
 - The fight is fully deterministic. Ties are broken by rule, not by chance, so a recorded command log replays exactly.
-- Placeholder art is fine: flat colored shapes and icons. Readability matters more than polish.
+- Readability matters more than polish. The prototype started with placeholder art (flat colored shapes and letters); since 2026-10-20 it has a first pass at the final look (see Changes since revision 2), and every color on the board is still paired with a shape, an icon or a word.
 - The rules engine is independent of the engine and platform that present it (see Technical architecture and data).
 
 ## Core rules
@@ -1003,3 +1003,4 @@ Two notes on the evidence behind these changes:
 | --- | --- | --- |
 | 2026-10-06 | Units that die in the same effect as the player are reported and leave corpses; their death effects and intercom lines are skipped. The loss itself is unchanged. | The engine stopped at the player's death (unit ID 0), so enemies killed by the same blast went unreported and telemetry undercounted kills in lost fights. |
 | 2026-10-13 | No rule changed. The owner confirmed every Proposed call, the Warden's charge range, the six differences from the design document, and a decision for every Open item (now under Decisions taken). The readings of the rules that the implementation took where the spec was silent moved into this spec from the implementation notes, as the Clarifications at the end of each section. | After the developer round and further play by the owner and others, the owner settled every question the spec and the implementation had left open. |
+| 2026-10-20 | No rule changed. The client moved from placeholder shapes toward the final look the owner chose, an industrial sci-fi lab: illustrated units on bases whose shape shows their side, a drawn room, combat effects, a HUD styled as the lab's security terminal, a title screen, a briefing before each fight and synthesized sound effects with a mute key. A primed hazard still shows only its visual cue, with no sound. | Playtesters found the game promising but did not engage with it because of its presentation. |
