@@ -26,7 +26,10 @@ export function FxLayer({ frameKey, events, s, scale }: { frameKey: number; even
     if (!events.length) return;
     const f = { key: frameKey, events, s };
     setFrames((old) => [...old.slice(-5), f]);
-    const t = window.setTimeout(() => setFrames((old) => old.filter((x) => x.key !== f.key)), LIFETIME * scale * 1000);
+    const t = window.setTimeout(() => {
+      timers.current = timers.current.filter((x) => x !== t);
+      setFrames((old) => old.filter((x) => x.key !== f.key));
+    }, LIFETIME * scale * 1000);
     timers.current.push(t);
     // Only a new frame adds effects; the state and scale are read as they were when it arrived.
     // eslint-disable-next-line react-hooks/exhaustive-deps

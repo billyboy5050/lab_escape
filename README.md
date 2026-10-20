@@ -50,7 +50,7 @@ npm run sim -- presets --seeds 1000
 
 ## Playing
 
-The game opens on a title screen; Begin (or **Enter**) goes to the loadout. Start fight shows a briefing (the room, the lab's opening intercom line, the goal and your kit), and Enter the armory starts the fight. The fight and its turn clock start only then, so time on the briefing is not counted as turn time. Retry from the result screen goes straight back into the fight; a `?replay=` link skips the title.
+The game opens on a title screen; Begin (or **Enter**) goes to the loadout. Start fight shows a briefing (the room, the lab's opening intercom line, the goal and your kit), and Enter the armory (**Enter**) starts the fight; **Esc** goes back to the loadout. The fight and its turn clock start only then, so time on the briefing is not counted as turn time. Retry from the result screen goes straight back into the fight; a `?replay=` link skips the title.
 
 - **Move** for free: hover a highlighted tile to see the path and what the enemies would do if you stood there, click to go. Undo free moves with **Z** until you spend AP or step on something.
 - **Act**: pick an ability (click, or keys **1–9**, **0**, **-**, **=** in action-bar order), hover a highlighted target to preview it, click to commit. Previews show damage after armor, kills, statuses, areas, chain and shot lines, and a red ring with **!** on any of your own units that would be hit. **Esc** cancels.

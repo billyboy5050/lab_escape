@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import type { Content } from '../../content/types';
+import { operatesFocus } from '../actionKeys';
 import { ENGINE_VERSION } from '../../state/state';
 import { Icon } from '../art/icons';
 import { UnitFigure } from '../art/units';
@@ -8,6 +10,14 @@ import { useTypewriter } from '../useTypewriter';
 export function TitleScreen({ c, onBegin }: { c: Content; onBegin: () => void }) {
   const lines = ['> VITAL SIGNS ........ STABLE', '> MEMORY ............. NOT FOUND', `> LOCATION ........... ${c.map.name.toUpperCase()}`, '> 1 UNREAD MESSAGE', '  "Get out. Fast."'];
   const { shown, done } = useTypewriter(lines, 38, 500);
+  useEffect(() => {
+    // Enter begins, unless a button has focus: then Enter presses that button (src/client/actionKeys.ts).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !operatesFocus(e.target as HTMLElement | null)) onBegin();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onBegin]);
   return (
     <div className="title-screen">
       <div />

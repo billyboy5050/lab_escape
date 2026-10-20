@@ -230,6 +230,14 @@ export function FightScreen(props: {
   // Each animation frame plays its sounds and shakes or flashes the board; a new wave also raises an alert.
   const boardRef = useRef<HTMLDivElement>(null);
   const [alert, setAlert] = useState<string | null>(null);
+  // The alert's timer outlives the frame that raised it, so it is kept here and not in the effect's cleanup.
+  const alertTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (alertTimer.current !== null) window.clearTimeout(alertTimer.current);
+    },
+    [],
+  );
   useEffect(() => {
     const events = fight.frameEvents;
     if (!events.length) return;
@@ -254,8 +262,11 @@ export function FightScreen(props: {
     const wave = events.find((e) => e.t === 'WaveSpawned');
     if (wave && wave.t === 'WaveSpawned' && wave.wave > 1) {
       setAlert('Reinforcements');
-      const t = window.setTimeout(() => setAlert(null), 1600);
-      return () => window.clearTimeout(t);
+      if (alertTimer.current !== null) window.clearTimeout(alertTimer.current);
+      alertTimer.current = window.setTimeout(() => {
+        alertTimer.current = null;
+        setAlert(null);
+      }, 1600);
     }
   }, [fight.frameKey]); // eslint-disable-line react-hooks/exhaustive-deps
 

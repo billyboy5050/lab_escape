@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { operatesFocus } from '../actionKeys';
 import type { Content } from '../../content/types';
 import { boardFor } from '../../state/grid';
 import type { Loadout } from '../../state/types';
@@ -20,10 +21,12 @@ export function BriefingScreen({ c, loadout, onDeploy, onBack }: { c: Content; l
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onBack();
+      // Enter goes in, unless a button has focus: then Enter presses that button (src/client/actionKeys.ts).
+      else if (e.key === 'Enter' && !operatesFocus(e.target as HTMLElement | null)) onDeploy();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onBack]);
+  }, [onBack, onDeploy]);
   const name = (id: string) => c.abilities[id]?.name ?? id;
   return (
     <div className="screen">
