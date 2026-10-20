@@ -125,3 +125,31 @@ At 4 HP the drone survives one Guard shot, yet neither preset moves beyond noise
 **Owner decision, 2026-10-08.** For round 2, retain the current drone rules and values and evaluate it as a fragile decoy with chain-damage utility. Decoy usefulness remains a hypothesis to validate with players, not a guarantee that it draws fire: Guards still choose targets by their normal rules. Watch whether players understand its movement and find it useful. Revisit movement if they understand the behaviour and still find it unhelpful; that would be a rule change requiring a spec update and an engine-version bump.
 
 **Found along the way:** the result screen lists hazard fires with internal names: `vent_b5→player`, and `gun→object 5` for a shield segment or egg. It is a roadmap item.
+
+## The owner's first Tech win (2026-10-20)
+
+The owner won with Tech for the first time on 2026-10-20, on the restyled client (engine 0.1.1, content 08a289f83c157f), in round 28 of the 30-round cap: "a slog of a battle", but an enjoyable one. The picks were the Tech preset's exactly, chosen by hand, so the fight is labelled custom; it has no tester ID, so the playtest report leaves it out. The replay is in the owner's `telemetry/` (`2026-10-20T20-21-03-588Z-custom-win`), not in git: it is tied to this content hash and cannot be regenerated like the bot's winning lines. `npm run sim -- replay` reproduces the win.
+
+| Measure | This fight | Spec target |
+| --- | --- | --- |
+| Length | 28 rounds | 8 to 12; alarm over 16 |
+| Median turn | 20.7 s over 28 turns, 10 minutes of turns in all | Under 60 s |
+| Damage to the player (enemies, hazards, own) | 6, 1, 0 | |
+| Hazard fires | 11: the gun hit shield segments five times and a Guard once; the panels and vent G6 hit drones and turrets four times; vent B5 hit the player and a drone once | At least 2 |
+| Peak minions (lost) | 5, the cap (17) | |
+| Abilities used | Barrier Shield 19, Sidearm 13, Auto-Turret 12, Scout Drone 8, Proximity Mine 8, Grapple Hook 1, Reload 1 | |
+| Warden | Reached the player in round 10; killed in round 15 | |
+
+**The fight came in three phases:**
+
+1. **Rounds 1 to 14, a standoff.** Only the Flamer died, to a drone's zap in round 5. Shields absorbed 5 to 9 damage a round while the enemies lost 0 to 7 HP a round. All three waves had arrived by round 7, as usual.
+2. **Rounds 15 to 17, the breakthrough.** The Sidearm finished the Warden in round 15. In round 17 one Guard walked into the two mines laid on C5 and D5 the round before and set off both, killing four Guards: the biggest swing of the fight, and an unplanned combo of the kind the spec's question 5 asks about.
+3. **Rounds 18 to 28, the tail.** The last four enemies took 11 rounds. The last Guard stood on D3 from round 18 and fired every round into the shields and turrets in front of it. The same shields stopped three of the player's turret shots (rounds 23, 26 and 27). Turrets finished it in round 28, six rounds after the previous kill.
+
+**What it says:**
+
+- **Tech can win by holding, not trading.** The win came from shields and turrets: 19 Barrier Shields and 12 turrets, against 1 to 3 turrets on the round-1 Tech screens. The bot plays Tech the same way (10.5 turrets a fight).
+- **Length is the alarm.** 28 rounds is well past the 16-round alarm for winning fights and two rounds from the cap, where an undecided fight is a loss. The standoff and the tail account for the extra rounds, not late waves.
+- **Friendly fire stayed on the player's side.** 13 HP of the player's own damage hit their minions and shields (turret shots into a drone and into shields, a drone zap into a turret, the round-17 mines into a shield, a Sidearm shot into a drone). None hit the player.
+- **Hazards keep firing in a long fight.** 11 fires, against round 1's average of 0.62; ten of them hit the player's side.
+- **One fight by one experienced player.** It is evidence for the roadmap's Tech item, not a finding. The spec tunes on playtest evidence, and round 2 shows whether first-time players see the same.
