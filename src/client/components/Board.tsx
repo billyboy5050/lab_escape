@@ -48,8 +48,15 @@ export interface BoardProps {
   view?: BoardView;
 }
 
-/** The top-down projection, for the pieces drawn outside a board (the minion roster draws a unit token). */
+/** The default for a unit token drawn without a projection: the top-down board's, which does not depend on its size. */
 const TOP = projection('top', 8, 8);
+
+/** What a tile's input element does: hover previews it, a click (or a tap on the hovered tile) acts on it. */
+interface TileInput {
+  onPointerDown: (e: PointerEvent) => void;
+  onMouseEnter: () => void;
+  onClick: () => void;
+}
 
 export function Board(p: BoardProps) {
   const { c, s } = p;
@@ -69,7 +76,7 @@ export function Board(p: BoardProps) {
   const fxScale = p.speed === 2 ? 0.55 : 1;
   const slid = useSlides(units, iso);
 
-  const input = (t: Pos) => ({
+  const input = (t: Pos): TileInput => ({
     onPointerDown: (e: PointerEvent) => (lastPointer.current = e.pointerType as 'mouse' | 'touch' | 'pen'),
     onMouseEnter: () => p.onHover(t),
     onClick: () => p.onClick(t, lastPointer.current === 'touch'),
@@ -283,7 +290,7 @@ function objectBox(proj: Projection, o: GameObject): Box {
  * Input on the isometric board: a diamond per tile, and over them a box per unit and standing object, so a click on a
  * figure picks the tile it stands on even where it rises over the tile behind.
  */
-function IsoInput({ p, proj, units, input }: { p: BoardProps; proj: Projection; units: Unit[]; input: (t: Pos) => object }) {
+function IsoInput({ p, proj, units, input }: { p: BoardProps; proj: Projection; units: Unit[]; input: (t: Pos) => TileInput }) {
   const b = boardFor(p.c.map);
   const figures: { pos: Pos; key: string }[] = [...p.s.objects.filter((o) => !isFlat(o)).map((o) => ({ pos: o.pos, key: `o${o.id}` })), ...units.map((u) => ({ pos: u.pos, key: `u${u.id}` }))];
   figures.sort((a, z) => proj.depth(a.pos.x, a.pos.y) - proj.depth(z.pos.x, z.pos.y) || a.pos.x - z.pos.x);

@@ -57,7 +57,12 @@ export function useSlides(units: readonly { id: number; pos: Pos }[], on: boolea
   useEffect(() => {
     if (!moving) return;
     const r = requestAnimationFrame(() => setFrame((n) => n + 1));
-    return () => cancelAnimationFrame(r);
+    // A hidden or background page gets no animation frames; the timer still lands every unit on its tile.
+    const t = window.setTimeout(() => setFrame((n) => n + 1), SLIDE_MS + 20);
+    return () => {
+      cancelAnimationFrame(r);
+      window.clearTimeout(t);
+    };
   });
   return out;
 }
