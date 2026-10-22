@@ -1,6 +1,7 @@
 import type { DirectionName, MapFile } from '../../content/types';
 import { boardFor } from '../../state/grid';
 import type { Pos } from '../../state/types';
+import { tileName } from '../../util/tiles';
 import { ISO_WALL, MG, TS, posKey, tx, ty, type Projection, type XY } from './geometry';
 import { BLOCK_TERRAIN, FloorBase, FloorPanel, Vent, WallGun, gunDirections } from './terrain';
 
@@ -302,7 +303,7 @@ export function IsoBlock({ map, t, id, proj, faded }: { map: MapFile; t: Pos; id
     }
   }
   return (
-    <g className="iso-block" style={{ opacity: faded ? 0.3 : 1 }}>
+    <g className="iso-block" data-tile={tileName(t)} style={{ opacity: faded ? 0.3 : 1 }}>
       {body}
     </g>
   );

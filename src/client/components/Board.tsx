@@ -84,7 +84,13 @@ export function Board(p: BoardProps) {
       onMouseLeave={() => p.onHover(null)}
       style={{ '--fx': fxScale } as CSSProperties}
     >
-      {iso ? <IsoScene p={p} proj={proj} units={units} hit={hit} slid={slid} hazardAt={hazardAt} fxScale={fxScale} /> : <TopScene p={p} proj={proj} units={units} hit={hit} hazardAt={hazardAt} fxScale={fxScale} />}
+      {iso ? <IsoScene p={p} proj={proj} units={units} hit={hit} slid={slid} hazardAt={hazardAt} /> : <TopScene p={p} proj={proj} units={units} hit={hit} hazardAt={hazardAt} />}
+
+      {/* Combat effects for the frames on screen. Outside the scenes, so switching views does not replay them. */}
+      <FxLayer frameKey={p.frameKey} events={p.frameEvents} s={s} scale={fxScale} proj={proj} />
+
+      {/* Debug (on the isometric board, its floor markings are drawn with the floor) */}
+      {p.debug && <DebugLayer c={c} dbg={p.debug} hazardAt={hazardAt} proj={proj} part={iso ? 'text' : 'all'} />}
 
       {/* Input layer */}
       {iso ? (
@@ -107,11 +113,10 @@ interface SceneProps {
   units: Unit[];
   hit: Set<number>;
   hazardAt: Map<string, Hazard>;
-  fxScale: number;
 }
 
-/** The top-down board, in the order it has always been drawn. */
-function TopScene({ p, proj, units, hit, hazardAt, fxScale }: SceneProps) {
+/** The top-down board, in the order it has always been drawn (effects and the debug overlay follow, in the board). */
+function TopScene({ p, proj, units, hit }: SceneProps) {
   const { c, s } = p;
   return (
     <>
@@ -156,12 +161,6 @@ function TopScene({ p, proj, units, hit, hazardAt, fxScale }: SceneProps) {
 
       {/* Preview of the hovered action */}
       {p.preview && p.preview.ok && <PreviewLayer c={c} s={s} pv={p.preview} proj={proj} />}
-
-      {/* Combat effects for the frames on screen */}
-      <FxLayer frameKey={p.frameKey} events={p.frameEvents} s={s} scale={fxScale} proj={proj} />
-
-      {/* Debug */}
-      {p.debug && <DebugLayer c={c} dbg={p.debug} hazardAt={hazardAt} proj={proj} />}
     </>
   );
 }
@@ -174,7 +173,7 @@ const IsoRoomMemo = memo(IsoRoom);
  * floor transform. Things that stand up (terrain blocks, objects, units) are drawn front-on, back to front. Numbers,
  * bars and chips go on a layer above all of them, so nothing standing in front can hide them.
  */
-function IsoScene({ p, proj, units, hit, slid, hazardAt, fxScale }: SceneProps & { slid: Map<number, XY> }) {
+function IsoScene({ p, proj, units, hit, slid, hazardAt }: SceneProps & { slid: Map<number, XY> }) {
   const { c, s } = p;
   const b = boardFor(c.map);
   const intentsShown = p.showIntents && p.intents && !p.preview ? p.intents : null;
@@ -261,12 +260,6 @@ function IsoScene({ p, proj, units, hit, slid, hazardAt, fxScale }: SceneProps &
 
       {/* Preview of the hovered action */}
       {previewOk && <PreviewLayer c={c} s={s} pv={previewOk} proj={proj} part="upright" />}
-
-      {/* Combat effects for the frames on screen */}
-      <FxLayer frameKey={p.frameKey} events={p.frameEvents} s={s} scale={fxScale} proj={proj} />
-
-      {/* Debug */}
-      {p.debug && <DebugLayer c={c} dbg={p.debug} hazardAt={hazardAt} proj={proj} part="text" />}
     </>
   );
 }
@@ -429,6 +422,15 @@ function HazardCue({ h, proj }: { h: Hazard; proj: Projection }) {
   );
 }
 
+/** Where a hazard's state is written on its tile: near the top edge, or the top corner on the isometric board. */
+function hazardLabelAt(proj: Projection, x: number, y: number): XY {
+  if (proj.view === 'iso') {
+    const a = proj.at(x, y);
+    return { x: a.x, y: a.y - 14 };
+  }
+  return proj.pt(MG + x * TS + TS / 2, MG + y * TS + 11);
+}
+
 /** Cooldowns are hidden from players (spec, Hazard cues) unless rules.ui.showHazardCooldowns is set. */
 function HazardCooldowns({ c, s, debug, proj }: { c: Content; s: GameState; debug: BoardDebug | null; proj: Projection }) {
   if (!c.rules.ui.showHazardCooldowns || debug?.hazards) return null;
@@ -437,7 +439,7 @@ function HazardCooldowns({ c, s, debug, proj }: { c: Content; s: GameState; debu
       {s.hazards
         .filter((h) => h.state === 'cooldown')
         .map((h) => {
-          const a = proj.pt(cx(h.tiles[0]!.x), MG + h.tiles[0]!.y * TS + 11);
+          const a = hazardLabelAt(proj, h.tiles[0]!.x, h.tiles[0]!.y);
           return (
             <text key={`hcd${h.id}`} x={a.x} y={a.y} textAnchor="middle" fontSize="9" fill="var(--ink-2)" fontFamily="var(--mono)" pointerEvents="none">
               {`cooling ${h.cooldown}`}
@@ -847,20 +849,24 @@ function DebugLayer({ c, dbg, hazardAt, proj, part = 'all' }: { c: Content; dbg:
         boardFor(c.map)
           .allTiles()
           .map((t) => {
-            const a = proj.view === 'iso' ? proj.pt(MG + t.x * TS + 6, MG + (t.y + 1) * TS - 6) : proj.pt(MG + t.x * TS + 3, MG + (t.y + 1) * TS - 3);
+            // On the isometric board, in the tile's right-hand corner, where it cannot be read as the next tile's.
+            const iso = proj.view === 'iso' ? proj.at(t.x, t.y) : null;
+            const a = iso ? { x: iso.x + 52, y: iso.y + 4 } : proj.pt(MG + t.x * TS + 3, MG + (t.y + 1) * TS - 3);
             return (
-              <text key={`d${key(t)}`} x={a.x} y={a.y} fontSize={8.5 * f} fill="var(--ink-2)" stroke="var(--chip-bg)" strokeWidth={2} paintOrder="stroke" fontFamily="var(--mono)">
+              <text key={`d${key(t)}`} x={a.x} y={a.y} textAnchor={iso ? 'end' : undefined} fontSize={8.5 * f} fill="var(--ink-2)" stroke="var(--chip-bg)" strokeWidth={2} paintOrder="stroke" fontFamily="var(--mono)">
                 {tileName(t)}
               </text>
             );
           })}
       {dbg.spawns.map((sp, i) => {
-        const a = proj.pt(MG + sp.tile.x * TS + TS - 8, MG + sp.tile.y * TS + 15);
+        // On the isometric board, in the tile's left-hand corner.
+        const iso = proj.view === 'iso' ? proj.at(sp.tile.x, sp.tile.y) : null;
+        const a = iso ? { x: iso.x - 52, y: iso.y + 4 } : proj.pt(MG + sp.tile.x * TS + TS - 8, MG + sp.tile.y * TS + 15);
         return (
           <g key={`sp${i}`}>
             {floor && <rect x={MG + sp.tile.x * TS + 5} y={MG + sp.tile.y * TS + 5} width={TS - 10} height={TS - 10} rx={4} fill="none" stroke="var(--enemy)" strokeWidth={1.5} strokeDasharray="3 3" />}
             {text && (
-              <text x={a.x} y={a.y} textAnchor="end" fontSize={9 * f} fill="var(--enemy)" fontFamily="var(--mono)">
+              <text x={a.x} y={a.y} textAnchor={iso ? 'start' : 'end'} fontSize={9 * f} fill="var(--enemy)" fontFamily="var(--mono)">
                 W{sp.wave}
               </text>
             )}
@@ -872,7 +878,7 @@ function DebugLayer({ c, dbg, hazardAt, proj, part = 'all' }: { c: Content; dbg:
         [...hazardAt.entries()].map(([k, h]) => {
           const [x, y] = k.split(',').map(Number) as [number, number];
           const txt = h.state === 'cooldown' ? `cd${h.cooldown}` : h.state === 'primed' ? 'PRIMED' : 'ready';
-          const a = proj.pt(MG + x * TS + TS / 2, MG + y * TS + 11);
+          const a = hazardLabelAt(proj, x, y);
           return (
             <text key={`hd${k}`} x={a.x} y={a.y} textAnchor="middle" fontSize={9 * f} fontWeight={700} fill="var(--hazard)" stroke="var(--chip-bg)" strokeWidth={2.5} paintOrder="stroke" fontFamily="var(--mono)">
               {txt}
