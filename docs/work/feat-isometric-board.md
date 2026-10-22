@@ -1,7 +1,7 @@
 # Isometric board view
 
 - Branch: `feat/isometric-board`
-- Pull request: to be opened
+- Pull request: https://github.com/billyboy5050/lab_escape/pull/14
 - Roadmap item: none (owner request after the 2026-10-20 restyle and the concept art)
 - Started: 2026-10-22
 - Last updated: 2026-10-22, by Claude (Opus 5.5)
