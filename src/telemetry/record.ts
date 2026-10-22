@@ -28,6 +28,8 @@ export interface FightRecord {
     attempt?: number;
     /** Wall-clock milliseconds the player spent on each turn. Telemetry only; replay ignores it. */
     turnTimesMs?: number[];
+    /** How the board was drawn: top-down, isometric, or both (switched mid-fight). Telemetry only; replay ignores it. */
+    view?: 'top' | 'iso' | 'both';
   };
 }
 
@@ -127,6 +129,7 @@ export function recordProblems(rec: unknown): string[] {
       for (const k of ['created', 'label', 'bot', 'preset', 'tester'] as const) if (meta[k] !== undefined && typeof meta[k] !== 'string') add(`meta.${k} must be text`);
       if (meta.seed !== undefined && typeof meta.seed !== 'number') add('meta.seed must be a number');
       if (meta.attempt !== undefined && !(typeof meta.attempt === 'number' && Number.isInteger(meta.attempt) && meta.attempt >= 1)) add('meta.attempt must be a whole number of at least 1');
+      if (meta.view !== undefined && meta.view !== 'top' && meta.view !== 'iso' && meta.view !== 'both') add('meta.view must be top, iso or both');
       const t = meta.turnTimesMs;
       if (t !== undefined) {
         if (!Array.isArray(t)) add('meta.turnTimesMs must be a list of numbers');

@@ -13,6 +13,8 @@ import { DebugPanel, flamerOptionsFrom, type DebugToggles } from '../components/
 import { ActionBar, CombatLog, InfoPanel, IntercomLogModal, IntercomPanel, MinionPanel, StatusStrip } from '../components/Panels';
 import { actionIndexForKey, endsTurn, spaceSkips } from '../actionKeys';
 import { frameMood } from '../art/fx';
+import type { BoardView } from '../art/geometry';
+import { recordedView } from '../boardView';
 import { playSfx, sfxForEvents } from '../sfx';
 import { saveTelemetry } from '../telemetry';
 import { useFight, type Speed } from '../useFight';
@@ -50,6 +52,9 @@ export function FightScreen(props: {
   debugOpen: boolean;
   setDebugOpen: (b: boolean) => void;
   toast: (msg: string) => void;
+  /** How the board is drawn, and a way to switch it (V). */
+  view: BoardView;
+  setView: (v: BoardView) => void;
 }) {
   const { c, loadout, settings } = props;
   const [toggles, setToggles] = useState<DebugToggles>({ ids: true, spawns: true, hazards: true, flamer: true, log: false });
@@ -57,7 +62,7 @@ export function FightScreen(props: {
     debugLog: props.debugOpen && toggles.log,
     restartKey: props.restartKey,
     replay: props.replay,
-    meta: { preset: props.presetId ?? undefined, tester: props.tester },
+    meta: { preset: props.presetId ?? undefined, tester: props.tester, view: props.view },
   });
   const live = fight.session.state;
   const [cursor, setCursor] = useState(0);
@@ -270,6 +275,15 @@ export function FightScreen(props: {
     }
   }, [fight.frameKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The telemetry says which view the fight was played in, and `both` if the player switched views during it.
+  useEffect(() => {
+    const meta = fight.session.record.meta;
+    if (!meta || props.replay || live.outcome) return;
+    meta.view = recordedView(meta.view, props.view);
+    // Only a switch of view matters here; the session and outcome are read as they are when it happens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.view]);
+
   // Save telemetry once the fight is over and the last animation has played.
   useEffect(() => {
     if (!live.outcome || fight.busy || save !== null || props.replay) return;
@@ -307,6 +321,8 @@ export function FightScreen(props: {
         return;
       }
       if (e.key === 'i' || e.key === 'I') return setShowIntents((v) => !v);
+      // Modified, V is the browser's (Cmd+V pastes).
+      if ((e.key === 'v' || e.key === 'V') && !e.ctrlKey && !e.metaKey && !e.altKey) return props.setView(props.view === 'iso' ? 'top' : 'iso');
       if (e.key === 'l' || e.key === 'L') return setLogOpen((v) => !v);
       if (e.key === 'n' || e.key === 'N') {
         if (fight.stepMode) fight.advance(e.shiftKey);
@@ -386,7 +402,7 @@ export function FightScreen(props: {
     <div className="fight">
       <div className="fight-main">
       <StatusStrip c={c} s={shown} intents={idle ? intents : null} busy={fight.busy} />
-      <div className="panel board-wrap" ref={boardRef} style={{ ['--fx' as string]: fight.speed === 2 ? 0.55 : 1 }}>
+      <div className={`panel board-wrap${props.view === 'iso' ? ' iso' : ''}`} ref={boardRef} style={{ ['--fx' as string]: fight.speed === 2 ? 0.55 : 1 }}>
         <Board
           c={c}
           s={shown}
@@ -402,6 +418,7 @@ export function FightScreen(props: {
           showIntents={showIntents}
           debug={debugBoard}
           speed={fight.speed}
+          view={props.view}
         />
         <div className="board-scan" />
         <div className="board-alarm" />
@@ -451,6 +468,14 @@ export function FightScreen(props: {
                 {sp === 0 ? 'Skip' : `${sp}x`}
               </button>
             ))}
+          </span>
+          <span className="seg" role="group" aria-label="Board view (V)" title="Board view: top-down or isometric (V)">
+            {(['top', 'iso'] as BoardView[]).map((v) => (
+              <button key={v} className={props.view === v ? 'on' : ''} aria-pressed={props.view === v} onClick={() => props.setView(v)}>
+                {v === 'top' ? 'Top' : 'Iso'}
+              </button>
+            ))}
+            <kbd>V</kbd>
           </span>
           <label className="pill" title="Show enemy and minion intents (I)">
             <input type="checkbox" checked={showIntents} onChange={(e) => setShowIntents(e.target.checked)} /> Intents <kbd>I</kbd>
