@@ -15,9 +15,7 @@ export function Room({ map, coords = true }: { map: MapFile; coords?: boolean })
   const W = MG * 2 + b.width * TS;
   const H = MG * 2 + b.height * TS;
   const tiles = b.allTiles();
-  const gunDir = new Map<string, DirectionName>();
-  for (const h of map.hazards) if (h.direction) for (const t of h.tiles) gunDir.set(posKey(parseTile(t)), h.direction);
-  const floorTiles = tiles.filter((t) => !['wall', 'pillar', 'shutter', 'gun'].includes(b.terrainId(t)));
+  const gunDir = gunDirections(map);
 
   return (
     <g className="room" pointerEvents="none">
@@ -35,6 +33,54 @@ export function Room({ map, coords = true }: { map: MapFile; coords?: boolean })
       ))}
       {coords && <Coords w={b.width} h={b.height} W={W} H={H} />}
 
+      <FloorBase map={map} />
+
+      {tiles.map((t) => {
+        const id = b.terrainId(t);
+        switch (id) {
+          case 'wall':
+            return <WallBlock key={posKey(t)} t={t} />;
+          case 'pillar':
+            return <Pillar key={posKey(t)} t={t} />;
+          case 'shutter':
+            return <Shutter key={posKey(t)} t={t} />;
+          case 'gun':
+            return <WallGun key={posKey(t)} t={t} dir={gunDir.get(posKey(t)) ?? 'W'} />;
+          case 'vent':
+            return <Vent key={posKey(t)} t={t} />;
+          case 'panel':
+            return <FloorPanel key={posKey(t)} t={t} />;
+          default:
+            return null;
+        }
+      })}
+
+      {/* Edge shading where the floor meets the frame */}
+      <rect x={MG} y={MG} width={b.width * TS} height={b.height * TS} fill="url(#lx-vignette)" />
+    </g>
+  );
+}
+
+/** Terrain drawn as a solid block on the isometric board; everything else lies on the floor. */
+export const BLOCK_TERRAIN: readonly string[] = ['wall', 'pillar', 'shutter', 'gun'];
+
+/** The direction each wall gun faces, by tile. */
+export function gunDirections(map: MapFile): Map<string, DirectionName> {
+  const out = new Map<string, DirectionName>();
+  for (const h of map.hazards) if (h.direction) for (const t of h.tiles) out.set(posKey(parseTile(t)), h.direction);
+  return out;
+}
+
+/**
+ * The floor in floor space: plates, tread, grime, painted markings, the ceiling lamps' pools of light and the soft
+ * shadows of walls and pillars. Shared by both views: the isometric board draws it through its floor transform.
+ */
+export function FloorBase({ map }: { map: MapFile }) {
+  const b = boardFor(map);
+  const tiles = b.allTiles();
+  const floorTiles = tiles.filter((t) => !BLOCK_TERRAIN.includes(b.terrainId(t)));
+  return (
+    <>
       {/* Floor */}
       <g transform={`translate(${MG},${MG})`}>
         <rect width={b.width * TS} height={b.height * TS} fill="url(#lx-plate)" />
@@ -64,30 +110,7 @@ export function Room({ map, coords = true }: { map: MapFile; coords?: boolean })
         if (id !== 'wall' && id !== 'pillar') return null;
         return <rect key={`sh${posKey(t)}`} x={tx(t.x) + 8} y={ty(t.y) + 12} width={TS - 4} height={TS - 6} rx={8} fill="#000" opacity={0.4} filter="url(#lx-soft)" />;
       })}
-
-      {tiles.map((t) => {
-        const id = b.terrainId(t);
-        switch (id) {
-          case 'wall':
-            return <WallBlock key={posKey(t)} t={t} />;
-          case 'pillar':
-            return <Pillar key={posKey(t)} t={t} />;
-          case 'shutter':
-            return <Shutter key={posKey(t)} t={t} />;
-          case 'gun':
-            return <WallGun key={posKey(t)} t={t} dir={gunDir.get(posKey(t)) ?? 'W'} />;
-          case 'vent':
-            return <Vent key={posKey(t)} t={t} />;
-          case 'panel':
-            return <FloorPanel key={posKey(t)} t={t} />;
-          default:
-            return null;
-        }
-      })}
-
-      {/* Edge shading where the floor meets the frame */}
-      <rect x={MG} y={MG} width={b.width * TS} height={b.height * TS} fill="url(#lx-vignette)" />
-    </g>
+    </>
   );
 }
 
@@ -228,7 +251,7 @@ function Shutter({ t }: { t: Pos }) {
   );
 }
 
-function WallGun({ t, dir }: { t: Pos; dir: DirectionName }) {
+export function WallGun({ t, dir }: { t: Pos; dir: DirectionName }) {
   const x = tx(t.x);
   const y = ty(t.y);
   const c = TS / 2;
@@ -254,7 +277,7 @@ function WallGun({ t, dir }: { t: Pos; dir: DirectionName }) {
   );
 }
 
-function Vent({ t }: { t: Pos }) {
+export function Vent({ t }: { t: Pos }) {
   const x = tx(t.x) + TS / 2;
   const y = ty(t.y) + TS / 2;
   const id = `vent-clip-${t.x}-${t.y}`;
@@ -285,7 +308,7 @@ function Vent({ t }: { t: Pos }) {
   );
 }
 
-function FloorPanel({ t }: { t: Pos }) {
+export function FloorPanel({ t }: { t: Pos }) {
   const x = tx(t.x);
   const y = ty(t.y);
   return (
