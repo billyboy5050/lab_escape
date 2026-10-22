@@ -150,6 +150,17 @@ describe('the isometric board', () => {
     expect(Number(b5[2])).toBeLessThan(ISO.at(1, 4).y - TS / 2);
   });
 
+  it('previews a mine lying on the floor, as it will be once placed', () => {
+    const open = scenario({ player: 'B8', abilities: ['proximity_mine'] });
+    const pv = previewCommand(C, open, { type: 'ability', ability: 'proximity_mine', target: 'C8' });
+    expect(pv.ok).toBe(true);
+    const c = ISO.at(2, 7);
+    const flat = `translate(${c.x},${c.y}) scale(${ISO.k},${ISO.k * 0.55})`;
+    expect(render(open, { preview: pv })).toContain(`transform="${flat}"`);
+    const placed = scenario({ player: 'B8', objects: [{ kind: 'mine', at: 'C8' }] });
+    expect(render(placed)).toContain(`transform="${flat}"`);
+  });
+
   it('decides what a block hides by the screen boxes they cover', () => {
     const pillar = blockBox(ISO, { x: 2, y: 5 }, 'pillar');
     const behind = ISO.at(1, 4);

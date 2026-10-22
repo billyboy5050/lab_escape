@@ -452,17 +452,30 @@ function HazardCooldowns({ c, s, debug, proj }: { c: Content; s: GameState; debu
 
 // ------------------------------------------------------------------------------------------ objects
 
+/** How much a flat object (a mine, a corpse) is squashed to lie on the isometric floor. */
+const FLAT = 0.55;
+
 function ObjectGlyph({ o, proj, parts = 'all' }: { o: GameObject; proj: Projection; parts?: 'all' | 'art' | 'chips' }) {
   const title =
     o.kind === 'corpse' ? `${o.of} corpse, ${o.decay} round(s) left` : o.kind === 'mine' ? 'Your mine' : o.kind === 'egg' ? `Egg: hatches into ${o.hatchInto} in ${o.timer} round(s); ${o.hp} HP` : `Shield segment, ${o.hp} HP`;
   const a = proj.at(o.pos.x, o.pos.y);
   if (proj.view === 'iso') {
     // Flat objects lie on the floor, squashed like it; standing ones stand on the tile's centre. Chips are never squashed.
-    const art = isFlat(o) && parts === 'art' ? `translate(${a.x},${a.y}) scale(${proj.k},${proj.k * 0.55})` : `translate(${a.x},${a.y}) ${proj.upright}`;
+    const upright = `translate(${a.x},${a.y}) ${proj.upright}`;
+    const art = isFlat(o) ? `translate(${a.x},${a.y}) scale(${proj.k},${proj.k * FLAT})` : upright;
     return (
-      <g pointerEvents="none" transform={art}>
-        <ObjectArt o={o} parts={parts} />
-        {parts !== 'chips' && <title>{title}</title>}
+      <g pointerEvents="none">
+        {parts !== 'chips' && (
+          <g transform={art}>
+            <ObjectArt o={o} parts="art" />
+            <title>{title}</title>
+          </g>
+        )}
+        {parts !== 'art' && (
+          <g transform={upright}>
+            <ObjectArt o={o} parts="chips" />
+          </g>
+        )}
       </g>
     );
   }
