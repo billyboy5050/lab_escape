@@ -12,6 +12,8 @@ import { LoadoutScreen } from './screens/LoadoutScreen';
 import { BriefingScreen } from './screens/BriefingScreen';
 import { ResultScreen } from './screens/ResultScreen';
 import { TitleScreen } from './screens/TitleScreen';
+import { initialBoardView, saveBoardView } from './boardView';
+import type { BoardView } from './art/geometry';
 import { isMuted, onMutedChange, playSfx, setMuted } from './sfx';
 import { loadPref, loadTester, savePref } from './telemetry';
 import { cleanTester } from '../telemetry/label';
@@ -24,6 +26,7 @@ export function App() {
   // A replay link goes straight to the fight; anything else opens on the title.
   const [screen, setScreen] = useState<Screen>(() => (new URLSearchParams(window.location.search).get('replay') ? 'loadout' : 'title'));
   const [muted, setMutedState] = useState(isMuted);
+  const [boardView, setBoardViewState] = useState<BoardView>(() => initialBoardView());
   const [loadout, setLoadoutState] = useState<Loadout>(() => loadPref('loadout', { abilities: [...hybrid.abilities], upgrades: [...hybrid.upgrades] }, isLoadout));
   const [presetId, setPresetIdState] = useState<string | null>(() => loadPref('preset', hybrid.id, isPresetId));
   const [tester, setTesterState] = useState<string | undefined>(() => loadTester());
@@ -57,6 +60,10 @@ export function App() {
     setPresetIdState(p);
     savePref('preset', p);
   };
+  const setBoardView = useCallback((v: BoardView) => {
+    setBoardViewState(v);
+    saveBoardView(v);
+  }, []);
 
   // A content reload gives this render the new content before the effect below has fixed the loadout, and a fight
   // cannot be built from a loadout that no longer fits (newGame throws, and the whole app goes with it). So decide
@@ -222,6 +229,8 @@ export function App() {
             debugOpen={debugOpen}
             setDebugOpen={setDebugOpen}
             toast={toast}
+            view={boardView}
+            setView={setBoardView}
           />
         </div>
       )}

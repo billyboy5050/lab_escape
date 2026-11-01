@@ -26,6 +26,8 @@ The simulator's findings (greedy bot, 1,000 seeds per preset) are in [implementa
 
 On 2026-10-20 the client was restyled toward the final look (an industrial sci-fi lab, with combat effects, sound, a title screen and a briefing; spec, Changes since revision 2) because playtesters found the game promising but did not engage with its placeholder presentation. Fights recorded before then, round 1 included, were played on the placeholder look, so a difference between them and later fights may come from the presentation as well as the players.
 
+Since 2026-10-22 the board can also be drawn in an isometric view, behind a toggle; top-down stays the default. The replay's `meta.view` records which view each fight used, so fights in the two views can be told apart.
+
 The developer round (spec round 1) and what it found are in [implementation-notes.md](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
 
 ## Up next
@@ -49,6 +51,7 @@ The spec's next step is playtesting (its "Test plan and tuning" section). The to
 Agents should not settle these on their own. Ask, and record the answer in the spec or the notes.
 
 - **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order). None had been called for by 2026-10-13.
+- **The isometric view.** Whether it becomes the default, and whether any playtest round uses it. Until then top-down is the default and round 2 should be played top-down, so it compares with round 1 on presentation as well as players. Notes on readability are in pull request #14.
 
 ## Smaller items
 
@@ -59,7 +62,8 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 - **Readable hazard fires on the result screen.** The fight summary names a hazard by its map ID and an object by its number (`vent_b5→player`, `gun→object 5`), and the result screen prints them as they are. Name them as the board does ("Gas vent B5", "shield segment", "egg") in `src/telemetry/summary.ts` or where `src/client/screens/ResultScreen.tsx` prints them.
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Phone-width layout.** The narrow breakpoint exists but has not been playtested.
-- **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.
+- **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) and V (board view) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.
+- **Board view in the playtest report.** Replays record `meta.view` (top, iso or both), but `npm run sim -- telemetry` neither reports it nor filters by it. Before a round mixes views, list each fight's view in the report and add a filter (or skip fights not played top-down by default).
 - **Vite's native config loader.** `npm test` warns that `vite.config.ts` imports `./src/dev/telemetryPath` without a file extension, which the native config loader (planned as Vite's default) will not accept. Adding `.ts` also needs `allowImportingTsExtensions` in `tsconfig.json` (allowed because it sets `noEmit`).
 
 ## After the MVP

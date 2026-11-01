@@ -37,6 +37,7 @@ describe('replay file shape', () => {
     expect(() => checkCompatible(C, JSON.parse(JSON.stringify(good())))).not.toThrow();
     expect(recordProblems(broken((r) => delete r.meta))).toEqual([]);
     expect(recordProblems(broken((r) => (r.meta = { bot: 'greedy', seed: 7 })))).toEqual([]);
+    for (const view of ['top', 'iso', 'both']) expect(recordProblems(broken((r) => (r.meta = { view })))).toEqual([]);
   });
 
   it.each([null, 'replay', 7, [], undefined])('rejects %j, which is not a replay file at all', (raw) => {
@@ -62,6 +63,7 @@ describe('replay file shape', () => {
     ['meta is not an object', (r: Record<string, unknown>) => (r.meta = 'x'), 'meta'],
     ['turn times are not a list', (r: Record<string, unknown>) => (r.meta = { turnTimesMs: 5 }), 'meta.turnTimesMs'],
     ['a turn time is not a number', (r: Record<string, unknown>) => (r.meta = { turnTimesMs: [1, 'slow'] }), 'meta.turnTimesMs[1]'],
+    ['the board view is not one of the views', (r: Record<string, unknown>) => (r.meta = { view: 'sideways' }), 'meta.view'],
   ])('rejects a file where %s, naming the field, instead of crashing the screen later', (_, edit, field) => {
     const raw = broken(edit);
     expect(recordProblems(raw).join('\n')).toContain(field);

@@ -57,6 +57,10 @@ export function ArtDefs() {
           <stop offset="55%" stopColor="#000" stopOpacity={0} />
           <stop offset="100%" stopColor="#000" stopOpacity={0.55} />
         </radialGradient>
+        <radialGradient id="lx-iso-halo" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="var(--frame-hi)" stopOpacity={0.55} />
+          <stop offset="100%" stopColor="var(--frame-hi)" stopOpacity={0} />
+        </radialGradient>
         <radialGradient id="lx-pool" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="var(--lamp)" stopOpacity={0.16} />
           <stop offset="100%" stopColor="var(--lamp)" stopOpacity={0} />

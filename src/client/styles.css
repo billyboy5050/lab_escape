@@ -1066,6 +1066,19 @@ kbd {
   user-select: none;
   touch-action: manipulation;
 }
+/* The isometric board is about 1.6 times as wide as it is tall: it fills the column's width, up to the same height. */
+.board-wrap.iso {
+  width: auto;
+  justify-self: stretch;
+}
+.board-svg.iso {
+  width: 100%;
+  height: auto;
+  max-height: max(440px, calc(100vh - 345px));
+}
+.iso-block {
+  transition: opacity 0.15s ease-out;
+}
 .board-scan {
   position: absolute;
   inset: 0;
@@ -1339,6 +1352,10 @@ kbd {
 .seg button.on {
   background: var(--accent);
   color: var(--accent-ink);
+}
+.seg kbd {
+  align-self: center;
+  margin: 0 6px;
 }
 .hint {
   font: 12px var(--mono);
