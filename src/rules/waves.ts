@@ -4,7 +4,7 @@ import type { World } from './world';
 
 /** Number of waves in play: all of them unless a debug setting holds later waves back. */
 export function wavesInPlay(w: World): number {
-  return Math.min(w.s.settings.maxWaves ?? w.c.waves.length, w.c.waves.length);
+  return Math.min(w.s.settings.maxWaves ?? w.room.waves.length, w.room.waves.length);
 }
 
 /**
@@ -14,7 +14,7 @@ export function wavesInPlay(w: World): number {
 export function spawnDueWaves(w: World): void {
   const inPlay = wavesInPlay(w);
   while (w.s.wavesSpawned < inPlay) {
-    const next = w.c.waves[w.s.wavesSpawned]!;
+    const next = w.room.waves[w.s.wavesSpawned]!;
     const due = next.round <= w.s.round;
     const early = !due && w.c.rules.earlyWaveWhenEmpty && w.s.wavesSpawned > 0 && w.enemies().length === 0;
     if (!due && !early) break;
@@ -33,7 +33,7 @@ export function arrivalApplies(w: World, waveIndex: number): boolean {
  * free tile. Every unit is placed before any mine under one goes off.
  */
 export function spawnWave(w: World, index: number): Unit[] {
-  const wave = w.c.waves[index]!;
+  const wave = w.room.waves[index]!;
   const arrival = arrivalApplies(w, index);
   const units: Unit[] = [];
   for (const entry of wave.units) {

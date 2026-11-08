@@ -102,6 +102,8 @@ export function recordProblems(rec: unknown): string[] {
   else {
     const w = rec.settings.maxWaves;
     if (w !== undefined && (typeof w !== 'number' || !Number.isInteger(w) || w < 1)) add(`settings.maxWaves must be a whole number of at least 1 (got ${JSON.stringify(w)})`);
+    const room = rec.settings.room;
+    if (room !== undefined && typeof room !== 'string') add(`settings.room must be a room ID (got ${JSON.stringify(room)})`);
   }
   if (!Array.isArray(rec.commands)) add('commands must be a list');
   else {
@@ -156,6 +158,8 @@ export function checkCompatible(c: Content, rec: unknown): asserts rec is FightR
     const more = problems.length > MAX_PROBLEMS ? ['(further problems not shown)'] : [];
     throw new ReplayMismatch(`The replay file is malformed:\n  - ${[...shown, ...more].join('\n  - ')}`);
   }
+  const room = (rec as unknown as FightRecord).settings.room;
+  if (room !== undefined && !Object.hasOwn(c.rooms, room)) throw new ReplayMismatch(`Replay was played in room "${room}", which this content does not have`);
 }
 
 export interface ReplayResult {

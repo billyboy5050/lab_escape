@@ -2,6 +2,10 @@
 
 export interface Pos { x: number; y: number }
 
+/** The largest room a tile name can address: columns A to Z, rows 1 to 99. */
+export const MAX_COLUMNS = 26;
+export const MAX_ROWS = 99;
+
 export function tileName(p: Pos): string {
   return String.fromCharCode(65 + p.x) + String(p.y + 1);
 }

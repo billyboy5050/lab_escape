@@ -117,6 +117,8 @@ export interface Loadout { abilities: string[]; upgrades: string[] }
 export interface FightSettings {
   /** Number of waves in play. Fewer than all holds the later waves back, and clearing the last one in play wins. */
   maxWaves?: number;
+  /** The ID of the room the fight takes place in. A fight that names none is in the Armory. */
+  room?: string;
 }
 
 export interface IntercomEntry { round: number; phase: Phase; line: string; text: string }

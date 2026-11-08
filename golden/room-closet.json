@@ -1,0 +1,116 @@
+{
+  "preset": "hybrid",
+  "note": "Scripted regression fight. Re-record on purpose when content values or rules change: npm run golden:record",
+  "record": {
+    "format": "lab-escape/replay@1",
+    "engineVersion": "0.1.1",
+    "contentHash": "18c3341def8b09",
+    "loadout": {
+      "abilities": [
+        "sidearm",
+        "proximity_mine",
+        "scout_drone",
+        "barrier_shield",
+        "acid_spit",
+        "spore_pod",
+        "brood_egg",
+        "parasite"
+      ],
+      "upgrades": [
+        "H1_spore_mines",
+        "H2_plague_drone",
+        "A3_parasite_jump"
+      ]
+    },
+    "settings": {
+      "room": "closet"
+    },
+    "commands": [
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "A4"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "A1"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B4",
+          "B3",
+          "A3"
+        ]
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "B2"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "B2"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "parasite",
+        "target": "D1"
+      },
+      {
+        "type": "ability",
+        "ability": "scout_drone",
+        "target": "B4"
+      },
+      {
+        "type": "endTurn"
+      },
+      {
+        "type": "ability",
+        "ability": "brood_egg",
+        "target": "D2"
+      },
+      {
+        "type": "ability",
+        "ability": "barrier_shield",
+        "target": "A1",
+        "target2": "A2"
+      },
+      {
+        "type": "move",
+        "path": [
+          "B3",
+          "B2"
+        ]
+      },
+      {
+        "type": "move",
+        "path": [
+          "B3"
+        ]
+      },
+      {
+        "type": "endTurn"
+      }
+    ],
+    "meta": {
+      "bot": "greedy",
+      "seed": 1,
+      "preset": "hybrid",
+      "label": "golden hybrid in closet"
+    }
+  },
+  "eventCount": 174,
+  "eventsHash": "189b014d5c6231",
+  "finalStateHash": "1be4f4269ada3b",
+  "outcome": "win",
+  "rounds": 4
+}

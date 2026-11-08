@@ -1,4 +1,5 @@
-import type { Content, DamageType, StatusId, UpgradeDef } from '../content/types';
+import { roomFor } from '../content/load';
+import type { Content, DamageType, RoomDef, StatusId, UpgradeDef } from '../content/types';
 import { boardFor, cheb, comparePos, samePos, type Board } from '../state/grid';
 import { cloneState } from '../state/state';
 import type {
@@ -78,6 +79,8 @@ export interface WorldOptions {
  */
 export class World {
   readonly b: Board;
+  /** The room this fight takes place in. */
+  readonly room: RoomDef;
   readonly events: GameEvent[] = [];
   readonly frames: Frame[] | null;
   readonly deathHooks: DeathHook[] = [];
@@ -91,7 +94,8 @@ export class World {
     readonly s: GameState,
     opts: WorldOptions = {},
   ) {
-    this.b = boardFor(c.map);
+    this.room = roomFor(c, s.settings.room);
+    this.b = boardFor(this.room);
     this.frames = opts.frames ? [] : null;
   }
 
@@ -474,7 +478,7 @@ export class World {
   }
 
   private allEnemiesDown(): boolean {
-    const inPlay = Math.min(this.s.settings.maxWaves ?? this.c.waves.length, this.c.waves.length);
+    const inPlay = Math.min(this.s.settings.maxWaves ?? this.room.waves.length, this.room.waves.length);
     return this.s.wavesSpawned >= inPlay && !this.s.units.some((u) => u.team === 'enemy' && !u.dead);
   }
 

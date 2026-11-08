@@ -35,6 +35,8 @@ Options
   --size N         Abilities per random loadout in a sweep (default: the loadout size in rules.json)
   --set PATH=VAL   Content override, repeatable, e.g. --set units.warden.hp=16
   --hold-wave3     Hold back wave 3; clearing wave 2 wins (the first playtest's setup)
+  --rooms FILE     Add the rooms in a JSON file to the content, e.g. golden/rooms.json
+  --room ID        Fight in this room (default: the Armory)
   --csv FILE       Write one row per fight
   --out DIR        Write the report, CSV and winning replays to DIR (default reports/ for presets)
   --record         With golden: re-record the golden replays
@@ -86,17 +88,24 @@ Options
             Directory.SetCurrentDirectory(FindRoot());
             var bot = a.Value("bot") ?? Batch.GreedyKind;
             if (!Batch.BotKinds.Contains(bot)) throw new ArgumentException($"Unknown bot \"{bot}\"");
+            var files = ContentLoader.FilesFromDirectory("content");
+            var roomsFile = a.Value("rooms");
+            if (roomsFile != null) files.Root["rooms"] = StrictJson.Parse(File.ReadAllText(roomsFile));
+            var overrides = ParseOverrides(a.List("set"));
+            var room = a.Value("room");
+            // A wrong room ID would otherwise surface once per fight, as a report full of errors.
+            if (room != null) Batch.ContentFor(files, overrides).RoomFor(room);
             var opts = new RunOptions
             {
                 Bot = bot,
                 Preset = a.Value("preset") ?? "hybrid",
-                Overrides = ParseOverrides(a.List("set")),
+                Overrides = overrides,
                 Seeds = Batch.SeedRange(Options.ParseInteger("from", a.Value("from") ?? "1")!.Value, SeedCount(a.Value("seeds"))),
-                Settings = a.Flag("hold-wave3") ? new FightSettings { MaxWaves = 2 } : new FightSettings(),
+                Settings = new FightSettings { MaxWaves = a.Flag("hold-wave3") ? 2 : (int?)null, Room = room },
                 Workers = ClampToInt(Options.ParseInteger("workers", a.Value("workers"), 1)),
                 Out = a.Value("out"),
                 Csv = a.Value("csv"),
-                Files = ContentLoader.FilesFromDirectory("content"),
+                Files = files,
             };
             switch (cmd)
             {
@@ -129,6 +138,9 @@ Options
             public string? Csv;
             public int? Size;
             public ContentFiles Files = null!;
+
+            /// <summary>Text for a report's title when the fights are not in the Armory.</summary>
+            public string InRoom => Settings.Room == null ? "" : $" in room {Settings.Room}";
         }
 
         private static int SeedCount(string? raw)
@@ -206,7 +218,7 @@ Options
             var spec = new BatchSpec { Bot = o.Bot, Loadout = LoadoutChoice.OfPreset(o.Preset), Seeds = o.Seeds, Settings = o.Settings };
             var rows = Batch.RunBatchParallel(spec, c, o.Workers, Progress($"{o.Preset} x {o.Bot}"));
             var stats = Report.Aggregate(rows, c);
-            var title = $"Batch: {o.Preset} preset, {o.Bot} bot, seeds {o.Seeds[0]} to {o.Seeds[o.Seeds.Count - 1]}{DescribeOverrides(o.Overrides)}";
+            var title = $"Batch: {o.Preset} preset, {o.Bot} bot, seeds {o.Seeds[0]} to {o.Seeds[o.Seeds.Count - 1]}{o.InRoom}{DescribeOverrides(o.Overrides)}";
             var text = Report.FormatReport(title, stats) + $"\n\n({JsText.ToFixed(clock.Elapsed.TotalSeconds, 1)} s, content {c.Hash})";
             Console.WriteLine(text);
             ReportErrors(rows, Console.Out);
@@ -222,7 +234,7 @@ Options
                 var spec = new BatchSpec { Bot = o.Bot, Loadout = LoadoutChoice.OfPreset(p.Id), Seeds = o.Seeds, Settings = o.Settings, KeepRecords = true };
                 var rows = Batch.RunBatchParallel(spec, c, o.Workers, Progress($"{p.Id} x {o.Bot}"));
                 var stats = Report.Aggregate(rows, c);
-                var text = Report.FormatReport($"Preset {p.Name}: {o.Bot} bot, {o.Seeds.Count} seeds{DescribeOverrides(o.Overrides)}", stats);
+                var text = Report.FormatReport($"Preset {p.Name}: {o.Bot} bot, {o.Seeds.Count} seeds{o.InRoom}{DescribeOverrides(o.Overrides)}", stats);
                 log.WriteLine(text);
                 ReportErrors(rows, log);
                 var win = rows.FirstOrDefault(r => r.Outcome == FightOutcome.Win && r.Record != null);
@@ -249,7 +261,7 @@ Options
             var spec = new BatchSpec { Bot = o.Bot, Loadout = LoadoutChoice.OfSweep(size), Seeds = o.Seeds, Settings = o.Settings };
             var rows = Batch.RunBatchParallel(spec, c, o.Workers, Progress($"sweep {size} of {c.AbilityOrder.Count}"));
             var stats = Report.Aggregate(rows, c);
-            var text = Report.FormatReport($"Loadout sweep: {size} of {c.AbilityOrder.Count} abilities, {o.Bot} bot, {o.Seeds.Count} random loadouts{DescribeOverrides(o.Overrides)}", stats);
+            var text = Report.FormatReport($"Loadout sweep: {size} of {c.AbilityOrder.Count} abilities, {o.Bot} bot, {o.Seeds.Count} random loadouts{o.InRoom}{DescribeOverrides(o.Overrides)}", stats);
             log.WriteLine(text);
             ReportErrors(rows, log);
             WriteOutputs(outDir, o.Csv, $"sweep-{size}-{o.Bot}", rows, text, stats, log, new[] { new KeyValuePair<string, string>("lift.csv", Report.LiftToCsv(stats.Lift)) });
@@ -260,7 +272,7 @@ Options
             if (string.IsNullOrEmpty(param) || string.IsNullOrEmpty(values)) throw new ArgumentException("tune needs --param PATH and --values A,B,C");
             var lines = new List<string>
             {
-                $"Tuning {param} on the {o.Preset} preset ({o.Bot} bot, {o.Seeds.Count} seeds each)",
+                $"Tuning {param} on the {o.Preset} preset{o.InRoom} ({o.Bot} bot, {o.Seeds.Count} seeds each)",
                 $"{"value".PadRight(10)} {"win rate".PadRight(26)} rounds(win)  hazard fires  own-damage share",
             };
             foreach (var raw in values.Split(','))
@@ -280,34 +292,35 @@ Options
 
         private static int RunGolden(RunOptions o, bool record)
         {
-            var c = ContentLoader.Build(o.Files);
             const string dir = "golden";
+            var files = ContentLoader.FilesFromDirectory("content");
+            var fights = Golden.Fights(files, StrictJson.Parse(File.ReadAllText(Path.Combine(dir, "rooms.json"))));
             if (record)
             {
                 Directory.CreateDirectory(dir);
-                foreach (var p in c.Presets)
+                foreach (var f in fights)
                 {
-                    var (golden, events) = Golden.Record(c, p.Id);
-                    File.WriteAllText(Path.Combine(dir, $"{p.Id}.json"), Hash.Stringify(golden, 2) + "\n");
-                    File.WriteAllText(Path.Combine(dir, $"{p.Id}.events.jsonl"), Records.EventsToJsonl(events));
-                    Console.WriteLine($"Recorded golden {p.Id}: {golden["outcome"]} in {golden["rounds"]} rounds, {golden["eventCount"]} events, hash {golden["eventsHash"]}");
+                    var (golden, events) = Golden.Record(f.Content, f.Preset, f.Settings);
+                    File.WriteAllText(Path.Combine(dir, $"{f.Name}.json"), Hash.Stringify(golden, 2) + "\n");
+                    File.WriteAllText(Path.Combine(dir, $"{f.Name}.events.jsonl"), Records.EventsToJsonl(events));
+                    Console.WriteLine($"Recorded golden {f.Name}: {golden["outcome"]} in {golden["rounds"]} rounds, {golden["eventCount"]} events, hash {golden["eventsHash"]}");
                 }
                 return 0;
             }
             var failed = 0;
-            foreach (var p in c.Presets)
+            foreach (var f in fights)
             {
-                var file = Path.Combine(dir, $"{p.Id}.json");
+                var file = Path.Combine(dir, $"{f.Name}.json");
                 if (!File.Exists(file))
                 {
-                    Console.WriteLine($"{p.Id}: missing ({file}); run npm run golden:record");
+                    Console.WriteLine($"{f.Name}: missing ({file}); run npm run golden:record");
                     failed++;
                     continue;
                 }
-                var eventsFile = Path.Combine(dir, $"{p.Id}.events.jsonl");
+                var eventsFile = Path.Combine(dir, $"{f.Name}.events.jsonl");
                 var expected = File.Exists(eventsFile) ? JsText.Trim(File.ReadAllText(eventsFile)).Split('\n') : null;
-                var r = Golden.Verify(c, StrictJson.Parse(File.ReadAllText(file)), expected);
-                Console.WriteLine($"{p.Id}: {(r.Ok ? "ok" : $"FAILED - {r.Problem}")}");
+                var r = Golden.Verify(f.Content, StrictJson.Parse(File.ReadAllText(file)), expected);
+                Console.WriteLine($"{f.Name}: {(r.Ok ? "ok" : $"FAILED - {r.Problem}")}");
                 if (!r.Ok) failed++;
             }
             return failed > 0 ? 1 : 0;

@@ -1,13 +1,25 @@
 import { REQUIRED_ABILITY_FIELDS, REQUIRED_BLOCK_FIELDS, REQUIRED_HAZARD_SHAPE_FIELDS, REQUIRED_UNIT_FIELDS, REQUIRED_UPGRADE_FIELDS, REQUIRED_UTILITIES, REQUIRED_UTILITY_FIELDS } from './required';
-import { DAMAGE_TYPES, DIRECTION_NAMES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type StatusId } from './types';
+import { DAMAGE_TYPES, DIRECTION_NAMES, STATUS_IDS, type Content, type ContentFiles, type DamageType, type MapFile, type RoomDef, type RoomFile, type StatusId } from './types';
 import { hashJson } from '../util/hash';
-import { isTileName, parseTile } from '../util/tiles';
+import { isTileName, MAX_COLUMNS, MAX_ROWS, parseTile, type Pos } from '../util/tiles';
 
 export class ContentError extends Error {
   constructor(public readonly problems: string[]) {
     super(`Content failed validation:\n  - ${problems.join('\n  - ')}`);
     this.name = 'ContentError';
   }
+}
+
+/** A room from rooms.json with the palette in map.json under its own legend and terrain. */
+function resolveRoom(map: MapFile, file: RoomFile): RoomDef {
+  return { ...file, legend: { ...map.legend, ...file.legend }, terrain: { ...map.terrain, ...file.terrain } };
+}
+
+/** The room a fight takes place in. A fight that names none is in the Armory. */
+export function roomFor(c: Content, id: string | undefined): RoomDef {
+  if (id === undefined) return c.defaultRoom;
+  if (!Object.hasOwn(c.rooms, id)) throw new Error(`Unknown room "${id}"`);
+  return c.rooms[id]!;
 }
 
 /** Validates the raw content files and builds the lookup tables the engine uses. Throws ContentError. */
@@ -19,6 +31,8 @@ export function buildContent(files: ContentFiles): Content {
   const utilities = Object.fromEntries(files.abilities.utilities.map((u) => [u.id, u]));
   const upgrades = Object.fromEntries(files.upgrades.map((u) => [u.id, u]));
   const hazardDefs = Object.fromEntries(files.hazards.map((h) => [h.id, h]));
+  const defaultRoom: RoomDef = { ...files.map, waves: files.waves, roundCap: files.rules.roundCap };
+  const rooms = Object.fromEntries([defaultRoom, ...(files.rooms ?? []).map((r) => resolveRoom(files.map, r))].map((r) => [r.id, r]));
   return {
     files,
     rules: files.rules,
@@ -29,6 +43,8 @@ export function buildContent(files: ContentFiles): Content {
     upgrades,
     upgradeOrder: files.upgrades.map((u) => u.id),
     hazardDefs,
+    rooms,
+    defaultRoom,
     map: files.map,
     waves: files.waves,
     intercom: files.intercom,
@@ -245,43 +261,114 @@ export function validateContent(f: ContentFiles): string[] {
   }
   const m = f.map;
   if (!m) return [...p, 'map.json is missing'];
-  if (m.rows.length !== m.height) p.push(`map has ${m.rows.length} rows but height ${m.height}`);
-  m.rows.forEach((row, y) => {
-    if (row.length !== m.width) p.push(`map row ${y + 1} has ${row.length} tiles but width ${m.width}`);
-    for (const ch of row) {
-      const t = m.legend[ch];
-      if (!t) p.push(`map legend has no entry for "${ch}"`);
-      else if (!m.terrain[t]) p.push(`map terrain has no definition for "${t}"`);
-    }
-  });
-  const tileOk = (name: string, where: string) => {
-    if (!isTileName(name)) return p.push(`${where} "${name}" is not a tile name`);
-    const t = parseTile(name);
-    if (t.x < 0 || t.y < 0 || t.x >= m.width || t.y >= m.height) p.push(`${where} "${name}" is off the map`);
-  };
-  tileOk(m.playerStart, 'map.playerStart');
-  for (const hz of list(m.hazards, 'map.hazards')) {
-    if (!hazardIds.has(hz.def)) p.push(`map hazard ${hz.id} uses unknown hazard def "${hz.def}"`);
-    // Every hazard is placed, drawn and (for a lane) fired from its first tile, so one with none would crash the board.
-    if (!Array.isArray(hz.tiles) || hz.tiles.length === 0) p.push(`map hazard ${hz.id} needs at least one tile`);
-    else hz.tiles.forEach((t) => tileOk(t, `map hazard ${hz.id} tile`));
-    // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
-    if (hz.direction && !DIRECTION_NAMES.includes(hz.direction)) p.push(`map hazard ${hz.id} has unknown direction ${JSON.stringify(hz.direction)} (use N, E, S or W)`);
-    if (hazardDefs.find((h) => h.id === hz.def)?.shape === 'lane' && !hz.direction) p.push(`map hazard ${hz.id} is a lane and needs a direction`);
-  }
 
-  // Waves
-  let lastRound = 0;
-  (f.waves ?? []).forEach((wave, i) => {
-    int(wave.round, `waves[${i}].round`, 1);
-    if (wave.round < lastRound) p.push(`waves[${i}] arrives before the wave listed above it`);
-    lastRound = wave.round;
-    for (const u of wave.units) {
-      if (!unitIds.has(u.def)) p.push(`waves[${i}] uses unknown unit "${u.def}"`);
-      tileOk(u.tile, `waves[${i}] spawn tile`);
+  /** A tile type's blocking flags. A missing one would read as "does not block" and leave a hole in a wall. */
+  const checkTerrain = (terrain: unknown, plan: string) => {
+    if (!isRecord(terrain)) return;
+    for (const [id, def] of Object.entries(terrain)) {
+      for (const flag of ['blocksMove', 'blocksSight', 'blocksProjectile']) {
+        const v = isRecord(def) ? def[flag] : undefined;
+        if (typeof v !== 'boolean') p.push(`${plan} terrain "${id}" needs ${flag} to be true or false (got ${JSON.stringify(v)})`);
+      }
     }
-  });
-  if (!f.waves?.length) p.push('waves.json has no waves');
+  };
+
+  /**
+   * The checks every room passes, the Armory included. `plan` names the floor plan in messages ("map" for map.json,
+   * "rooms.<id>" for a room in rooms.json), and `wavesAt` and `noWaves` do the same for its waves.
+   */
+  const checkRoom = (room: MapFile, roomWaves: unknown, plan: string, wavesAt: string, noWaves: string) => {
+    const { width, height } = room;
+    int(width, `${plan}.width`, 1);
+    int(height, `${plan}.height`, 1);
+    if (typeof width === 'number' && width > MAX_COLUMNS) p.push(`${plan}.width must be at most ${MAX_COLUMNS}, the columns A to Z (got ${width})`);
+    if (typeof height === 'number' && height > MAX_ROWS) p.push(`${plan}.height must be at most ${MAX_ROWS}, the rows 1 to ${MAX_ROWS} (got ${height})`);
+    const legend: Record<string, unknown> = isRecord(room.legend) ? room.legend : {};
+    const terrain: Record<string, unknown> = isRecord(room.terrain) ? room.terrain : {};
+    const rows = list(room.rows, `${plan}.rows`).map((row) => (typeof row === 'string' ? row : ''));
+    if (rows.length !== height) p.push(`${plan} has ${rows.length} rows but height ${height}`);
+    rows.forEach((row, y) => {
+      if (row.length !== width) p.push(`${plan} row ${y + 1} has ${row.length} tiles but width ${width}`);
+      for (const ch of row) {
+        const t = Object.hasOwn(legend, ch) ? legend[ch] : undefined;
+        if (typeof t !== 'string' || !t) p.push(`${plan} legend has no entry for "${ch}"`);
+        else if (!Object.hasOwn(terrain, t) || !terrain[t]) p.push(`${plan} terrain has no definition for "${t}"`);
+      }
+    });
+    const onMap = (name: unknown, where: string): Pos | null => {
+      if (!isTileName(name)) {
+        p.push(`${where} "${String(name)}" is not a tile name`);
+        return null;
+      }
+      const t = parseTile(name);
+      if (t.x < 0 || t.y < 0 || typeof width !== 'number' || t.x >= width || typeof height !== 'number' || t.y >= height) {
+        p.push(`${where} "${name}" is off the map`);
+        return null;
+      }
+      return t;
+    };
+    /** A tile a unit is placed on when the fight starts or a wave arrives. */
+    const standable = (name: unknown, where: string) => {
+      const t = onMap(name, where);
+      if (!t) return;
+      const id = legend[rows[t.y]?.[t.x] ?? ''];
+      const def = typeof id === 'string' && Object.hasOwn(terrain, id) ? terrain[id] : undefined;
+      if (isRecord(def) && def.blocksMove === true) p.push(`${where} "${String(name)}" is on terrain that blocks movement`);
+    };
+    standable(room.playerStart, `${plan}.playerStart`);
+    const hazardNames = new Set<unknown>();
+    for (const entry of list(room.hazards, `${plan}.hazards`)) {
+      const hz: Partial<MapFile['hazards'][number]> = isRecord(entry) ? entry : {};
+      if (typeof hz.id !== 'string' || !hz.id) p.push(`${plan} has a hazard with no id`);
+      else if (hazardNames.has(hz.id)) p.push(`${plan} has two hazards with the id "${hz.id}"`);
+      hazardNames.add(hz.id);
+      if (!hazardIds.has(hz.def!)) p.push(`${plan} hazard ${hz.id} uses unknown hazard def "${hz.def}"`);
+      // Every hazard is placed, drawn and (for a lane) fired from its first tile, so one with none would crash the board.
+      if (!Array.isArray(hz.tiles) || hz.tiles.length === 0) p.push(`${plan} hazard ${hz.id} needs at least one tile`);
+      else hz.tiles.forEach((t) => onMap(t, `${plan} hazard ${hz.id} tile`));
+      // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
+      if (hz.direction && !DIRECTION_NAMES.includes(hz.direction)) p.push(`${plan} hazard ${hz.id} has unknown direction ${JSON.stringify(hz.direction)} (use N, E, S or W)`);
+      if (hazardDefs.find((h) => h.id === hz.def)?.shape === 'lane' && !hz.direction) p.push(`${plan} hazard ${hz.id} is a lane and needs a direction`);
+    }
+
+    let lastRound = 0;
+    const waves: unknown[] = Array.isArray(roomWaves) ? roomWaves : [];
+    waves.forEach((entry, i) => {
+      const wave: Record<string, unknown> = isRecord(entry) ? entry : {};
+      int(wave.round, `${wavesAt}[${i}].round`, 1);
+      if (typeof wave.round === 'number') {
+        if (wave.round < lastRound) p.push(`${wavesAt}[${i}] arrives before the wave listed above it`);
+        lastRound = wave.round;
+      }
+      for (const raw of list(wave.units as unknown[], `${wavesAt}[${i}].units`)) {
+        const u: Record<string, unknown> = isRecord(raw) ? raw : {};
+        if (!unitIds.has(u.def as string)) p.push(`${wavesAt}[${i}] uses unknown unit "${String(u.def)}"`);
+        standable(u.tile, `${wavesAt}[${i}] spawn tile`);
+      }
+    });
+    if (!waves.length) p.push(noWaves);
+  };
+
+  checkTerrain(m.terrain, 'map');
+  checkRoom(m, f.waves, 'map', 'waves', 'waves.json has no waves');
+
+  // Rooms beyond the Armory
+  if (f.rooms !== undefined) {
+    const roomIds = new Set<string>([m.id]);
+    list(f.rooms, 'rooms').forEach((entry, i) => {
+      const r: Partial<RoomFile> = isRecord(entry) ? entry : {};
+      if (typeof r.id !== 'string' || !r.id) return p.push(`rooms[${i}] needs an id`);
+      const plan = `rooms.${r.id}`;
+      if (roomIds.has(r.id)) p.push(`rooms has two rooms with the id "${r.id}"`);
+      roomIds.add(r.id);
+      int(r.roundCap, `${plan}.roundCap`, 1);
+      for (const key of ['legend', 'terrain'] as const) {
+        if (r[key] !== undefined && !isRecord(r[key])) p.push(`${plan}.${key} must be an object`);
+      }
+      checkTerrain(r.terrain, plan);
+      checkRoom(resolveRoom(m, r as RoomFile), r.waves, plan, `${plan}.waves`, `${plan} has no waves`);
+    });
+  }
 
   // Intercom
   const lineIds = new Set<string>();

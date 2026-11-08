@@ -12,23 +12,28 @@ namespace LabEscape.Core.Tests
     /// <summary>The port's central proof: the fights recorded by the TypeScript engine replay identically here.</summary>
     public class GoldenTests
     {
-        private static string[] Presets() => C.Presets.Select(p => p.Id).ToArray();
+        private static readonly List<GoldenFight> AllFights = Golden.Fights(ContentLoader.FilesFromDirectory(Path.Combine(RepoRoot, "content")), JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", "rooms.json"))));
 
-        private static JToken GoldenFile(string preset) => JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".json")));
+        private static string[] Fights() => AllFights.Select(f => f.Name).ToArray();
 
-        private static (List<GameEvent> Events, GameState State) Replay(JToken record)
+        private static Content ContentOf(string name) => AllFights.First(f => f.Name == name).Content;
+
+        private static JToken GoldenFile(string name) => JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", name + ".json")));
+
+        private static (List<GameEvent> Events, GameState State) Replay(string name, JToken record)
         {
+            var content = ContentOf(name);
             var loadout = record["loadout"]!;
             var maxWaves = record["settings"]?["maxWaves"];
-            var settings = new FightSettings { MaxWaves = maxWaves?.Value<int>() };
-            var game = Engine.NewGame(C, new Loadout(loadout["abilities"]!.Values<string>()!, loadout["upgrades"]!.Values<string>()!), settings);
+            var settings = new FightSettings { MaxWaves = maxWaves?.Value<int>(), Room = record["settings"]?["room"]?.Value<string>() };
+            var game = Engine.NewGame(content, new Loadout(loadout["abilities"]!.Values<string>()!, loadout["upgrades"]!.Values<string>()!), settings);
             var state = game.State;
             var events = new List<GameEvent>(game.Events);
             var i = 0;
             foreach (var token in (JArray)record["commands"]!)
             {
                 i++;
-                var r = Engine.Step(C, state, Command.Parse(token));
+                var r = Engine.Step(content, state, Command.Parse(token));
                 Assert.That(r.Ok, Is.True, $"Command {i} ({token["type"]}) was rejected: {r.Error}");
                 state = r.State;
                 events.AddRange(r.Events);
@@ -36,19 +41,19 @@ namespace LabEscape.Core.Tests
             return (events, state);
         }
 
-        [TestCaseSource(nameof(Presets))]
-        public void RecordWasMadeWithThisEngineAndContent(string preset)
+        [TestCaseSource(nameof(Fights))]
+        public void RecordWasMadeWithThisEngineAndContent(string name)
         {
-            var record = GoldenFile(preset)["record"]!;
+            var record = GoldenFile(name)["record"]!;
             Assert.That(record["engineVersion"]!.Value<string>(), Is.EqualTo(GameStates.EngineVersion));
-            Assert.That(C.Hash, Is.EqualTo(record["contentHash"]!.Value<string>()), "the C# content hash must equal the hash the TypeScript engine recorded");
+            Assert.That(ContentOf(name).Hash, Is.EqualTo(record["contentHash"]!.Value<string>()), "the C# content hash must equal the hash the TypeScript engine recorded");
         }
 
-        [TestCaseSource(nameof(Presets))]
-        public void EventLogIsIdenticalLineByLine(string preset)
+        [TestCaseSource(nameof(Fights))]
+        public void EventLogIsIdenticalLineByLine(string name)
         {
-            var expected = File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".events.jsonl")).TrimEnd('\n').Split('\n');
-            var (events, _) = Replay(GoldenFile(preset)["record"]!);
+            var expected = File.ReadAllText(Path.Combine(RepoRoot, "golden", name + ".events.jsonl")).TrimEnd('\n').Split('\n');
+            var (events, _) = Replay(name, GoldenFile(name)["record"]!);
             for (var i = 0; i < expected.Length && i < events.Count; i++)
             {
                 Assert.That(events[i].ToJson(), Is.EqualTo(expected[i]), $"event {i} differs");
@@ -56,11 +61,11 @@ namespace LabEscape.Core.Tests
             Assert.That(events.Count, Is.EqualTo(expected.Length));
         }
 
-        [TestCaseSource(nameof(Presets))]
-        public void HashesOfEventsAndFinalStateMatch(string preset)
+        [TestCaseSource(nameof(Fights))]
+        public void HashesOfEventsAndFinalStateMatch(string name)
         {
-            var golden = GoldenFile(preset);
-            var (events, state) = Replay(golden["record"]!);
+            var golden = GoldenFile(name);
+            var (events, state) = Replay(name, golden["record"]!);
             var eventArray = new JArray(events.Select(e => JsonIn.Parse(e.ToJson())));
             Assert.That(events.Count, Is.EqualTo(golden["eventCount"]!.Value<int>()));
             Assert.That(Hash.HashJson(eventArray), Is.EqualTo(golden["eventsHash"]!.Value<string>()));
@@ -69,20 +74,21 @@ namespace LabEscape.Core.Tests
             Assert.That(state.Round, Is.EqualTo(golden["rounds"]!.Value<int>()));
         }
 
-        [TestCaseSource(nameof(Presets))]
-        public void TheGoldenCheckPasses(string preset)
+        [TestCaseSource(nameof(Fights))]
+        public void TheGoldenCheckPasses(string name)
         {
-            var expected = JsText.Trim(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".events.jsonl"))).Split('\n');
-            var r = Golden.Verify(C, GoldenFile(preset), expected);
+            var expected = JsText.Trim(File.ReadAllText(Path.Combine(RepoRoot, "golden", name + ".events.jsonl"))).Split('\n');
+            var r = Golden.Verify(ContentOf(name), GoldenFile(name), expected);
             Assert.That(r.Problem ?? "ok", Is.EqualTo("ok"));
         }
 
-        [TestCaseSource(nameof(Presets))]
-        public void RecordingAGoldenWritesTheCommittedFileExactly(string preset)
+        [TestCaseSource(nameof(Fights))]
+        public void RecordingAGoldenWritesTheCommittedFileExactly(string name)
         {
-            var (golden, events) = Golden.Record(C, preset);
-            Assert.That(Hash.Stringify(golden, 2) + "\n", Is.EqualTo(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".json"))));
-            Assert.That(Records.EventsToJsonl(events), Is.EqualTo(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".events.jsonl"))));
+            var fight = AllFights.First(f => f.Name == name);
+            var (golden, events) = Golden.Record(fight.Content, fight.Preset, fight.Settings);
+            Assert.That(Hash.Stringify(golden, 2) + "\n", Is.EqualTo(File.ReadAllText(Path.Combine(RepoRoot, "golden", name + ".json"))));
+            Assert.That(Records.EventsToJsonl(events), Is.EqualTo(File.ReadAllText(Path.Combine(RepoRoot, "golden", name + ".events.jsonl"))));
         }
 
         [Test]

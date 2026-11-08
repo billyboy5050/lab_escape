@@ -1,3 +1,4 @@
+import { roomFor } from '../content/load';
 import type { Content } from '../content/types';
 import { DIR_BY_NAME } from './grid';
 import { parseTile } from '../util/tiles';
@@ -9,12 +10,13 @@ export const ENGINE_VERSION = '0.1.1';
 /** The state before round 1 starts: the player on its start tile, hazards ready, nothing else. */
 export function createInitialState(c: Content, loadout: Loadout, settings: FightSettings = {}): GameState {
   const pdef = c.units['player']!;
+  const room = roomFor(c, settings.room);
   const player: Unit = {
     id: 0,
     def: 'player',
     team: 'player',
     kind: 'player',
-    pos: parseTile(c.map.playerStart),
+    pos: parseTile(room.playerStart),
     hp: pdef.hp,
     maxHp: pdef.hp,
     armor: pdef.armor,
@@ -29,7 +31,7 @@ export function createInitialState(c: Content, loadout: Loadout, settings: Fight
     phase: 'roundStart',
     units: [player],
     objects: [],
-    hazards: c.map.hazards.map((h) => ({
+    hazards: room.hazards.map((h) => ({
       id: h.id,
       def: h.def,
       tiles: h.tiles.map(parseTile),

@@ -96,20 +96,20 @@ namespace LabEscape.Core
         private readonly TerrainDef[] _terrain;
         private readonly string[] _terrainIds;
 
-        public Board(MapFile map)
+        public Board(RoomDef room)
         {
-            Width = map.Width;
-            Height = map.Height;
-            _terrain = new TerrainDef[map.Width * map.Height];
-            _terrainIds = new string[map.Width * map.Height];
+            Width = room.Width;
+            Height = room.Height;
+            _terrain = new TerrainDef[room.Width * room.Height];
+            _terrainIds = new string[room.Width * room.Height];
             var i = 0;
-            for (var y = 0; y < map.Height; y++)
+            for (var y = 0; y < room.Height; y++)
             {
-                for (var x = 0; x < map.Width; x++)
+                for (var x = 0; x < room.Width; x++)
                 {
-                    var id = map.Legend[map.Rows[y][x].ToString()];
+                    var id = room.Legend[room.Rows[y][x].ToString()];
                     _terrainIds[i] = id;
-                    _terrain[i] = map.Terrain[id];
+                    _terrain[i] = room.Terrain[id];
                     i++;
                 }
             }

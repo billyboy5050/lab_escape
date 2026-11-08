@@ -237,7 +237,7 @@ function applyDebug(w: World, cmd: Extract<Command, { type: 'debug' }>): void {
       return;
     }
     case 'forceWave': {
-      if (s.wavesSpawned >= w.c.waves.length) throw new IllegalCommand('No waves left');
+      if (s.wavesSpawned >= w.room.waves.length) throw new IllegalCommand('No waves left');
       w.root('debug: force wave', null, () => {
         const idx = s.wavesSpawned;
         if (s.settings.maxWaves !== undefined && s.settings.maxWaves <= idx) s.settings.maxWaves = idx + 1;

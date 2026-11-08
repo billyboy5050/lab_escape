@@ -41,6 +41,26 @@ namespace LabEscape.Core
 
         public static Content FromDirectory(string directory) => Build(FilesFromDirectory(directory));
 
+        /// <summary>A room from rooms.json with the palette in map.json under its own legend and terrain.</summary>
+        internal static JObject ResolveRoom(JToken map, JToken room)
+        {
+            var output = room is JObject o ? (JObject)o.DeepClone() : new JObject();
+            output["legend"] = Merged(J.Get(map, "legend"), J.Get(room, "legend"));
+            output["terrain"] = Merged(J.Get(map, "terrain"), J.Get(room, "terrain"));
+            return output;
+        }
+
+        private static JObject Merged(params JToken?[] tables)
+        {
+            var output = new JObject();
+            foreach (var table in tables)
+            {
+                if (!(table is JObject o)) continue;
+                foreach (var pair in o.Properties()) output[pair.Name] = pair.Value.DeepClone();
+            }
+            return output;
+        }
+
         /// <summary>Validates the raw content files and builds the lookup tables the engine uses. Throws ContentError.</summary>
         public static Content Build(ContentFiles files)
         {
@@ -402,75 +422,147 @@ namespace LabEscape.Core
                     p.Add("map.json is missing");
                     return p;
                 }
-                var width = J.Get(m, "width");
-                var height = J.Get(m, "height");
-                var rows = ListOrEmpty(J.Get(m, "rows"));
-                if (!J.StrictEquals(new JValue(rows.Count), height)) p.Add($"map has {rows.Count} rows but height {J.Show(height)}");
-                var legend = J.Get(m, "legend");
-                var terrain = J.Get(m, "terrain");
-                for (var y = 0; y < rows.Count; y++)
+                // A tile type's blocking flags. A missing one would read as "does not block" and leave a hole in a wall.
+                void CheckTerrain(JToken? terrain, string plan)
                 {
-                    var row = J.StrOf(rows[y]) ?? "";
-                    if (!J.StrictEquals(new JValue(row.Length), width)) p.Add($"map row {y + 1} has {row.Length} tiles but width {J.Show(width)}");
-                    foreach (var ch in row)
+                    if (!(terrain is JObject table)) return;
+                    foreach (var pair in table.Properties())
                     {
-                        var key = ch.ToString();
-                        var t = J.StrOf(J.Get(legend, key));
-                        if (string.IsNullOrEmpty(t)) p.Add($"map legend has no entry for \"{key}\"");
-                        else if (!J.Truthy(J.Get(terrain, t!))) p.Add($"map terrain has no definition for \"{t}\"");
+                        foreach (var flag in new[] { "blocksMove", "blocksSight", "blocksProjectile" })
+                        {
+                            var v = J.Get(pair.Value, flag);
+                            if (!J.IsBool(v)) p.Add($"{plan} terrain \"{pair.Name}\" needs {flag} to be true or false (got {Hash.Stringify(v)})");
+                        }
                     }
-                }
-                void TileOk(JToken? name, string where)
-                {
-                    var text = J.StrOf(name);
-                    if (text == null || !Tiles.IsName(text))
-                    {
-                        p.Add($"{where} \"{J.Show(name)}\" is not a tile name");
-                        return;
-                    }
-                    var tile = Tiles.Parse(text);
-                    if (tile.X < 0 || tile.Y < 0 || !J.IsNumber(width) || tile.X >= J.Number(width!) || !J.IsNumber(height) || tile.Y >= J.Number(height!)) p.Add($"{where} \"{text}\" is off the map");
-                }
-                TileOk(J.Get(m, "playerStart"), "map.playerStart");
-                foreach (var hz in List(J.Get(m, "hazards"), "map.hazards"))
-                {
-                    var hzId = J.Show(J.Get(hz, "id"));
-                    var defName = J.Get(hz, "def");
-                    if (!hazardIds.Contains(J.StrOf(defName)) || J.StrOf(defName) == null) p.Add($"map hazard {hzId} uses unknown hazard def \"{J.Show(defName)}\"");
-                    // Every hazard is placed, drawn and (for a lane) fired from its first tile, so one with none would crash the board.
-                    if (J.Get(hz, "tiles") is JArray tiles && tiles.Count > 0)
-                    {
-                        foreach (var t in tiles) TileOk(t, $"map hazard {hzId} tile");
-                    }
-                    else p.Add($"map hazard {hzId} needs at least one tile");
-                    // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
-                    var direction = J.Get(hz, "direction");
-                    if (J.Truthy(direction) && !Contains(DirectionNames, direction)) p.Add($"map hazard {hzId} has unknown direction {Hash.Stringify(direction)} (use N, E, S or W)");
-                    var hazardDef = hazardDefs.FirstOrDefault(h => J.StrictEquals(J.Get(h, "id"), defName));
-                    if (hazardDef != null && J.StrOf(J.Get(hazardDef, "shape")) == "lane" && !J.Truthy(direction)) p.Add($"map hazard {hzId} is a lane and needs a direction");
                 }
 
-                // Waves
-                var lastRound = 0.0;
-                var waves = ListOrEmpty(f["waves"]);
-                for (var i = 0; i < waves.Count; i++)
+                // The checks every room passes, the Armory included. plan names the floor plan in messages ("map" for map.json,
+                // "rooms.<id>" for a room in rooms.json), and wavesAt and noWaves do the same for its waves.
+                void CheckRoom(JToken room, JToken? roomWaves, string plan, string wavesAt, string noWaves)
                 {
-                    var wave = waves[i];
-                    var round = J.Get(wave, "round");
-                    Int(round, $"waves[{i}].round", 1);
-                    if (J.IsNumber(round))
+                    var width = J.Get(room, "width");
+                    var height = J.Get(room, "height");
+                    Int(width, $"{plan}.width", 1);
+                    Int(height, $"{plan}.height", 1);
+                    if (J.IsNumber(width) && J.Number(width!) > Tiles.MaxColumns) p.Add($"{plan}.width must be at most {Tiles.MaxColumns}, the columns A to Z (got {J.Show(width)})");
+                    if (J.IsNumber(height) && J.Number(height!) > Tiles.MaxRows) p.Add($"{plan}.height must be at most {Tiles.MaxRows}, the rows 1 to {Tiles.MaxRows} (got {J.Show(height)})");
+                    var legend = J.Get(room, "legend");
+                    var terrain = J.Get(room, "terrain");
+                    var rows = List(J.Get(room, "rows"), $"{plan}.rows").Select(r => J.StrOf(r) ?? "").ToList();
+                    if (!J.StrictEquals(new JValue(rows.Count), height)) p.Add($"{plan} has {rows.Count} rows but height {J.Show(height)}");
+                    for (var y = 0; y < rows.Count; y++)
                     {
-                        if (J.Number(round!) < lastRound) p.Add($"waves[{i}] arrives before the wave listed above it");
-                        lastRound = J.Number(round!);
+                        var row = rows[y];
+                        if (!J.StrictEquals(new JValue(row.Length), width)) p.Add($"{plan} row {y + 1} has {row.Length} tiles but width {J.Show(width)}");
+                        foreach (var ch in row)
+                        {
+                            var key = ch.ToString();
+                            var t = J.StrOf(J.Get(legend, key));
+                            if (string.IsNullOrEmpty(t)) p.Add($"{plan} legend has no entry for \"{key}\"");
+                            else if (!J.Truthy(J.Get(terrain, t!))) p.Add($"{plan} terrain has no definition for \"{t}\"");
+                        }
                     }
-                    foreach (var u in List(J.Get(wave, "units"), $"waves[{i}].units"))
+                    Pos? OnMap(JToken? name, string where)
                     {
-                        var unit = J.StrOf(J.Get(u, "def"));
-                        if (unit == null || !unitIds.Contains(unit)) p.Add($"waves[{i}] uses unknown unit \"{J.Show(J.Get(u, "def"))}\"");
-                        TileOk(J.Get(u, "tile"), $"waves[{i}] spawn tile");
+                        var text = J.StrOf(name);
+                        if (text == null || !Tiles.IsName(text))
+                        {
+                            p.Add($"{where} \"{J.Show(name)}\" is not a tile name");
+                            return null;
+                        }
+                        var tile = Tiles.Parse(text);
+                        if (tile.X < 0 || tile.Y < 0 || !J.IsNumber(width) || tile.X >= J.Number(width!) || !J.IsNumber(height) || tile.Y >= J.Number(height!))
+                        {
+                            p.Add($"{where} \"{text}\" is off the map");
+                            return null;
+                        }
+                        return tile;
+                    }
+                    // A tile a unit is placed on when the fight starts or a wave arrives.
+                    void Standable(JToken? name, string where)
+                    {
+                        var at = OnMap(name, where);
+                        if (at == null) return;
+                        var tile = at.Value;
+                        var ch = tile.Y < rows.Count && tile.X < rows[tile.Y].Length ? rows[tile.Y][tile.X].ToString() : "";
+                        var id = J.StrOf(J.Get(legend, ch));
+                        var def = id == null ? null : J.Get(terrain, id);
+                        if (J.IsBool(J.Get(def, "blocksMove")) && J.Get(def, "blocksMove")!.Value<bool>()) p.Add($"{where} \"{J.Show(name)}\" is on terrain that blocks movement");
+                    }
+                    Standable(J.Get(room, "playerStart"), $"{plan}.playerStart");
+                    var hazardNames = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var hz in List(J.Get(room, "hazards"), $"{plan}.hazards"))
+                    {
+                        var hzName = J.StrOf(J.Get(hz, "id"));
+                        if (string.IsNullOrEmpty(hzName)) p.Add($"{plan} has a hazard with no id");
+                        else if (!hazardNames.Add(hzName!)) p.Add($"{plan} has two hazards with the id \"{hzName}\"");
+                        var hzId = J.Show(J.Get(hz, "id"));
+                        var defName = J.Get(hz, "def");
+                        if (!hazardIds.Contains(J.StrOf(defName)) || J.StrOf(defName) == null) p.Add($"{plan} hazard {hzId} uses unknown hazard def \"{J.Show(defName)}\"");
+                        // Every hazard is placed, drawn and (for a lane) fired from its first tile, so one with none would crash the board.
+                        if (J.Get(hz, "tiles") is JArray tiles && tiles.Count > 0)
+                        {
+                            foreach (var t in tiles) OnMap(t, $"{plan} hazard {hzId} tile");
+                        }
+                        else p.Add($"{plan} hazard {hzId} needs at least one tile");
+                        // A direction that is not N, E, S or W would resolve to nothing, and the first lane shot would crash on it.
+                        var direction = J.Get(hz, "direction");
+                        if (J.Truthy(direction) && !Contains(DirectionNames, direction)) p.Add($"{plan} hazard {hzId} has unknown direction {Hash.Stringify(direction)} (use N, E, S or W)");
+                        var hazardDef = hazardDefs.FirstOrDefault(h => J.StrictEquals(J.Get(h, "id"), defName));
+                        if (hazardDef != null && J.StrOf(J.Get(hazardDef, "shape")) == "lane" && !J.Truthy(direction)) p.Add($"{plan} hazard {hzId} is a lane and needs a direction");
+                    }
+
+                    var lastRound = 0.0;
+                    var waves = ListOrEmpty(roomWaves);
+                    for (var i = 0; i < waves.Count; i++)
+                    {
+                        var wave = waves[i];
+                        var round = J.Get(wave, "round");
+                        Int(round, $"{wavesAt}[{i}].round", 1);
+                        if (J.IsNumber(round))
+                        {
+                            if (J.Number(round!) < lastRound) p.Add($"{wavesAt}[{i}] arrives before the wave listed above it");
+                            lastRound = J.Number(round!);
+                        }
+                        foreach (var u in List(J.Get(wave, "units"), $"{wavesAt}[{i}].units"))
+                        {
+                            var unit = J.StrOf(J.Get(u, "def"));
+                            if (unit == null || !unitIds.Contains(unit)) p.Add($"{wavesAt}[{i}] uses unknown unit \"{J.Show(J.Get(u, "def"))}\"");
+                            Standable(J.Get(u, "tile"), $"{wavesAt}[{i}] spawn tile");
+                        }
+                    }
+                    if (waves.Count == 0) p.Add(noWaves);
+                }
+
+                CheckTerrain(J.Get(m, "terrain"), "map");
+                CheckRoom(m!, f["waves"], "map", "waves", "waves.json has no waves");
+
+                // Rooms beyond the Armory
+                if (f.Root.Property("rooms") != null)
+                {
+                    var roomIds = new HashSet<string?>(StringComparer.Ordinal) { J.StrOf(J.Get(m, "id")) };
+                    var rooms = List(f["rooms"], "rooms");
+                    for (var i = 0; i < rooms.Count; i++)
+                    {
+                        var r2 = rooms[i];
+                        var id = J.StrOf(J.Get(r2, "id"));
+                        if (string.IsNullOrEmpty(id))
+                        {
+                            p.Add($"rooms[{i}] needs an id");
+                            continue;
+                        }
+                        var plan = $"rooms.{id}";
+                        if (!roomIds.Add(id)) p.Add($"rooms has two rooms with the id \"{id}\"");
+                        Int(J.Get(r2, "roundCap"), $"{plan}.roundCap", 1);
+                        foreach (var key in new[] { "legend", "terrain" })
+                        {
+                            var v = J.Get(r2, key);
+                            if (v != null && !(v is JObject)) p.Add($"{plan}.{key} must be an object");
+                        }
+                        CheckTerrain(J.Get(r2, "terrain"), plan);
+                        CheckRoom(ResolveRoom(m!, r2), J.Get(r2, "waves"), plan, $"{plan}.waves", $"{plan} has no waves");
                     }
                 }
-                if (waves.Count == 0) p.Add("waves.json has no waves");
 
                 // Intercom
                 var lineIds = new HashSet<string?>(StringComparer.Ordinal);

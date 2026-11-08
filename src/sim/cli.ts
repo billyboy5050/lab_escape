@@ -2,12 +2,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { defaultContent } from '../content';
-import type { GameEvent } from '../state/types';
+import { defaultContent, defaultContentFiles, roomFor, type ContentFiles, type RoomFile } from '../content';
+import type { FightSettings, GameEvent } from '../state/types';
 import { checkCompatible, replay } from '../telemetry/record';
 import { summarize } from '../telemetry/summary';
 import { contentFor, seedRange, type BatchSpec, type BotKind, type FightRow } from './batch';
-import { recordGolden, verifyGolden, eventsToJsonl, type GoldenFile } from './golden';
+import { goldenFights, recordGolden, verifyGolden, eventsToJsonl, type GoldenFile } from './golden';
 import { parseInteger } from './options';
 import { DEFAULT_PLAYTEST, formatPlaytest, loadTelemetry } from './playtest';
 import { runBatchParallel } from './parallel';
@@ -35,6 +35,8 @@ Options
   --size N         Abilities per random loadout in a sweep (default: the loadout size in rules.json)
   --set PATH=VAL   Content override, repeatable, e.g. --set units.warden.hp=16
   --hold-wave3     Hold back wave 3; clearing wave 2 wins (the first playtest's setup)
+  --rooms FILE     Add the rooms in a JSON file to the content, e.g. golden/rooms.json
+  --room ID        Fight in this room (default: the Armory)
   --csv FILE       Write one row per fight
   --out DIR        Write the report, CSV and winning replays to DIR (default reports/ for presets)
   --record         With golden: re-record the golden replays
@@ -57,6 +59,8 @@ function main(): Promise<void> | void {
       size: { type: 'string' },
       set: { type: 'string', multiple: true },
       'hold-wave3': { type: 'boolean', default: false },
+      rooms: { type: 'string' },
+      room: { type: 'string' },
       csv: { type: 'string' },
       out: { type: 'string' },
       record: { type: 'boolean', default: false },
@@ -79,7 +83,12 @@ function main(): Promise<void> | void {
   if (!['random', 'greedy', 'greedy-naive'].includes(bot)) throw new Error(`Unknown bot "${bot}"`);
   const overrides = parseOverrides(values.set ?? []);
   const seeds = seedRange(parseInteger('from', values.from)!, parseInteger('seeds', values.seeds, { min: 1 }) ?? 1000);
-  const settings = values['hold-wave3'] ? { maxWaves: 2 } : {};
+  const rooms = values.rooms === undefined ? undefined : (JSON.parse(fs.readFileSync(values.rooms, 'utf8')) as RoomFile[]);
+  const files: ContentFiles | undefined = rooms && { ...defaultContentFiles(), rooms };
+  const settings: FightSettings = { ...(values['hold-wave3'] ? { maxWaves: 2 } : {}), ...(values.room === undefined ? {} : { room: values.room }) };
+  // A wrong room ID would otherwise surface once per fight, as a report full of errors.
+  if (values.room !== undefined) roomFor(contentFor(overrides, files), values.room);
+  const inRoom = values.room === undefined ? '' : ` in room ${values.room}`;
   const workers = parseInteger('workers', values.workers, { min: 1 });
   const outDir = values.out;
   const progress = (label: string) => (done: number, total: number) => {
@@ -90,12 +99,12 @@ function main(): Promise<void> | void {
   switch (cmd) {
     case 'batch':
       return (async () => {
-        const spec: BatchSpec = { bot, loadout: { preset: values.preset! }, seeds, overrides, settings };
-        const c = contentFor(overrides);
+        const spec: BatchSpec = { bot, loadout: { preset: values.preset! }, seeds, overrides, rooms, settings };
+        const c = contentFor(overrides, files);
         const t = Date.now();
         const rows = await runBatchParallel(spec, { workers, onProgress: progress(`${values.preset} x ${bot}`) });
         const stats = aggregate(rows, c);
-        const title = `Batch: ${values.preset} preset, ${bot} bot, seeds ${seeds[0]} to ${seeds[seeds.length - 1]}${describeOverrides(overrides)}`;
+        const title = `Batch: ${values.preset} preset, ${bot} bot, seeds ${seeds[0]} to ${seeds[seeds.length - 1]}${inRoom}${describeOverrides(overrides)}`;
         const text = formatReport(title, stats) + `\n\n(${((Date.now() - t) / 1000).toFixed(1)} s, content ${c.hash})`;
         console.log(text);
         reportErrors(rows);
@@ -103,13 +112,13 @@ function main(): Promise<void> | void {
       })();
     case 'presets':
       return (async () => {
-        const c = contentFor(overrides);
+        const c = contentFor(overrides, files);
         const dir = outDir ?? 'reports';
         const lines: string[] = [];
         for (const p of c.presets) {
-          const rows = await runBatchParallel({ bot, loadout: { preset: p.id }, seeds, overrides, settings, keepRecords: true }, { workers, onProgress: progress(`${p.id} x ${bot}`) });
+          const rows = await runBatchParallel({ bot, loadout: { preset: p.id }, seeds, overrides, rooms, settings, keepRecords: true }, { workers, onProgress: progress(`${p.id} x ${bot}`) });
           const stats = aggregate(rows, c);
-          const text = formatReport(`Preset ${p.name}: ${bot} bot, ${seeds.length} seeds${describeOverrides(overrides)}`, stats);
+          const text = formatReport(`Preset ${p.name}: ${bot} bot, ${seeds.length} seeds${inRoom}${describeOverrides(overrides)}`, stats);
           console.log(text);
           reportErrors(rows);
           const win = rows.find((r) => r.outcome === 'win' && r.record);
@@ -125,11 +134,11 @@ function main(): Promise<void> | void {
       })();
     case 'sweep':
       return (async () => {
-        const c = contentFor(overrides);
+        const c = contentFor(overrides, files);
         const size = parseInteger('size', values.size, { min: 1 }) ?? c.rules.loadout.abilities;
-        const rows = await runBatchParallel({ bot, loadout: { sweep: true, size }, seeds, overrides, settings }, { workers, onProgress: progress(`sweep ${size} of ${c.abilityOrder.length}`) });
+        const rows = await runBatchParallel({ bot, loadout: { sweep: true, size }, seeds, overrides, rooms, settings }, { workers, onProgress: progress(`sweep ${size} of ${c.abilityOrder.length}`) });
         const stats = aggregate(rows, c);
-        const text = formatReport(`Loadout sweep: ${size} of ${c.abilityOrder.length} abilities, ${bot} bot, ${seeds.length} random loadouts${describeOverrides(overrides)}`, stats);
+        const text = formatReport(`Loadout sweep: ${size} of ${c.abilityOrder.length} abilities, ${bot} bot, ${seeds.length} random loadouts${inRoom}${describeOverrides(overrides)}`, stats);
         console.log(text);
         reportErrors(rows);
         writeOutputs({ outDir, csv: values.csv, name: `sweep-${size}-${bot}`, rows, text, stats, extra: { 'lift.csv': liftToCsv(stats.lift) } });
@@ -137,13 +146,13 @@ function main(): Promise<void> | void {
     case 'tune':
       return (async () => {
         if (!values.param || !values.values) throw new Error('tune needs --param PATH and --values A,B,C');
-        const out: string[] = [`Tuning ${values.param} on the ${values.preset} preset (${bot} bot, ${seeds.length} seeds each)`];
+        const out: string[] = [`Tuning ${values.param} on the ${values.preset} preset${inRoom} (${bot} bot, ${seeds.length} seeds each)`];
         out.push(`${'value'.padEnd(10)} ${'win rate'.padEnd(26)} rounds(win)  hazard fires  own-damage share`);
         for (const raw of values.values.split(',')) {
           const v = parseValue(raw);
           const o = { ...overrides, [values.param]: v };
-          const c = contentFor(o);
-          const rows = await runBatchParallel({ bot, loadout: { preset: values.preset! }, seeds, overrides: o, settings }, { workers, onProgress: progress(`${values.param}=${raw}`) });
+          const c = contentFor(o, files);
+          const rows = await runBatchParallel({ bot, loadout: { preset: values.preset! }, seeds, overrides: o, rooms, settings }, { workers, onProgress: progress(`${values.param}=${raw}`) });
           const s = aggregate(rows, c);
           // A bad value can break only some seeds; aggregate leaves those out, so the row has to say they happened.
           out.push(...formatTuneRow(String(raw), s, rows.find((r) => r.outcome === 'error')?.error));
@@ -151,31 +160,31 @@ function main(): Promise<void> | void {
         console.log(out.join('\n'));
       })();
     case 'golden': {
-      const c = defaultContent();
       const dir = 'golden';
+      const fights = goldenFights(defaultContentFiles(), JSON.parse(fs.readFileSync(path.join(dir, 'rooms.json'), 'utf8')) as RoomFile[]);
       if (values.record) {
         fs.mkdirSync(dir, { recursive: true });
-        for (const p of c.presets) {
-          const { golden, events } = recordGolden(c, p.id);
-          fs.writeFileSync(path.join(dir, `${p.id}.json`), JSON.stringify(golden, null, 2) + '\n');
-          fs.writeFileSync(path.join(dir, `${p.id}.events.jsonl`), eventsToJsonl(events));
-          console.log(`Recorded golden ${p.id}: ${golden.outcome} in ${golden.rounds} rounds, ${golden.eventCount} events, hash ${golden.eventsHash}`);
+        for (const f of fights) {
+          const { golden, events } = recordGolden(f.content, f.preset, f.settings);
+          fs.writeFileSync(path.join(dir, `${f.name}.json`), JSON.stringify(golden, null, 2) + '\n');
+          fs.writeFileSync(path.join(dir, `${f.name}.events.jsonl`), eventsToJsonl(events));
+          console.log(`Recorded golden ${f.name}: ${golden.outcome} in ${golden.rounds} rounds, ${golden.eventCount} events, hash ${golden.eventsHash}`);
         }
         return;
       }
       let failed = 0;
-      for (const p of c.presets) {
-        const file = path.join(dir, `${p.id}.json`);
+      for (const f of fights) {
+        const file = path.join(dir, `${f.name}.json`);
         if (!fs.existsSync(file)) {
-          console.log(`${p.id}: missing (${file}); run npm run golden:record`);
+          console.log(`${f.name}: missing (${file}); run npm run golden:record`);
           failed++;
           continue;
         }
         const g = JSON.parse(fs.readFileSync(file, 'utf8')) as GoldenFile;
-        const evFile = path.join(dir, `${p.id}.events.jsonl`);
+        const evFile = path.join(dir, `${f.name}.events.jsonl`);
         const expected = fs.existsSync(evFile) ? fs.readFileSync(evFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l) as GameEvent) : undefined;
-        const r = verifyGolden(c, g, expected);
-        console.log(`${p.id}: ${r.ok ? 'ok' : `FAILED - ${r.problem}`}`);
+        const r = verifyGolden(f.content, g, expected);
+        console.log(`${f.name}: ${r.ok ? 'ok' : `FAILED - ${r.problem}`}`);
         if (!r.ok) failed++;
       }
       if (failed) process.exitCode = 1;
@@ -185,7 +194,7 @@ function main(): Promise<void> | void {
       const file = positionals[1];
       if (!file) throw new Error('replay needs a FILE');
       const rec: unknown = JSON.parse(fs.readFileSync(file, 'utf8'));
-      const c = defaultContent();
+      const c = contentFor(undefined, files);
       checkCompatible(c, rec);
       const r = replay(c, rec);
       const s = summarize(r.events, r.state);

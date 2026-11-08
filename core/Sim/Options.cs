@@ -11,7 +11,7 @@ namespace LabEscape.Sim
     /// <summary>The command line, read by the same rules as Node's parseArgs in strict mode.</summary>
     public sealed class ParsedArgs
     {
-        private static readonly string[] Strings = { "bot", "preset", "seeds", "from", "workers", "size", "csv", "out", "informed-from", "informed-attempts", "informed-preset", "param", "values" };
+        private static readonly string[] Strings = { "bot", "preset", "seeds", "from", "workers", "size", "rooms", "room", "csv", "out", "informed-from", "informed-attempts", "informed-preset", "param", "values" };
         private static readonly string[] Repeatable = { "set", "exclude-tester" };
         private static readonly string[] Flags = { "hold-wave3", "record", "include-unlabelled", "help" };
 

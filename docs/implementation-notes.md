@@ -38,6 +38,17 @@ The rules themselves are in the spec. On 2026-10-13 the owner confirmed every re
 - The client was checked by hand in Chrome at desktop sizes, in light and dark themes. The narrow-layout (phone) breakpoint exists but was not playtested.
 - In the isometric view a figure stands up over the tile behind it, and a unit's head can overlap the feet of the unit behind. Pillars and walls fade when they would hide a unit, an object or the hovered tile; units never fade, but every HP bar, chip and badge is drawn above all figures. At phone width the isometric tiles are about half as tall as top-down ones, so they are harder to tap.
 
+## Rooms as data
+
+Since M11 a fight takes place in a room: a floor plan, its hazards, its waves and its round cap, held together as a `RoomDef`. Each fight's settings can name one (`settings.room`), and a fight that names none is in the Armory. The name travels with the replay, and a replay naming a room the content lacks is refused.
+
+- **The Armory stays in its old files until the freeze ends.** Its room is built on load from `map.json`, `waves.json` and `rules.roundCap`. Those files did not change, so neither did the content hash, the golden replays or the committed reports.
+- **Other rooms go in an optional `rooms` list in the content.** Nothing ships in it yet, so `content/rooms.json` does not exist. The list is part of the hash only when present, so adding a room makes old replays stop loading, as any content change does.
+- **A room's `legend` and `terrain` add to the ones in `map.json`.** A room names only the tile types it brings of its own. A void tile for a non-rectangular room is ordinary terrain that blocks everything: no code knows about it.
+- **Rooms are limited to 26 columns and 99 rows,** because tile names are one letter and up to two digits. Validation rejects anything larger. The plan's largest room is 14 wide.
+- **Validation is the same for every room, the Armory included.** Beyond what it checked before, it now rejects a player start or a wave spawn on terrain that blocks movement, which the engine would otherwise have quietly moved, a terrain type with a missing blocking flag, and two hazards with one ID.
+- **Test rooms.** `golden/rooms.json` holds three hand-written rooms: 6×5, 12×12 and a non-rectangular 14×8. They are not game content and carry no balance meaning. Each has a golden replay recorded by the TypeScript, which the C# tests reproduce event for event.
+
 ## The C# rules core
 
 `core/` is the rules core ported to C# (M9). It reads the same content files and must behave exactly as the TypeScript engine does until M13.

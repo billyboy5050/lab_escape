@@ -1,5 +1,6 @@
-import type { Content } from '../content/types';
-import type { GameEvent } from '../state/types';
+import { buildContent } from '../content/load';
+import type { Content, ContentFiles, RoomFile } from '../content/types';
+import type { FightSettings, GameEvent } from '../state/types';
 import { hashJson } from '../util/hash';
 import { checkCompatible, eventsToJsonl, replay, type FightRecord } from '../telemetry/record';
 import { GreedyBot } from './bots';
@@ -23,15 +24,39 @@ export interface GoldenFile {
 
 export const GOLDEN_SEED = 1;
 
+/** The preset that fights the golden rooms: it uses all three kits. */
+export const GOLDEN_ROOM_PRESET = 'hybrid';
+
+/** One golden replay to record or check: each file in golden/ is named after `name`. */
+export interface GoldenFight {
+  name: string;
+  content: Content;
+  preset: string;
+  settings: FightSettings;
+}
+
+/**
+ * Every golden fight: each preset in the Armory, then the golden room preset in each room of golden/rooms.json. The rooms
+ * are not game content. They exist to pin down fights of other sizes, so they join the content only for their own fights.
+ */
+export function goldenFights(files: ContentFiles, rooms: RoomFile[]): GoldenFight[] {
+  const armory = buildContent(files);
+  const withRooms = buildContent({ ...files, rooms });
+  return [
+    ...armory.presets.map((p) => ({ name: p.id, content: armory, preset: p.id, settings: {} })),
+    ...rooms.map((r) => ({ name: `room-${r.id}`, content: withRooms, preset: GOLDEN_ROOM_PRESET, settings: { room: r.id } })),
+  ];
+}
+
 /**
  * The scripted fight for a preset. The hand simulations behind the design document were summaries,
  * not move-by-move logs, so the script is a greedy-bot fight frozen into a command list (spec,
  * Headless simulation).
  */
-export function recordGolden(c: Content, presetId: string): { golden: GoldenFile; events: GameEvent[] } {
+export function recordGolden(c: Content, presetId: string, settings: FightSettings = {}): { golden: GoldenFile; events: GameEvent[] } {
   const p = c.presets.find((x) => x.id === presetId);
   if (!p) throw new Error(`Unknown preset ${presetId}`);
-  const fight = runFight(c, { abilities: p.abilities, upgrades: p.upgrades }, new GreedyBot(GOLDEN_SEED), { meta: { preset: p.id, label: `golden ${p.id}` } });
+  const fight = runFight(c, { abilities: p.abilities, upgrades: p.upgrades }, new GreedyBot(GOLDEN_SEED), { settings, meta: { preset: p.id, label: settings.room ? `golden ${p.id} in ${settings.room}` : `golden ${p.id}` } });
   delete fight.record.meta?.created;
   const rep = replay(c, fight.record);
   return {

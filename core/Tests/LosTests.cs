@@ -9,7 +9,7 @@ namespace LabEscape.Core.Tests
     /// <summary>Ported from tests/los.test.ts.</summary>
     public class LosTests
     {
-        private static readonly Board Board = C.Board;
+        private static readonly Board Board = C.DefaultRoom.Board;
         private static readonly List<Pos> AllTiles = Board.AllTiles();
 
         /// <summary>Sight with a plain trace from a to b (what the spec warns against).</summary>

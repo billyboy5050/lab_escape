@@ -77,9 +77,9 @@ namespace LabEscape.Core
             RunMinionPhase(w);
             RunEnemyPhase(w);
             RunEnvironmentPhase(w);
-            if (w.S.Round >= w.C.Rules.RoundCap)
+            if (w.S.Round >= w.Room.RoundCap)
             {
-                w.EndFight(new Outcome { Result = FightResult.Lose, Cause = $"Round {w.C.Rules.RoundCap} ended with the fight unresolved", Round = w.S.Round });
+                w.EndFight(new Outcome { Result = FightResult.Lose, Cause = $"Round {w.Room.RoundCap} ended with the fight unresolved", Round = w.S.Round });
             }
             StartRound(w, w.S.Round + 1);
         }

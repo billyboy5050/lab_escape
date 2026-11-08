@@ -13,7 +13,7 @@ import { buildContent } from './load';
 import type { Content, ContentFiles } from './types';
 
 export * from './types';
-export { buildContent, validateContent, upgradeAllowed, ContentError } from './load';
+export { buildContent, validateContent, upgradeAllowed, roomFor, ContentError } from './load';
 
 /** Fresh deep copy of the content files, safe to modify (used by tuning sweeps). */
 export function defaultContentFiles(): ContentFiles {

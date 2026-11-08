@@ -125,6 +125,7 @@ The README's [code layout](README.md#code-layout) has the module table. The esse
 - `step(content, state, command)` returns a new state and the events it produced. The engine has no rendering, input, clock or randomness. The client animates the events, and the simulator consumes the same stream.
 - Previews and enemy intents run the same engine on a copy of the state (`src/preview`). The UI never re-implements a rule.
 - Abilities and upgrades are small code behaviours keyed by ID (`src/effects`) that read every number from content. The spec's "Abilities and upgrades in code" explains why this is code and not a data language.
+- A fight takes place in a room: its floor plan, hazards, waves and round cap (`RoomDef`). Rules code reads the fight's room through `w.room`, never `c.map`, `c.waves` or `rules.roundCap`, which exist for the Armory's files and the web client. See [rooms as data](docs/implementation-notes.md#rooms-as-data).
 - Imports point one way: `util` and `content` at the bottom, then `state`, `rules`, `effects` and `ai`, `engine`, then `preview` and `telemetry`, with `sim` and `client` on top. Never import upward; `rules` must not import `engine`, for example.
 - `core/` holds the same rules core, telemetry and simulator in C#, for the move to Unity. Until M13 it must behave exactly as the TypeScript does, so a fix to any of them in one language needs the same fix in the other. Keep `core/Core` to C# 9 and .NET Standard 2.1 with no Unity dependency. Implementation notes say where the two differ on purpose, for the [rules core](docs/implementation-notes.md#the-c-rules-core) and the [simulator](docs/implementation-notes.md#the-c-simulator).
 
@@ -169,7 +170,8 @@ Do not ask about things this file or the docs already answer, or about routine c
 ## Gotchas
 
 - `telemetry/` at the top level is dev-server output and ignored by git; `src/telemetry/` is source.
-- `presets` writes to `reports/` unless given `--out`, even with `--set` overrides or another bot, so an experiment can overwrite the committed reports. Give exploratory runs `--out` with a scratch folder. Per-fight CSVs are ignored by git; text reports, stats JSON, the lift CSV and winning lines are committed.
+- `presets` writes to `reports/` unless given `--out`, even with `--set` overrides, another bot or another room, so an experiment can overwrite the committed reports. Give exploratory runs `--out` with a scratch folder. Per-fight CSVs are ignored by git; text reports, stats JSON, the lift CSV and winning lines are committed.
+- `golden/rooms.json` is hand-written test data, not game content: rooms of other sizes that the golden replays fight in. After editing it, run `npm run golden:record`.
 - A fight that throws writes its command log to `reports/error-seed-<N>.json`. That is a bug repro, not a report: turn it into a test or attach it to the fix, and do not commit it under `reports/`.
 - A test that plays whole bot fights needs `BOT_FIGHT_TIMEOUT_MS` from `tests/helpers.ts` as its timeout. Such tests take a second or two locally but several times that on the CI runner, past Vitest's 5 s default.
 - Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values.

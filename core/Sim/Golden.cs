@@ -7,6 +7,15 @@ using Newtonsoft.Json.Linq;
 
 namespace LabEscape.Sim
 {
+    /// <summary>One golden replay to record or check: each file in golden/ is named after Name.</summary>
+    public sealed class GoldenFight
+    {
+        public string Name = "";
+        public Content Content = null!;
+        public string Preset = "";
+        public FightSettings Settings = new FightSettings();
+    }
+
     public sealed class GoldenCheck
     {
         public string Preset = "";
@@ -22,17 +31,39 @@ namespace LabEscape.Sim
     public static class Golden
     {
         public const long Seed = 1;
+
+        /// <summary>The preset that fights the golden rooms: it uses all three kits.</summary>
+        public const string RoomPreset = "hybrid";
         private const string Note = "Scripted regression fight. Re-record on purpose when content values or rules change: npm run golden:record";
 
         public static string HashEvents(IEnumerable<GameEvent> events) => Hash.HashJson(new JArray(events.Select(e => JsonIn.Parse(e.ToJson()))));
         public static string HashState(GameState state) => Hash.HashJson(JsonIn.Parse(state.ToJson()));
 
+        /// <summary>
+        /// Every golden fight: each preset in the Armory, then the golden room preset in each room of golden/rooms.json. The rooms are
+        /// not game content. They exist to pin down fights of other sizes, so they join the content only for their own fights.
+        /// </summary>
+        public static List<GoldenFight> Fights(ContentFiles files, JToken rooms)
+        {
+            var armory = ContentLoader.Build(files.DeepClone());
+            var extended = files.DeepClone();
+            extended.Root["rooms"] = rooms.DeepClone();
+            var withRooms = ContentLoader.Build(extended);
+            var fights = armory.Presets.Select(p => new GoldenFight { Name = p.Id, Content = armory, Preset = p.Id }).ToList();
+            foreach (var room in (JArray)rooms)
+            {
+                var id = room["id"]!.Value<string>()!;
+                fights.Add(new GoldenFight { Name = "room-" + id, Content = withRooms, Preset = RoomPreset, Settings = new FightSettings { Room = id } });
+            }
+            return fights;
+        }
+
         /// <summary>The scripted fight for a preset: a greedy-bot fight frozen into a command list (spec, Headless simulation).</summary>
-        public static (JObject Golden, List<GameEvent> Events) Record(Content c, string presetId)
+        public static (JObject Golden, List<GameEvent> Events) Record(Content c, string presetId, FightSettings? settings = null)
         {
             var p = c.Presets.FirstOrDefault(x => x.Id == presetId);
             if (p == null) throw new ArgumentException($"Unknown preset {presetId}");
-            var fight = Runner.RunFight(c, new Loadout(p.Abilities, p.Upgrades), new GreedyBot(Seed), meta: new RecordMeta { Preset = p.Id, Label = $"golden {p.Id}" });
+            var fight = Runner.RunFight(c, new Loadout(p.Abilities, p.Upgrades), new GreedyBot(Seed), settings, meta: new RecordMeta { Preset = p.Id, Label = settings?.Room != null ? $"golden {p.Id} in {settings.Room}" : $"golden {p.Id}" });
             var rep = Records.Replay(c, fight.Record);
             var golden = new JObject
             {
