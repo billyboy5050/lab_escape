@@ -38,6 +38,29 @@ The rules themselves are in the spec. On 2026-10-13 the owner confirmed every re
 - The client was checked by hand in Chrome at desktop sizes, in light and dark themes. The narrow-layout (phone) breakpoint exists but was not playtested.
 - In the isometric view a figure stands up over the tile behind it, and a unit's head can overlap the feet of the unit behind. Pillars and walls fade when they would hide a unit, an object or the hovered tile; units never fade, but every HP bar, chip and badge is drawn above all figures. At phone width the isometric tiles are about half as tall as top-down ones, so they are harder to tap.
 
+## The C# rules core
+
+`core/` is the rules core ported to C# (M9). It reads the same content files and must behave exactly as the TypeScript engine does until M13.
+
+**How it was proven (2026-11-08).** The C# content hash equals the hash the TypeScript engine recorded. Each golden replay reproduces its `golden/*.events.jsonl` byte for byte, and its event and final-state hashes match. A one-off comparison then ran 3,150 fights from the TypeScript engine through the C# one: 3,000 random-bot fights over presets and random builds, 150 greedy-bot fights, six content variants and random debug commands. At each of the 47,022 steps it compared the events, frames, state, legal commands, action statuses, move options, intents and a preview, and it also tried 47,484 random or illegal commands and compared the verdict and error text. There were no differences. M10 repeats this at scale with the committed simulator reports.
+
+**JavaScript behaviour the port reproduces**, in case a change touches one of these:
+
+- Insertion-ordered maps are `OrderedMap`. Where the order shows, in hit and move lists and validation messages, a `Dictionary` would be wrong.
+- Sorting uses `Sequences.StableSorted`, because `List.Sort` is not stable and `Array.prototype.sort` is.
+- `structuredClone` is `GameState.Clone`. The classes it does not copy (`SourceRef`, `HazardDecision`, `IntercomEntry`, `Outcome`) must stay unchanged once made.
+- Number formatting, string escaping and key order in the hash and event logs are in `JsText` and `Hash`. Event classes write their fields in the order the TypeScript objects hold them, which is why `maxAmmo` comes before `ammo`.
+- `Tiles.Parse` is written by hand, because a .NET regular expression's `\d` also matches non-ASCII digits.
+
+**Where the two differ on purpose.** No valid fight reaches any of these.
+
+- Content shapes that make `validateContent` throw a `TypeError` (a wave with no `units`, a preset with no `abilities` or `upgrades`, an intercom line with no `trigger`) are reported as problems in C#.
+- `ContentLoader.Build` also rejects values the TypeScript validator does not check, such as an upgrade's unknown damage type or a fractional number in a field the rules treat as whole.
+- `Command.Parse` throws on an unknown command type or debug operation, where the TypeScript `step` does nothing and returns ok.
+- JSON.NET replaces a lone surrogate in a JSON string, so content holding one would hash differently. The hash code itself handles them as JavaScript does.
+
+**Tests not yet ported.** These depend on code that M10 brings across: the telemetry half of the "summaries count HP actually lost" test, the replay-compatibility and fight-session tests, the batch runs, and anything using the greedy bot. `core/Tests/Support/Bots.cs` holds the seeded generator and the random bot until the simulator owns them. Tests of the web client and dev server have no C# counterpart.
+
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
 
 From `npm run sim -- presets --seeds 1000` and `npm run sim -- sweep --seeds 1000`; the full reports are in `reports/`. Rerun them after any rule or content change and update this section with the new figures.

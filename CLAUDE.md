@@ -51,6 +51,7 @@ Each fact has one home. Link to it rather than copying it.
 | Quick balance check while iterating (prints only) | `npm run sim -- batch --preset hybrid --seeds 100` | seconds |
 | Re-record the golden replays | `npm run golden:record` | |
 | Playtest metrics from saved telemetry | `npm run sim -- telemetry [DIR]` | seconds |
+| C# rules core: build and test (needs the .NET SDK; `brew install dotnet` on a Mac) | `dotnet test core/Tests` | seconds |
 
 Times are for an 8-core machine.
 
@@ -96,6 +97,7 @@ These rules are mandatory. `main` is always green and changes only through merge
 A pull request is ready for review when every line that applies is true.
 
 - `npm run build` and `npm test` pass. CI runs both on every pull request.
+- **`core/` changed:** `dotnet test core/Tests` passes. CI does not run it until M10.
 - New or changed rules have tests, and the debug overlay can explain any new behaviour (spec, "Rules for every milestone").
 - No number is hard-coded in logic. Values live in `content/`, and any field the code reads with `!` is listed in `src/content/required.ts`.
 - **Content changed:** every generated file is regenerated (see "Regenerating generated files"), and the simulator figures in the implementation notes are updated if they moved.
@@ -122,6 +124,7 @@ The README's [code layout](README.md#code-layout) has the module table. The esse
 - Previews and enemy intents run the same engine on a copy of the state (`src/preview`). The UI never re-implements a rule.
 - Abilities and upgrades are small code behaviours keyed by ID (`src/effects`) that read every number from content. The spec's "Abilities and upgrades in code" explains why this is code and not a data language.
 - Imports point one way: `util` and `content` at the bottom, then `state`, `rules`, `effects` and `ai`, `engine`, then `preview` and `telemetry`, with `sim` and `client` on top. Never import upward; `rules` must not import `engine`, for example.
+- `core/` holds the same rules core in C#, for the move to Unity. Until M13 it must behave exactly as the TypeScript does, so a fix to the rules core in one language needs the same fix in the other. Keep `core/Core` to C# 9 and .NET Standard 2.1 with no Unity dependency. [Implementation notes](docs/implementation-notes.md#the-c-rules-core) say where the two differ on purpose.
 
 ## Invariants
 
