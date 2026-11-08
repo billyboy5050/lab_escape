@@ -524,7 +524,7 @@ namespace LabEscape.Core
         public static bool IsNullish(JToken? t) => t == null || t.Type == JTokenType.Null;
         public static bool IsBool(JToken? t) => t != null && t.Type == JTokenType.Boolean;
         public static bool IsNumber(JToken? t) => t != null && (t.Type == JTokenType.Integer || t.Type == JTokenType.Float);
-        public static double Number(JToken t) => t.Value<double>();
+        public static double Number(JToken t) => Hash.ToDouble((JValue)t);
         public static bool IsFinite(JToken t) => !double.IsNaN(Number(t)) && !double.IsInfinity(Number(t));
         public static bool IsInteger(JToken? t) => IsNumber(t) && IsFinite(t!) && Math.Floor(Number(t!)) == Number(t!);
         public static string? StrOf(JToken? t) => t != null && t.Type == JTokenType.String ? t.Value<string>() : null;

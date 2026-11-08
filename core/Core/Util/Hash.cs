@@ -73,9 +73,14 @@ namespace LabEscape.Core
             }
         }
 
-        private static double ToDouble(JValue value)
+        /// <summary>
+        /// The value as JSON.parse would hold it. An integer too long for a long arrives as a BigInteger, and the explicit
+        /// conversion to double truncates where JSON.parse rounds, so it goes through the decimal text instead.
+        /// </summary>
+        internal static double ToDouble(JValue value)
         {
-            return value.Value is BigInteger big ? (double)big : Convert.ToDouble(value.Value, CultureInfo.InvariantCulture);
+            if (value.Value is BigInteger big) return double.Parse(big.ToString(CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture);
+            return Convert.ToDouble(value.Value, CultureInfo.InvariantCulture);
         }
 
         private static void WriteObject(StringBuilder sb, JObject obj, bool sortKeys)
