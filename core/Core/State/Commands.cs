@@ -41,7 +41,7 @@ namespace LabEscape.Core
                 case "pickUpMine":
                     return new PickUpMineCommand(J.StrOf(J.Get(token, "target")) ?? "");
                 case "redeploy":
-                    return new RedeployCommand(J.Get(token, "drone")?.Value<int>() ?? -1, J.StrOf(J.Get(token, "target")) ?? "");
+                    return new RedeployCommand(WholeOr(J.Get(token, "drone"), -1), J.StrOf(J.Get(token, "target")) ?? "");
                 case "endTurn":
                     return new EndTurnCommand();
                 case "debug":
@@ -51,15 +51,18 @@ namespace LabEscape.Core
             }
         }
 
+        private static int WholeOr(JToken? token, int fallback) => J.IsInteger(token) ? (int)J.Number(token!) : fallback;
+        private static double NumberOr(JToken? token, double fallback) => J.IsNumber(token) ? J.Number(token!) : fallback;
+
         private static Command ParseDebug(JToken token)
         {
             var op = J.StrOf(J.Get(token, "op"));
             switch (op)
             {
                 case "setHp":
-                    return new DebugSetHp(J.Get(token, "unit")?.Value<int>() ?? -1, J.Get(token, "value")?.Value<double>() ?? 0);
+                    return new DebugSetHp(WholeOr(J.Get(token, "unit"), -1), NumberOr(J.Get(token, "value"), 0));
                 case "setAp":
-                    return new DebugSetAp(J.Get(token, "ap")?.Value<double>() ?? 0, J.Get(token, "movement")?.Value<double>());
+                    return new DebugSetAp(NumberOr(J.Get(token, "ap"), 0), J.IsNumber(J.Get(token, "movement")) ? J.Number(J.Get(token, "movement")!) : (double?)null);
                 case "spawn":
                     return new DebugSpawn(J.StrOf(J.Get(token, "def")) ?? "", J.StrOf(J.Get(token, "target")) ?? "");
                 case "forceWave":

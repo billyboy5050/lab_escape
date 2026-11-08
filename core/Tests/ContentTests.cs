@@ -365,6 +365,31 @@ namespace LabEscape.Core.Tests
             Assert.That(Problems(x => UpgradeOf(x, "T1_piercing_rounds")["requires"]!["any"] = new JArray("sidearm", "railgun")), Is.EqualTo(new[] { "upgrades.T1_piercing_rounds requires unknown ability \"railgun\"" }));
         }
 
+        private static IEnumerable<object[]> ShapesTheTypeScriptValidatorCrashesOn()
+        {
+            yield return new object[] { (Action<ContentFiles>)(x => ((JObject)x["waves"]![0]!).Remove("units")), "waves[0].units must be a list" };
+            yield return new object[] { (Action<ContentFiles>)(x => ((JObject)x["presets"]![0]!).Remove("abilities")), "presets.tech.abilities must be a list" };
+            yield return new object[] { (Action<ContentFiles>)(x => ((JObject)x["presets"]![0]!).Remove("upgrades")), "presets.tech.upgrades must be a list" };
+            yield return new object[] { (Action<ContentFiles>)(x => ((JObject)x["intercom"]!["lines"]![0]!).Remove("trigger")), "intercom line \"round1\" needs a trigger" };
+        }
+
+        // Not in the TypeScript tests: these inputs throw a TypeError from validateContent there. Reporting them is invariant 3.
+        [TestCaseSource(nameof(ShapesTheTypeScriptValidatorCrashesOn))]
+        public void ReportsAMissingListOrBlockThatRulesReadWithoutAFallback(Action<ContentFiles> edit, string problem)
+        {
+            var f = Edited(edit);
+            Assert.That(ContentLoader.Validate(f), Does.Contain(problem));
+            Assert.Throws<ContentError>(() => ContentLoader.Build(f));
+        }
+
+        [Test]
+        public void AValueThatValidationDoesNotCheckIsStillRejectedAsContentError()
+        {
+            var f = Edited(x => UpgradeOf(x, "T4_grapple_pin")["damageType"] = "plasma");
+            Assert.That(ContentLoader.Validate(f), Is.Empty);
+            Assert.Throws<ContentError>(() => ContentLoader.Build(f));
+        }
+
         [Test]
         public void AnOverrideChangesTheHashAndLeavesTheSourceFilesAlone()
         {

@@ -68,7 +68,12 @@ namespace LabEscape.Core
         private static string? OptStr(JToken? o, string key) => J.StrOf(J.Get(o, key));
         private static bool Flag(JToken? o, string key) => J.Truthy(J.Get(o, key));
 
-        private static T Enum<T>(JToken? o, params string[] path) where T : struct, Enum => Names.Parse<T>(Str(o, path));
+        private static T Enum<T>(JToken? o, params string[] path) where T : struct, Enum
+        {
+            var name = Str(o, path);
+            if (!Names.IsName<T>(name)) throw Bad($"{string.Join(".", path)} has unknown value \"{name}\"");
+            return Names.Parse<T>(name);
+        }
 
         private static T? OptEnum<T>(JToken? o, string key) where T : struct, Enum => J.IsNullish(J.Get(o, key)) ? (T?)null : Enum<T>(o, key);
 

@@ -46,7 +46,15 @@ namespace LabEscape.Core
         {
             var problems = Validate(files);
             if (problems.Count > 0) throw new ContentError(problems);
-            return Mapper.Map(files);
+            try
+            {
+                return Mapper.Map(files);
+            }
+            catch (Exception e) when (!(e is ContentError))
+            {
+                // Whatever validation did not name, a hot reload must still reject it and keep the old values.
+                throw new ContentError(new[] { "Content could not be read: " + e.Message });
+            }
         }
 
         /// <summary>Applies dotted-path overrides such as {"units.warden.hp", 16} to a copy of the files, in the order given.</summary>
@@ -455,7 +463,7 @@ namespace LabEscape.Core
                         if (J.Number(round!) < lastRound) p.Add($"waves[{i}] arrives before the wave listed above it");
                         lastRound = J.Number(round!);
                     }
-                    foreach (var u in ListOrEmpty(J.Get(wave, "units")))
+                    foreach (var u in List(J.Get(wave, "units"), $"waves[{i}].units"))
                     {
                         var unit = J.StrOf(J.Get(u, "def"));
                         if (unit == null || !unitIds.Contains(unit)) p.Add($"waves[{i}] uses unknown unit \"{J.Show(J.Get(u, "def"))}\"");
@@ -472,6 +480,7 @@ namespace LabEscape.Core
                     var shown = J.Show(J.Get(l, "id"));
                     if (lineIds.Contains(id)) p.Add($"intercom line \"{shown}\" is defined twice");
                     lineIds.Add(id);
+                    if (!(J.Get(l, "trigger") is JObject)) p.Add($"intercom line \"{shown}\" needs a trigger");
                     var def = J.Get(l, "trigger", "def");
                     if (J.Truthy(def) && !unitIds.Contains(J.StrOf(def))) p.Add($"intercom line \"{shown}\" names unknown unit \"{J.Show(def)}\"");
                 }
@@ -480,8 +489,8 @@ namespace LabEscape.Core
                 foreach (var pr in List(f["presets"], "presets"))
                 {
                     var prId = J.Show(J.Get(pr, "id"));
-                    var abilities = ListOrEmpty(J.Get(pr, "abilities"));
-                    var chosenUpgrades = ListOrEmpty(J.Get(pr, "upgrades"));
+                    var abilities = List(J.Get(pr, "abilities"), $"presets.{prId}.abilities");
+                    var chosenUpgrades = List(J.Get(pr, "upgrades"), $"presets.{prId}.upgrades");
                     foreach (var a in abilities)
                     {
                         if (!abilityIds.Contains(J.StrOf(a))) p.Add($"preset {prId} uses unknown ability \"{J.Show(a)}\"");
