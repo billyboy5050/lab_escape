@@ -1,3 +1,4 @@
+import { roomFor } from '../content/load';
 import type { Content } from '../content/types';
 import { grappleSelfPath } from '../effects/abilities';
 import { classify, hazardDamageToPlayer, hazardTargets } from '../ai/hazards';
@@ -176,7 +177,7 @@ export function scoreState(c: Content, s: GameState): number {
   let v = p.hp * 100;
   if (p.statuses.poison) v -= p.statuses.poison.remaining * rs.poison.damage * 90;
   if (p.statuses.parasite) v -= p.statuses.parasite.remaining * rs.parasite.damage * 90;
-  const board = boardFor(c.map);
+  const board = boardFor(roomFor(c, s.settings.room));
   for (const u of s.units) {
     if (u.dead) continue;
     if (u.team === 'enemy') {

@@ -1,4 +1,4 @@
-import { buildContent, defaultContentFiles, withOverrides, type Content, type ContentFiles } from '../content';
+import { buildContent, defaultContentFiles, withOverrides, type Content, type ContentFiles, type RoomFile } from '../content';
 import { upgradeAllowed } from '../content/load';
 import type { FightSettings, Loadout } from '../state/types';
 import type { Category, FightSummary } from '../telemetry/summary';
@@ -16,6 +16,8 @@ export interface BatchSpec {
   seeds: number[];
   /** Tuning overrides applied to the content files, e.g. {"units.warden.hp": 16}. */
   overrides?: Record<string, unknown>;
+  /** Rooms to add to the content, for fights whose settings name one of them. */
+  rooms?: RoomFile[];
   settings?: FightSettings;
   /** Keep each fight's command log in the rows (for saving winning lines). */
   keepRecords?: boolean;
@@ -52,6 +54,11 @@ export function contentFor(overrides?: Record<string, unknown>, files: ContentFi
   return buildContent(overrides && Object.keys(overrides).length ? withOverrides(files, overrides) : files);
 }
 
+/** The content a batch runs on: the default files, with its overrides and any rooms it adds. */
+export function contentOfBatch(spec: Pick<BatchSpec, 'overrides' | 'rooms'>): Content {
+  return contentFor(spec.overrides, spec.rooms ? { ...defaultContentFiles(), rooms: spec.rooms } : undefined);
+}
+
 export function makeBot(kind: BotKind, seed: number): Bot {
   if (kind === 'random') return new RandomBot(seed);
   return new GreedyBot(seed, { heedCues: kind === 'greedy' });
@@ -80,7 +87,7 @@ function loadoutFor(c: Content, spec: BatchSpec, seed: number): { loadout: Loado
 }
 
 /** Runs a batch on the current thread. Rows come back in seed order; the same spec always gives the same rows. */
-export function runBatch(spec: BatchSpec, c: Content = contentFor(spec.overrides)): FightRow[] {
+export function runBatch(spec: BatchSpec, c: Content = contentOfBatch(spec)): FightRow[] {
   const rows: FightRow[] = [];
   for (const seed of spec.seeds) {
     const { loadout, preset } = loadoutFor(c, spec, seed);

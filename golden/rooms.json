@@ -1,0 +1,91 @@
+[
+  {
+    "id": "closet",
+    "name": "Closet (6x5, smaller than the Armory)",
+    "width": 6,
+    "height": 5,
+    "rows": [
+      "..S..#",
+      "......",
+      "..P...",
+      ".v....",
+      ".@...G"
+    ],
+    "playerStart": "B5",
+    "hazards": [
+      { "id": "gun", "def": "wall_gun", "tiles": ["F5"], "direction": "W" },
+      { "id": "vent", "def": "gas_vent", "tiles": ["B4"] }
+    ],
+    "waves": [
+      { "round": 1, "units": [ { "def": "guard", "tile": "E1" }, { "def": "guard", "tile": "A1" } ] },
+      { "round": 3, "units": [ { "def": "medic", "tile": "D1" }, { "def": "guard", "tile": "F2" } ] }
+    ],
+    "roundCap": 12
+  },
+  {
+    "id": "hall",
+    "name": "Hall (12x12, waves from several directions)",
+    "width": 12,
+    "height": 12,
+    "rows": [
+      ".....SS.....",
+      "............",
+      "..P......P..",
+      "............",
+      "....v..v....",
+      "G...zz.....#",
+      "...........#",
+      "..P....P....",
+      "............",
+      "..v......v..",
+      "............",
+      ".....@......"
+    ],
+    "playerStart": "F12",
+    "hazards": [
+      { "id": "gun", "def": "wall_gun", "tiles": ["A6"], "direction": "E" },
+      { "id": "panel", "def": "panel_grid", "tiles": ["E6", "F6"] },
+      { "id": "vent_e5", "def": "gas_vent", "tiles": ["E5"] },
+      { "id": "vent_h5", "def": "gas_vent", "tiles": ["H5"] },
+      { "id": "vent_c10", "def": "gas_vent", "tiles": ["C10"] },
+      { "id": "vent_j10", "def": "gas_vent", "tiles": ["J10"] }
+    ],
+    "waves": [
+      { "round": 1, "units": [ { "def": "guard", "tile": "C1" }, { "def": "guard", "tile": "J1" }, { "def": "guard", "tile": "A9" }, { "def": "medic", "tile": "F2" } ] },
+      { "round": 4, "units": [ { "def": "guard", "tile": "L3" }, { "def": "guard", "tile": "A3" }, { "def": "flamer", "tile": "K11" } ] },
+      { "round": 7, "units": [ { "def": "warden", "tile": "E2" }, { "def": "guard", "tile": "D2" }, { "def": "guard", "tile": "H2" } ] }
+    ],
+    "roundCap": 24
+  },
+  {
+    "id": "hallways",
+    "name": "Hallways (14x8, not rectangular)",
+    "width": 14,
+    "height": 8,
+    "rows": [
+      "____....______",
+      "____....______",
+      "____.P..__....",
+      "..............",
+      "G......zz.....",
+      "____.P..__....",
+      "____....______",
+      "____.@..______"
+    ],
+    "legend": { "_": "void" },
+    "terrain": {
+      "void": { "name": "Void", "blocksMove": true, "blocksSight": true, "blocksProjectile": true }
+    },
+    "playerStart": "F8",
+    "hazards": [
+      { "id": "gun", "def": "wall_gun", "tiles": ["A5"], "direction": "E" },
+      { "id": "panel", "def": "panel_grid", "tiles": ["H5", "I5"] }
+    ],
+    "waves": [
+      { "round": 1, "units": [ { "def": "guard", "tile": "N4" }, { "def": "guard", "tile": "A4" }, { "def": "guard", "tile": "E1" } ] },
+      { "round": 4, "units": [ { "def": "guard", "tile": "M3" }, { "def": "flamer", "tile": "N5" }, { "def": "medic", "tile": "L6" } ] },
+      { "round": 7, "units": [ { "def": "warden", "tile": "H1" }, { "def": "guard", "tile": "G2" } ] }
+    ],
+    "roundCap": 24
+  }
+]

@@ -151,6 +151,23 @@ export interface MapFile {
 
 export interface WaveDef { round: number; units: { def: string; tile: string }[] }
 
+/**
+ * A room as written in content/rooms.json: its floor plan, hazards, waves and round cap. Its legend and terrain are
+ * optional and add to the palette in map.json, so a room only names the tile types it brings of its own.
+ */
+export interface RoomFile extends Omit<MapFile, 'legend' | 'terrain'> {
+  legend?: Record<string, string>;
+  terrain?: Record<string, TerrainDef>;
+  waves: WaveDef[];
+  roundCap: number;
+}
+
+/** A room ready to fight in: everything that differs from one fight's location to another's. */
+export interface RoomDef extends MapFile {
+  waves: WaveDef[];
+  roundCap: number;
+}
+
 export interface IntercomTrigger {
   type: 'roundStart' | 'hazardPrimed' | 'hazardHitsPlayer' | 'hazardHitsSoldier' | 'unitDied' | 'hpBelow';
   round?: number;
@@ -173,6 +190,8 @@ export interface ContentFiles {
   waves: WaveDef[];
   intercom: IntercomDef;
   presets: PresetDef[];
+  /** Rooms beyond the Armory. Hashed only when present, so the Armory's content hash does not depend on this field. */
+  rooms?: RoomFile[];
 }
 
 export interface Content {
@@ -185,6 +204,11 @@ export interface Content {
   upgrades: Record<string, UpgradeDef>;
   upgradeOrder: string[];
   hazardDefs: Record<string, HazardDef>;
+  /** Every room by ID, the Armory first. Fights find theirs with roomFor. */
+  rooms: Record<string, RoomDef>;
+  /** The room a fight takes place in when its settings name none: the Armory, built from map.json, waves.json and rules.roundCap. */
+  defaultRoom: RoomDef;
+  /** The Armory's map and waves, for the web client, which plays no other room. Rules code reads the fight's room instead. */
   map: MapFile;
   waves: WaveDef[];
   intercom: IntercomDef;

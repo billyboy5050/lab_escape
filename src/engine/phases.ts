@@ -72,8 +72,8 @@ export function endTurn(w: World): void {
   runMinionPhase(w);
   runEnemyPhase(w);
   runEnvironmentPhase(w);
-  if (w.s.round >= w.c.rules.roundCap) {
-    w.endFight({ result: 'lose', cause: `Round ${w.c.rules.roundCap} ended with the fight unresolved`, round: w.s.round });
+  if (w.s.round >= w.room.roundCap) {
+    w.endFight({ result: 'lose', cause: `Round ${w.room.roundCap} ended with the fight unresolved`, round: w.s.round });
   }
   startRound(w, w.s.round + 1);
 }
