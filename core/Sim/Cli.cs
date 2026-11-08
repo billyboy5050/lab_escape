@@ -77,7 +77,7 @@ Options
         {
             var a = ParsedArgs.Parse(args);
             var cmd = a.Positionals.FirstOrDefault();
-            if (cmd == null || a.Flag("help"))
+            if (string.IsNullOrEmpty(cmd) || a.Flag("help"))
             {
                 Console.WriteLine(Help);
                 return 0;
@@ -96,14 +96,16 @@ Options
                 Workers = ClampToInt(Options.ParseInteger("workers", a.Value("workers"), 1)),
                 Out = a.Value("out"),
                 Csv = a.Value("csv"),
-                Size = ClampToInt(Options.ParseInteger("size", a.Value("size"), 1)),
                 Files = ContentLoader.FilesFromDirectory("content"),
             };
             switch (cmd)
             {
                 case "batch": RunBatchCommand(opts); return 0;
                 case "presets": RunPresets(opts, opts.Out ?? "reports", Console.Out); return 0;
-                case "sweep": RunSweep(opts, opts.Out, Console.Out); return 0;
+                case "sweep":
+                    opts.Size = ClampToInt(Options.ParseInteger("size", a.Value("size"), 1));
+                    RunSweep(opts, opts.Out, Console.Out);
+                    return 0;
                 case "tune": RunTune(opts, a.Value("param"), a.Value("values")); return 0;
                 case "golden": return RunGolden(opts, a.Flag("record"));
                 case "replay": RunReplay(opts, a.Positionals.ElementAtOrDefault(1)); return 0;

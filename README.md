@@ -173,11 +173,11 @@ Imports point one way: `util` and `content` at the bottom, then `state`, `rules`
 
 Tests are in `tests/` (Vitest): line of sight and its symmetry, combat and timers, the value rule case by case, enemies and waves, both kits, every upgrade, the chain rule, intercom, previews matching results over 100 random states, intents matching the real end of turn, replay determinism and file checks, undo, golden replays and batch reproducibility, plus content validation, CLI options, reports and statistics, telemetry paths, saved preferences, the client's shortcut and formatting helpers, the isometric board's projection, draw order, fading and click boxes, and the rules sheet against the content.
 
-CI (`.github/workflows/ci.yml`) runs the build and the tests on every pull request.
+CI (`.github/workflows/ci.yml`) runs the build and the tests on every pull request, then the C# tests and the C# simulator's conformance check.
 
-## C# rules core
+## C# core and simulator
 
-`core/` is the port of the rules core to plain C#, the first step of moving the game to Unity ([phase plan](docs/phase-2.md#the-move-to-unity)). Nothing in the web game uses it. It reads the same `content/*.json`, and until M13 the TypeScript engine stays authoritative.
+`core/` is the port of the rules core, telemetry and simulator to plain C#, the first steps of moving the game to Unity ([phase plan](docs/phase-2.md#the-move-to-unity)). Nothing in the web game uses it. It reads the same `content/*.json`, and until M13 the TypeScript stays authoritative.
 
 Needs the .NET SDK (`brew install dotnet` on a Mac).
 
@@ -185,9 +185,22 @@ Needs the .NET SDK (`brew install dotnet` on a Mac).
 dotnet test core/Tests
 ```
 
+The simulator has the same commands, options and report files as `npm run sim`, and runs about twice as fast:
+
+```bash
+dotnet run --project core/Sim -c Release -- batch --preset hybrid --seeds 100
+```
+
+Its `conformance` command regenerates every committed report and compares each with its file, byte for byte. It is the proof that the port matches, and CI runs it:
+
+```bash
+dotnet run --project core/Sim -c Release -- conformance
+```
+
 | Folder | What it is |
 | --- | --- |
 | `core/Core` | The library: one namespace, `LabEscape.Core`, with a folder for each module in `src/`. It targets .NET Standard 2.1 and C# 9, the level Unity's LTS compiles, and has no Unity dependency |
-| `core/Tests` | NUnit tests: the rule tests from `tests/`, the golden replays and the hash vectors |
+| `core/Sim` | The simulator, on the library: bots, batches, reports, golden replays and playtest metrics (`src/sim`), as a console tool |
+| `core/Tests` | NUnit tests: the rule, telemetry and simulator tests from `tests/`, the golden replays and the hash vectors |
 
 The same names are used on both sides, with C# capitalisation: `step` is `Engine.Step`, `newGame` is `Engine.NewGame`, `previewCommand` is `Previews.PreviewCommand`. `GameObject` is `BoardObject` and the `Debug` event is `DebugEvent`, so they cannot clash with Unity's types.
