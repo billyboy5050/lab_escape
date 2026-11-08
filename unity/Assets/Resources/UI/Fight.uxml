@@ -62,7 +62,7 @@
                         <ui:Label class="panel-title" text="Intercom" />
                         <ui:Button name="open-log" class="btn small" text="Log [L]" focusable="false" />
                     </ui:VisualElement>
-                    <ui:Label name="intercom" class="intercom" />
+                    <ui:Label name="intercom" class="intercom-text" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel">
                     <ui:Label name="info-title" class="panel-title" text="Scanner" />

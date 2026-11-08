@@ -46,8 +46,8 @@ namespace LabEscape.Client
             b.Box(new Vector3(-edge, -0.34f, -(h2 + edge)), new Vector3(w + edge, -0.14f, edge), Palette.Frame);
             b.Box(new Vector3(-edge, -0.14f, 0f), new Vector3(w + edge, BackWall, edge), Palette.WallFace);
             b.Box(new Vector3(-edge, -0.14f, -h2), new Vector3(0f, BackWall, 0f), Palette.WallFace);
-            b.Box(new Vector3(0f, 0.74f, 0f), new Vector3(w, 0.79f, 0.02f), Palette.Accent);
-            b.Box(new Vector3(-0.02f, 0.74f, -h2), new Vector3(0f, 0.79f, 0f), Palette.Accent);
+            b.Box(new Vector3(0f, 0.74f, -0.02f), new Vector3(w, 0.79f, 0.01f), Palette.Accent);
+            b.Box(new Vector3(-0.01f, 0.74f, -h2), new Vector3(0.02f, 0.79f, 0f), Palette.Accent);
             b.Box(new Vector3(w, -0.14f, -(h2 + edge)), new Vector3(w + edge, 0.05f, 0f), Palette.FrameHi);
             b.Box(new Vector3(0f, -0.14f, -(h2 + edge)), new Vector3(w, 0.05f, -h2), Palette.FrameHi);
 

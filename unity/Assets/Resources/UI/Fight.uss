@@ -82,7 +82,7 @@
     flex-basis: 0;
     min-width: 92px;
     max-width: 150px;
-    height: 58px;
+    height: 66px;
     margin: 0 4px 4px 0;
     padding: 4px 6px;
     background-color: var(--panel-2);
@@ -98,11 +98,10 @@
 .action-btn.alien { border-left-color: #1fc28a; border-left-width: 3px; }
 .action-btn.selected { background-color: #16413c; border-color: var(--move); }
 .action-btn:disabled { opacity: 0.55; }
-.ab-top { flex-direction: row; justify-content: space-between; width: 100%; }
+.ab-top { flex-direction: row; justify-content: space-between; width: 100%; flex-shrink: 0; }
 .ab-name { font-size: 13px; -unity-font-style: bold; padding: 0; white-space: normal; flex-shrink: 1; }
 .ab-key { font-size: 11px; color: var(--ink-3); padding: 0; margin-left: 4px; }
-.ab-cost { font-size: 11px; color: var(--amber); padding: 0; }
-.ab-why { font-size: 10px; color: var(--ink-2); padding: 0; white-space: normal; }
+.ab-cost { font-size: 10px; color: var(--amber); padding: 0; white-space: normal; flex-shrink: 0; }
 
 .controls { flex-direction: row; align-items: center; }
 .btn {
@@ -137,7 +136,7 @@
 .seg-btn.on { background-color: var(--accent); color: #03201b; -unity-font-style: bold; }
 
 /* Side column */
-.intercom { color: var(--amber); white-space: normal; min-height: 54px; padding: 0; }
+.intercom-text { color: var(--amber); white-space: normal; min-height: 54px; padding: 0; }
 .info-body { min-height: 100px; }
 .info-line { white-space: normal; padding: 1px 0; color: var(--ink); }
 .info-line.head { -unity-font-style: bold; }
@@ -157,9 +156,9 @@
 /* Banners and flashes */
 .banner {
     position: absolute;
-    top: 8%;
-    padding: 6px 42px;
-    font-size: 32px;
+    top: 1%;
+    padding: 4px 34px;
+    font-size: 24px;
     -unity-font-style: bold;
     letter-spacing: 3px;
     color: var(--ink);
@@ -171,14 +170,14 @@
 .banner.minion { border-color: #56b4e9; }
 .banner.enemy { border-color: #ff6b1f; color: #ffc9a8; }
 .banner.environment { border-color: var(--amber); color: #ffe1a3; }
-.banner.alert { top: 20%; border-color: var(--danger); color: var(--danger); }
+.banner.alert { top: 9%; border-color: var(--danger); color: var(--danger); }
 .flash { opacity: 0; transition-property: opacity; transition-duration: 0.45s; }
 .flash.on { opacity: 1; transition-duration: 0s; }
 .alarm { background-color: rgba(255, 176, 32, 0.16); }
 .hurt { border-width: 26px; border-color: rgba(255, 60, 40, 0.5); }
 .toast {
     position: absolute;
-    bottom: 136px;
+    bottom: 146px;
     left: 30%;
     right: 40%;
     -unity-text-align: middle-center;
@@ -232,7 +231,7 @@
 .hp-seg.full.low { background-color: var(--danger); }
 .hp-fill { height: 100%; background-color: var(--good); }
 .hp-fill.low { background-color: var(--danger); }
-.hp-number { font-size: 12px; -unity-font-style: bold; color: var(--ink); padding: 0; margin-left: 4px; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
+.hp-number { font-size: 13px; -unity-font-style: bold; color: var(--ink); padding: 0; margin-left: 4px; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
 .head-row { position: absolute; left: -90px; width: 180px; bottom: 2px; flex-direction: row; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
 .tag-chip {
     font-size: 11px;

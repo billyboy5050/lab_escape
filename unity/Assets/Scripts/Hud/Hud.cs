@@ -93,6 +93,8 @@ namespace LabEscape.Client
             _startError = L("start-error");
             _log = Q<ScrollView>("log");
             _logLines = Q<ScrollView>("log-lines");
+            _log.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+            _log.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
 
             _undo = B("undo", () => UndoClicked?.Invoke());
             _endTurn = B("end-turn", () => EndTurnClicked?.Invoke());
@@ -267,8 +269,7 @@ namespace LabEscape.Client
                 top.Add(Ui.Text(st.Name, "ab-name"));
                 top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key"));
                 b.Add(top);
-                b.Add(Ui.Text($"{st.Ap} AP", "ab-cost"));
-                if (!st.Usable && st.Reason != null) b.Add(Ui.Text(st.Reason, "ab-why"));
+                b.Add(Ui.Text(!st.Usable && st.Reason != null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
                 _actionRow.Add(b);
                 if (st.Id != "grapple_hook" || selected != st.Id) continue;
                 var seg = Ui.El("seg", true);

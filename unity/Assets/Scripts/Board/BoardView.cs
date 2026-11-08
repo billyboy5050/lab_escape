@@ -43,7 +43,7 @@ namespace LabEscape.Client
             _hover = u.Flying ? 0.12f : 0f;
             Model.Root.transform.position = Iso.Tile(u.Pos.X, u.Pos.Y);
             Model.Root.transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
-            if (ghost) Model.Paint(0.42f);
+            Model.Paint(ghost ? 0.42f : 1f);
         }
 
         public bool Moving => _duration > 0f;
