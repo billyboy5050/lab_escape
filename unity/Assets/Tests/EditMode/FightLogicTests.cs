@@ -85,6 +85,19 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void LogLinesKeepRisingAfterAnUndo()
+        {
+            var flow = Settled("hybrid");
+            flow.Apply(Actions.MoveCommandFor(ModelFor(flow).Moves.First().Path));
+            flow.Skip();
+            Assert.That(flow.Undo(), Is.True);
+            var undoLine = flow.Log.Last().Id;
+            flow.Apply(new EndTurnCommand());
+            flow.Skip();
+            Assert.That(flow.Log.Last().Id, Is.GreaterThan(undoLine), "the log panel only appends lines newer than the last it showed");
+        }
+
+        [Test]
         public void ClickingAHighlightedTileMoves()
         {
             var flow = Settled("hybrid");

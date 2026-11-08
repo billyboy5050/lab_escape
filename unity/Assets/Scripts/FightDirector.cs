@@ -54,6 +54,12 @@ namespace LabEscape.Client
 
         public ActionModel? Model => _model;
 
+        public BoardView? Board => _board;
+
+        public Hud Hud => _hud;
+
+        public IsoCamera IsoCamera => _cam;
+
         /// <summary>Set by a scripted run: the tile to treat as under the pointer, instead of reading the mouse.</summary>
         public bool ScriptedPointer { get; set; }
 
@@ -369,7 +375,7 @@ namespace LabEscape.Client
         {
             var cmd = _hover.HasValue && Flow!.Idle ? _model!.CandidateFor(_hover.Value) : null;
             var key = cmd?.ToJson() ?? "";
-            if (key == _previewKey && ReferenceEquals(_preview?.State == null ? null : _previewBase, Flow!.Live)) return;
+            if (key == _previewKey && ReferenceEquals(_previewBase, Flow!.Live)) return;
             _previewKey = key;
             _previewBase = Flow!.Live;
             _previewCommand = cmd;

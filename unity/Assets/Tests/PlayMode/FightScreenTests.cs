@@ -6,6 +6,7 @@ using LabEscape.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace LabEscape.Client.Tests
 {
@@ -85,6 +86,100 @@ namespace LabEscape.Client.Tests
                 yield return WaitUntilIdle(d);
                 Assert.That(d.Flow!.Live.Round, Is.EqualTo(2));
             }
+        }
+
+        private static IEnumerator StartedFight(FightDirector d)
+        {
+            var p = d.Content!.Presets[0];
+            d.StartFight(new Loadout(p.Abilities, p.Upgrades), new FightSettings(), p.Id);
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            yield return WaitUntilIdle(d);
+            yield return null;
+            yield return null;
+        }
+
+        private static Vector2 ScreenPoint(FightDirector d, Vector3 world) => d.IsoCamera.Cam.WorldToScreenPoint(world);
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AScreenPointOverTheFloorPicksThatTile()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            var occupied = d.Flow!.Live.Units.Where(u => !u.Dead).Select(u => u.Pos).ToList();
+            var board = d.Content!.DefaultRoom.Board;
+            var checkedTiles = 0;
+            foreach (var t in board.AllTiles().Where(p => !occupied.Any(o => System.Math.Abs(o.X - p.X) + System.Math.Abs(o.Y - p.Y) <= 2)))
+            {
+                Assert.That(d.Board!.PickTile(ScreenPoint(d, Iso.Tile(t.X, t.Y))), Is.EqualTo(t));
+                checkedTiles++;
+            }
+            Assert.That(checkedTiles, Is.GreaterThan(10));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator PickingTheFloorStillWorksZoomedAndPanned()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            d.IsoCamera.Zoom(10f);
+            d.IsoCamera.PanPixels(new Vector2(40f, -25f));
+            yield return null;
+            var t = new Pos(4, 4);
+            Assert.That(d.Board!.PickTile(ScreenPoint(d, Iso.Tile(t.X, t.Y))), Is.EqualTo(t));
+            d.IsoCamera.Zoom(-1000f);
+            yield return null;
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator ClickingAFigurePicksTheTileItStandsOn()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            var u = d.Flow!.Live.Units.First(x => x.Team == Team.Enemy && !x.Dead);
+            var head = ScreenPoint(d, Iso.Tile(u.Pos.X, u.Pos.Y, 0.7f));
+            Assert.That(d.Board!.PickTile(head), Is.EqualTo(u.Pos), "the point above the feet is over the tile behind on the floor");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator PanelsBlockTheBoardAndTheBoardAreaDoesNot()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            var free = d.Hud.FreeScreenArea();
+            Assert.That(d.Hud.PointerOverUi(free.center), Is.False, "the middle of the board area");
+            Assert.That(d.Hud.PointerOverUi(new Vector2(free.xMax + 40f, free.center.y)), Is.True, "the side column");
+            Assert.That(d.Hud.PointerOverUi(new Vector2(free.center.x, free.yMin - 30f)), Is.True, "the action panel");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheEndTurnButtonEndsTheTurn()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            var root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
+            var button = root.Q<Button>("end-turn");
+            using (var e = NavigationSubmitEvent.GetPooled())
+            {
+                e.target = button;
+                button.SendEvent(e);
+            }
+            yield return WaitUntilIdle(d);
+            Assert.That(d.Flow!.Live.Round, Is.EqualTo(2));
         }
 
         [UnityTest]

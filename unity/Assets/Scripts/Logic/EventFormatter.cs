@@ -128,6 +128,9 @@ namespace LabEscape.Client
             return Who(s.NumberId);
         }
 
+        /// <summary>A line that comes from the client and not from an event. Every line shares one rising ID, which the log panel relies on.</summary>
+        public LogLine Line(string text, LogKind kind) => new LogLine(_nextId++, text, kind);
+
         public LogLine? Format(GameEvent e, GameState? s)
         {
             var t = Line(e, s);

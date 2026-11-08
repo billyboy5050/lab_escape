@@ -27,7 +27,6 @@ namespace LabEscape.Client
         public bool Busy;
         public FightSpeed Speed = FightSpeed.Normal;
         public readonly List<LogLine> Log = new List<LogLine>();
-        private int _undoLogId = 1000000;
 
         /// <summary>A frame has reached the screen: the board moves to its state and plays its events.</summary>
         public event Action<GameState, IReadOnlyList<GameEvent>>? FrameShown;
@@ -67,7 +66,7 @@ namespace LabEscape.Client
         public bool Undo()
         {
             if (Busy || !Session.Undo()) return false;
-            Log.Add(new LogLine(_undoLogId++, "Move undone", LogKind.Phase));
+            Log.Add(_fmt.Line("Move undone", LogKind.Phase));
             Shown = Session.State;
             FrameEvents = Array.Empty<GameEvent>();
             Snapped?.Invoke(Shown);
