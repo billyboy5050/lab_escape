@@ -1,7 +1,7 @@
 # Close the playtests and plan the full-game phase
 
 - Branch: `docs/phase-2-plan`
-- Pull request: to be linked once opened
+- Pull request: https://github.com/billyboy5050/lab_escape/pull/16
 - Roadmap item: First-time player round, Informed player round (both closed by this branch)
 - Started: 2026-11-08
 - Last updated: 2026-11-08, by Claude

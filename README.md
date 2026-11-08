@@ -2,7 +2,7 @@
 
 The playable MVP described in the [spec](docs/spec.md): one 8x8 room, three hidden waves, the Tech and Alien kits, 12 upgrades, the lab's hazard AI, telemetry, replays and a headless simulator.
 
-Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the first full playtest round has run and its metrics are recorded; that and whatever it turns up is what remains. See the [roadmap](docs/roadmap.md).
+Milestones M0 to M7 are done: the owner closed playtesting as successful on 2026-11-08. The full-game phase comes next, moving the game to Unity and building it out; see the [phase plan](docs/phase-2.md) and the [roadmap](docs/roadmap.md). Until that move is finished, everything below describes this TypeScript prototype.
 
 ## Documents
 
@@ -11,6 +11,7 @@ Milestones M0 to M6 are done and M7's tooling is built. M7 is not done until the
 | [docs/spec.md](docs/spec.md) | The design spec (revision 2) and the source of truth for the rules |
 | [docs/implementation-notes.md](docs/implementation-notes.md) | How the tooling reads the spec where it is silent, known limitations, what the simulator found, and what the playtests found |
 | [docs/roadmap.md](docs/roadmap.md) | Where things stand, what is next, and the decisions waiting on the owner |
+| [docs/phase-2.md](docs/phase-2.md) | The plan for the full-game phase: the move to Unity, the game it builds, and the milestones |
 | [docs/rules-sheet.html](docs/rules-sheet.html) | The one-page rules sheet for first-time players in playtests; open it in a browser and print it |
 | [docs/work/](docs/work/) | One note per branch in progress, so anyone can pick the work up |
 | [CLAUDE.md](CLAUDE.md) (also `AGENTS.md`) | How to work in this repo: branches, pull requests, keeping the docs current, and the invariants not to break |
@@ -61,7 +62,7 @@ The game opens on a title screen; Begin (or **Enter**) goes to the loadout. Star
 - **Speed**: 1x, 2x or skip (**F** cycles, **Space** skips the current animation unless a control has focus).
 - **L** opens the intercom log. **`** opens the debug overlay.
 - **Sound**: **M** (or the speaker button in the header) mutes and unmutes on every screen, and the browser remembers the choice. Sounds are synthesised in the browser; a primed hazard makes none, so its cue stays visual only.
-- **View**: the board is drawn from straight above (Top, the default) or tilted to an isometric three-quarter view (Iso). Switch with the Top/Iso control under the board or **V**, at any time, even mid-fight. The browser remembers the choice for later fights and visits; `?view=iso` or `?view=top` in the URL overrides it for that page (switching then updates the URL too). In Iso, a pillar or wall that would hide a unit, an object or the tile under the pointer fades, and clicking a figure picks the tile it stands on. Iso is a trial: top-down stays the default until the owner decides, because fights played in another view are not comparable with earlier playtest rounds.
+- **View**: the board is drawn from straight above (Top, the default) or tilted to an isometric three-quarter view (Iso). Switch with the Top/Iso control under the board or **V**, at any time, even mid-fight. The browser remembers the choice for later fights and visits; `?view=iso` or `?view=top` in the URL overrides it for that page (switching then updates the URL too). In Iso, a pillar or wall that would hide a unit, an object or the tile under the pointer fades, and clicking a figure picks the tile it stands on. Top-down stays the default in this web client; the Unity client will use a fixed isometric camera (see the [phase plan](docs/phase-2.md)).
 
 With Ctrl, Cmd or Alt held, the action keys, **V** and **M** are left to the browser (Ctrl or Cmd with `-` and `=` zoom the page). The other shortcuts do not check for modifiers yet, so Ctrl or Cmd with Z, E, F or L also triggers the game's undo, end turn, speed or log (see the [roadmap](docs/roadmap.md)). The action keys are defined once in `src/client/actionKeys.ts`.
 
