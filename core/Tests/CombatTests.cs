@@ -136,14 +136,15 @@ namespace LabEscape.Core.Tests
         }
 
         [Test]
-        public void DamageEventsRecordHpActuallyLostNotOverkill()
+        public void SummariesCountHpActuallyLostNotOverkill()
         {
-            // The TypeScript test also checks the telemetry summary, which is ported with the simulator (M10).
             var s = Scenario(new ScenarioSpec { Player = "B8", PlayerHp = 2, Units = { U("guard", "B6") } });
-            var hit = EventsOf<DamageDealt>(Run(s, EndTurn).Events)[0];
+            var r = Run(s, EndTurn);
+            var hit = EventsOf<DamageDealt>(r.Events)[0];
             Assert.That(hit.Amount, Is.EqualTo(3));
             Assert.That(hit.HpLost, Is.EqualTo(2));
             Assert.That(hit.Killed, Is.True);
+            Assert.That(Summaries.Summarize(r.Events, r.State).PlayerDamageTaken.Enemy, Is.EqualTo(2));
         }
 
         [Test]

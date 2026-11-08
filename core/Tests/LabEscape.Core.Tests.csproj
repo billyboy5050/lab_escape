@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\LabEscape.Core.csproj" />
+    <ProjectReference Include="..\Sim\LabEscape.Sim.csproj" />
   </ItemGroup>
 
 </Project>
