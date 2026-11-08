@@ -41,7 +41,7 @@ These are specified below so nothing is lost, but none of them helps answer the 
 
 **Out of scope**
 
-- The occult branch and debt, which is the first addition after the MVP.
+- The occult branch and debt, which the full-game phase adds (see [phase-2.md](phase-2.md)).
 - Cocoons, live capture and the Brood Egg's live-host tier.
 - The armored hatchling. It needs the Warden's corpse and an egg that hatches a round later, by which time the fight is usually over.
 - The run map, events, other rooms, wings, bosses beyond the Warden, and meta-progression (Alpha, Omega, unlocks).
@@ -957,7 +957,7 @@ The first draft left these Open for the implementation session. The implementati
 
 **After the MVP**
 
-The recommended next addition is a small Occult slice: Borrowed Time with a visible payback forecast, a range-limited and cooldown-limited Fate Swap, and Hex. Both winning builds in the hand simulations depended on swaps and debt. Testing debt carrying between rooms needs a second room, so add a minimal two-room chain at the same time. After that, build the run map, events and meta-progression from the design document.
+The full-game phase is planned in [phase-2.md](phase-2.md). It moves the game to Unity, then adds runs, larger rooms, events that decide upgrades, a reworked kit, the Occult branch and three wings. It replaces the small Occult slice and two-room chain first suggested here.
 
 The companion document is [Lab Escape Roguelite: Design Doc v0.1](https://claude.ai/code/artifact/d8804d7d-d61e-412c-8d4e-6b06a5496111).
 
@@ -1005,3 +1005,4 @@ Two notes on the evidence behind these changes:
 | 2026-10-13 | No rule changed. The owner confirmed every Proposed call, the Warden's charge range, the six differences from the design document, and a decision for every Open item (now under Decisions taken). The readings of the rules that the implementation took where the spec was silent moved into this spec from the implementation notes, as the Clarifications at the end of each section. | After the developer round and further play by the owner and others, the owner settled every question the spec and the implementation had left open. |
 | 2026-10-20 | No rule changed. The client moved from placeholder shapes toward the final look the owner chose, an industrial sci-fi lab: illustrated units on bases whose shape shows their side, a drawn room, combat effects, a HUD styled as the lab's security terminal, a title screen, a briefing before each fight and synthesized sound effects with a mute key. A primed hazard still shows only its visual cue, with no sound. | Playtesters found the game promising but did not engage with it because of its presentation. |
 | 2026-10-22 | No rule changed. The board can also be drawn in an isometric three-quarter view, chosen with a toggle (a Top/Iso control, the V key, or `?view=` in the URL); top-down stays the default. In the isometric view terrain, objects and units are drawn back to front, a pillar or wall that would hide a unit, an object or the hovered tile fades, and bars, chips and intent tags are drawn above everything. Colour is still paired with a shape, an icon or a word, and a hazard still shows only its cue. The replay's metadata records the view a fight was played in. | The owner liked concept art of the room in isometric view and asked to try it in play. It is opt-in because the first-time player round has not run yet, and a change of presentation would confound comparisons between rounds. |
+| 2026-11-08 | No rule changed. The owner closed playtesting as successful and M7 as done, on outside testers' verbal feedback. M7's acceptance criterion of recorded first-time metrics, and the success criteria that depend on human play, were not measured, because the testers' recordings have not been received (see the [implementation notes](implementation-notes.md#what-the-outside-testers-said-2026-11-08)). The owner also changed two entries under Decisions taken, which apply once the [full-game phase](phase-2.md) delivers them: engine, language and platform become Unity with the rules in plain C#, for Mac and Windows plus a web build for testers; the art direction becomes 3D with a fixed isometric camera. The TypeScript and React prototype stays in use until then. | Testers found the game fun but could not picture the full loop, and the owner judged that enough to move on to building the full game. |
