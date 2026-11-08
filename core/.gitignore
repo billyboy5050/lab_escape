@@ -1,2 +1,3 @@
-bin/
-obj/
+.build/
+# Unity writes these into the local package; nothing refers to them.
+*.meta
