@@ -230,6 +230,16 @@ namespace LabEscape.Core.Tests
             }
         }
 
+        [Test]
+        public void RoomsTakeTuningOverridesAsTheRestOfTheContentDoes()
+        {
+            var overrides = new OrderedMap<string, JToken>(StringComparer.Ordinal);
+            overrides["rooms.closet.roundCap"] = 3;
+            var tuned = ContentLoader.Build(ContentLoader.WithOverrides(FilesWith(Rooms), overrides));
+            Assert.That(tuned.Rooms["closet"].RoundCap, Is.EqualTo(3));
+            Assert.That(tuned.Hash, Is.Not.EqualTo(R.Hash));
+        }
+
         // ------------------------------------------------------------------ replays in a room
 
         private static FightRun Fight() => Runner.RunFight(R, Hybrid, new RandomBot(5), new FightSettings { Room = "closet" });

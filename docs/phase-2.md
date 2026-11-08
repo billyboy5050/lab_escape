@@ -185,9 +185,9 @@ Rooms as data comes before the Unity client, so the client is written once for m
 
 ## Technical notes for Stage B onward
 
-- `FightSettings` gains room, starting HP and debt, so every fight stays a standalone replay.
+- `FightSettings` gains starting HP and debt, as it gained the room at M11, so every fight stays a standalone replay.
 - A `run` layer above `engine`: a pure `RunStep` mirroring `Step`, with its seeded generator in `util`.
-- A `void` terrain makes non-rectangular rooms. The round cap moves from `rules` to per-room.
+- A `void` terrain makes non-rectangular rooms. It is ordinary terrain data, so it needs only a shared definition and a look. The Armory's round cap moves from `rules` into its room when the Armory's files do, after M13.
 - Saves and progress are shape-checked (invariant 7 in CLAUDE.md).
 - Weapons are abilities with a slot field, and level paths gate existing upgrade IDs, so upgrade behaviour code carries over.
 

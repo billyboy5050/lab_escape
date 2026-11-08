@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildContent, defaultContentFiles, roomFor, validateContent, type ContentFiles, type RoomFile } from '../src/content';
+import { buildContent, defaultContentFiles, roomFor, validateContent, withOverrides, type ContentFiles, type RoomFile } from '../src/content';
 import { legalCommands } from '../src/engine/commands';
 import { newGame, step } from '../src/engine/step';
 import { computeIntents, previewCommand } from '../src/preview/preview';
@@ -179,6 +179,12 @@ describe('rooms of other sizes', () => {
     };
     expect(tilesOf('hall').some((t) => parseTile(t).y >= 8)).toBe(true);
     expect(tilesOf('hallways').some((t) => parseTile(t).x >= 8)).toBe(true);
+  });
+
+  it('take tuning overrides, as the rest of the content does', () => {
+    const tuned = buildContent(withOverrides({ ...defaultContentFiles(), rooms: ROOMS }, { 'rooms.closet.roundCap': 3 }));
+    expect(tuned.rooms['closet']!.roundCap).toBe(3);
+    expect(tuned.hash).not.toBe(R.hash);
   });
 
   it('a batch adds its rooms to the content it runs on', () => {

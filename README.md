@@ -83,7 +83,7 @@ Every number lives in `content/*.json`:
 | `abilities.json` | The 11 abilities and the utility actions, with their rule text |
 | `upgrades.json` | The 12 upgrades |
 | `hazards.json` | Wall gun, panel grid, gas vents |
-| `map.json` | Armory Lockdown terrain and hazard placement |
+| `map.json` | Armory Lockdown terrain and hazard placement, and the tile types every room shares |
 | `waves.json` | The three waves |
 | `intercom.json` | Lines, triggers and lexicon |
 | `presets.json` | Tech, Alien and Hybrid presets |
@@ -122,11 +122,19 @@ npm run sim -- --help
 | `--size N` | Abilities per random loadout in a sweep (default: the loadout size in `rules.json`) |
 | `--set PATH=VAL` | Content override, repeatable, e.g. `--set units.warden.hp=16` |
 | `--hold-wave3` | Hold back wave 3; clearing wave 2 wins (the first playtest's setup) |
+| `--rooms FILE` | Add the rooms in a JSON file to the content, e.g. `golden/rooms.json` |
+| `--room ID` | Fight in this room (default: the Armory) |
 | `--csv FILE` | Write one row per fight |
 | `--out DIR` | Write the report, CSV and winning replays to DIR (default `reports/` for `presets`) |
 | `--record` | With `golden`: re-record the golden replays |
 
 Counts must be whole numbers, and `--seeds`, `--workers` and `--size` at least 1. A `presets` run at 1,000 seeds takes about two minutes on an 8-core machine; use `--seeds 100` while iterating.
+
+A fight takes place in the Armory unless it names another room. To try the rooms of other sizes:
+
+```bash
+npm run sim -- batch --rooms golden/rooms.json --room hall --seeds 100
+```
 
 Bots:
 
@@ -148,7 +156,7 @@ For playtests, give each person a tester ID: open the game at `?tester=P3` or ty
 
 First-time players get the one-page rules sheet and no coaching (spec, playtest round 2). Open `docs/rules-sheet.html` in a browser, or http://localhost:5173/docs/rules-sheet.html while the dev server runs, and print it; it fits one A4 or Letter page. It states the rules and explains the screen, and leaves out what the game hides on purpose: when waves arrive, which tiles the lab's defences cover, what makes the lab fire them, and the intercom's code words. Its numbers are tagged with where they come from in `content/`, and `npm test` fails if one no longer matches.
 
-Golden replays live in `golden/` (one command log and event log per preset). `npm test` fails if a build changes them; re-record on purpose with `npm run golden:record` after an intended rule or content change.
+Golden replays live in `golden/`: one command log and event log per preset in the Armory, and one per room in `golden/rooms.json`, a hand-written set of rooms of other sizes. `npm test` fails if a build changes them; re-record on purpose with `npm run golden:record` after an intended rule or content change.
 
 ## Code layout
 
@@ -156,12 +164,12 @@ The rules engine is a deterministic library with no rendering, input or clock de
 
 | Module | Folder | Responsibility |
 | --- | --- | --- |
-| state | `src/state` | Types, grid geometry and symmetric line of sight, initial state, `ENGINE_VERSION` |
+| state | `src/state` | Types, grid geometry and symmetric line of sight for a board of any size, initial state, `ENGINE_VERSION` |
 | rules | `src/rules` | The `World` rules context: damage and armor, statuses, deaths and corpses, movement and mines, the chain queue and once-per-chain rule, projectiles, environment steps, waves, intercom |
 | effects | `src/effects` | Ability behaviours and upgrade hooks |
 | ai | `src/ai` | Enemy, minion and hazard AI (the value rule) |
 | engine | `src/engine` | The round and phase loop, `step`, `newGame`, legal commands |
-| content | `src/content` | JSON loading, validation, content hash, overrides, the list of required fields |
+| content | `src/content` | JSON loading, validation, rooms, content hash, overrides, the list of required fields |
 | preview | `src/preview` | Dry-run previews and intents |
 | telemetry | `src/telemetry` | Replay records, summaries, the client fight session (command log and undo) |
 | sim | `src/sim` | Bots, batch runner, worker pool, reports, golden replays, CLI |

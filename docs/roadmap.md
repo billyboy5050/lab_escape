@@ -8,7 +8,7 @@ Last reviewed: 2026-11-08.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet.
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory.
 
 | Milestone | Status |
 | --- | --- |
@@ -34,9 +34,8 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M11: Rooms as data, any size.**
-2. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
-3. **M13: Unity parity, retire the web client.**
+1. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
+2. **M13: Unity parity, retire the web client.**
 
 Stages B to D follow: game systems, look and content, then the loop and a tester round.
 
@@ -64,6 +63,10 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 ## Smaller items
 
 Items about the web client stop applying when M13 retires it. Anything that should survive moves into a Unity milestone at that point.
+
+- **Move the Armory into `content/rooms.json`.** Once the freeze ends at M13, M14 can add the file, put the Armory in it with the new rooms, and delete `map.json`, `waves.json`, `rules.roundCap` and `Content.map` and `Content.waves`. The tile types in `map.json` need a home of their own at that point. Until then the Armory is built from its old files so that its content hash does not move.
+- **Intercom lines per room.** `content/intercom.json` is written for the Armory and fires in every room, so a room of another size hears about the armory floor. This changes nothing headless. Lines need to belong to a room or a wing by M21.
+- **Report targets per room.** The simulator's targets and alarms, such as rounds to win and the Warden reaching the player by round 7, were set for the Armory. They still print for other rooms but mean little there. M16 should replace them.
 
 - **Loadout size in the sweep.** At 8 of 11 any two builds share at least 5 abilities, which weakens the test of whether loadouts play differently. The owner kept 8 for every playtest round (2026-10-13), so 6 of 11 is tried in the simulator instead: run `npm run sim -- sweep --size 6 --seeds 1000 --out <scratch folder>`, compare the win-rate lift and the spread of winning loadouts with the committed 8-ability sweep (`reports/sweep-8-greedy.txt`), and add the findings to the implementation notes.
 - **Ability rules during a fight.** The action bar's tooltip shows an ability's name, or why it cannot be used, but never its rule text, so in a fight the full rule is only on the loadout screen and the rules sheet carries a short version. Add each ability's `text` to its action button's tooltip.
