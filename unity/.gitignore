@@ -17,3 +17,6 @@
 *.pidb
 *.userprefs
 *.DS_Store
+# Copied from content/ by the build step; content/ is the only source.
+/Assets/Resources/Content/
+/Assets/Resources/Content.meta

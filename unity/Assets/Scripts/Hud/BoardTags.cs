@@ -1,0 +1,355 @@
+#nullable enable
+using System.Collections.Generic;
+using System.Linq;
+using LabEscape.Core;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace LabEscape.Client
+{
+    /// <summary>Small helpers for building interface elements from code.</summary>
+    public static class Ui
+    {
+        public static VisualElement El(string classes, bool pick = false)
+        {
+            var e = new VisualElement();
+            AddClasses(e, classes);
+            e.pickingMode = pick ? PickingMode.Position : PickingMode.Ignore;
+            return e;
+        }
+
+        public static Label Text(string text, string classes, bool pick = false)
+        {
+            var l = new Label(text);
+            AddClasses(l, classes);
+            l.pickingMode = pick ? PickingMode.Position : PickingMode.Ignore;
+            return l;
+        }
+
+        private static void AddClasses(VisualElement e, string classes)
+        {
+            foreach (var c in classes.Split(' '))
+            {
+                if (c.Length > 0) e.AddToClassList(c);
+            }
+        }
+
+        public static void Show(VisualElement e, bool on) => e.EnableInClassList("hidden", !on);
+    }
+
+    /// <summary>
+    /// Everything anchored to a place on the board: HP bars, armor, ammo and status chips, preview badges, incoming-damage tags and
+    /// damage numbers. They live on the interface layer, so nothing standing in front of a unit can hide them.
+    /// </summary>
+    public sealed class BoardTags
+    {
+        private sealed class UnitTag
+        {
+            public readonly VisualElement Feet = Ui.El("anchor");
+            public readonly VisualElement Head = Ui.El("anchor");
+            private readonly VisualElement _bar = Ui.El("hp-bar");
+            private readonly Label _hp = Ui.Text("", "hp-number");
+            private readonly VisualElement _row = Ui.El("head-row");
+            private string _sig = "";
+
+            public UnitTag(VisualElement layer)
+            {
+                var feet = Ui.El("feet-row");
+                feet.Add(_bar);
+                feet.Add(_hp);
+                Feet.Add(feet);
+                Head.Add(_row);
+                layer.Add(Feet);
+                layer.Add(Head);
+            }
+
+            public void Remove()
+            {
+                Feet.RemoveFromHierarchy();
+                Head.RemoveFromHierarchy();
+            }
+
+            public void Update(Content c, Unit u)
+            {
+                var st = u.Statuses;
+                var armor = Mathf.Max(0, u.Armor - (st.Corrode?.Stacks ?? 0));
+                var def = c.Units[u.Def];
+                var sig = $"{u.Hp}/{u.MaxHp}/{armor}/{u.Ammo}/{u.MaxAmmo}/{u.Charges}/{u.MaxCharges}/{u.DroneState}/{st.Poison?.Remaining}/{st.Parasite?.Remaining}/{st.Corrode?.Stacks}/{st.Pinned != null}/{st.Slowed != null}";
+                if (sig == _sig) return;
+                _sig = sig;
+
+                _bar.Clear();
+                var low = u.Hp <= u.MaxHp / 3f;
+                var shown = Mathf.Max(0, u.Hp);
+                if (u.MaxHp <= 10)
+                {
+                    for (var i = 0; i < u.MaxHp; i++) _bar.Add(Ui.El($"hp-seg{(i < shown ? " full" : "")}{(low ? " low" : "")}"));
+                }
+                else
+                {
+                    var fill = Ui.El($"hp-fill{(low ? " low" : "")}");
+                    fill.style.width = Length.Percent(100f * shown / u.MaxHp);
+                    _bar.Add(fill);
+                }
+                _hp.text = u.Hp.ToString();
+
+                _row.Clear();
+                if (u.MaxAmmo.HasValue) _row.Add(Pips(u.MaxAmmo.Value, u.Ammo ?? 0, "ammo"));
+                if (u.MaxCharges.HasValue) _row.Add(Pips(u.MaxCharges.Value, u.Charges ?? 0, "charge"));
+                if (u.DroneState == DroneState.Returning) _row.Add(Ui.Text("RTN", "tag-chip"));
+                if (def.Armor > 0 || armor > 0) _row.Add(Ui.Text($"ARM {armor}", "tag-chip"));
+                if (st.Poison != null) _row.Add(Status($"PSN {st.Poison.Remaining}", StatusId.Poison));
+                if (st.Parasite != null) _row.Add(Status($"PAR {st.Parasite.Remaining}", StatusId.Parasite));
+                if (st.Corrode != null) _row.Add(Status($"COR {st.Corrode.Stacks}", StatusId.Corrode));
+                if (st.Pinned != null) _row.Add(Status("PIN", StatusId.Pinned));
+                if (st.Slowed != null) _row.Add(Status("SLW", StatusId.Slowed));
+            }
+
+            private static VisualElement Pips(int max, int n, string kind)
+            {
+                var row = Ui.El("tag-pips");
+                for (var i = 0; i < max; i++) row.Add(Ui.El(i < n ? $"tag-pip {kind}" : "tag-pip"));
+                return row;
+            }
+
+            private static Label Status(string text, StatusId id)
+            {
+                var l = Ui.Text(text, "tag-chip");
+                var col = Palette.StatusColor(id);
+                l.style.color = col;
+                l.style.borderTopColor = l.style.borderBottomColor = l.style.borderLeftColor = l.style.borderRightColor = col;
+                return l;
+            }
+        }
+
+        private sealed class ObjectTag
+        {
+            public readonly VisualElement Anchor = Ui.El("anchor");
+            private readonly VisualElement _row = Ui.El("head-row");
+            private string _sig = "";
+
+            public ObjectTag(VisualElement layer)
+            {
+                Anchor.Add(_row);
+                layer.Add(Anchor);
+            }
+
+            public void Update(BoardObject o)
+            {
+                var sig = $"{o.Kind}/{o.Timer}/{o.Hp}/{o.Decay}";
+                if (sig == _sig) return;
+                _sig = sig;
+                _row.Clear();
+                switch (o.Kind)
+                {
+                    case ObjectKind.Egg:
+                        _row.Add(Ui.Text($"T{o.Timer}", "tag-chip"));
+                        _row.Add(Ui.Text($"{o.Hp} HP", "tag-chip"));
+                        break;
+                    case ObjectKind.Corpse:
+                        _row.Add(Ui.Text($"{o.Decay}", "tag-chip"));
+                        break;
+                    case ObjectKind.Shield:
+                        _row.Add(Ui.Text($"{o.Hp} HP", "tag-chip"));
+                        break;
+                }
+            }
+        }
+
+        private sealed class FloatingText
+        {
+            public Label Label = null!;
+            public Vector3 World;
+            public float Start;
+            public float Duration;
+            public float Offset;
+        }
+
+        private readonly VisualElement _layer;
+        private readonly Content _c;
+        private readonly IsoCamera _cam;
+        private readonly Dictionary<int, UnitTag> _units = new Dictionary<int, UnitTag>();
+        private readonly Dictionary<int, ObjectTag> _objects = new Dictionary<int, ObjectTag>();
+        private readonly List<(VisualElement El, Vector3 World)> _chips = new List<(VisualElement, Vector3)>();
+        private readonly List<FloatingText> _floats = new List<FloatingText>();
+        private object? _chipsFor;
+        private bool _chipsShowIntents;
+        private float _now;
+
+        public BoardTags(VisualElement layer, Content c, IsoCamera cam)
+        {
+            _layer = layer;
+            _c = c;
+            _cam = cam;
+        }
+
+        public void Clear()
+        {
+            foreach (var t in _units.Values) t.Remove();
+            _units.Clear();
+            foreach (var t in _objects.Values) t.Anchor.RemoveFromHierarchy();
+            _objects.Clear();
+            ClearChips();
+            foreach (var f in _floats) f.Label.RemoveFromHierarchy();
+            _floats.Clear();
+        }
+
+        private void ClearChips()
+        {
+            foreach (var (el, _) in _chips) el.RemoveFromHierarchy();
+            _chips.Clear();
+        }
+
+        /// <summary>Starts a number or word that rises from a place on the board and fades.</summary>
+        public void Float(Vector3 world, string text, Color colour, int size, float offsetPixels, float delay, float scale)
+        {
+            var l = Ui.Text(text, "float-text");
+            l.style.color = colour;
+            l.style.fontSize = size;
+            l.style.opacity = 0f;
+            _layer.Add(l);
+            _floats.Add(new FloatingText { Label = l, World = world, Start = _now + delay * scale, Duration = 1.05f * scale, Offset = offsetPixels });
+        }
+
+        private Vector2 ToPanel(Vector3 world) => RuntimePanelUtils.CameraTransformWorldToPanel(_layer.panel, world, _cam.Cam);
+
+        private static void Place(VisualElement e, Vector2 at) => e.style.translate = new Translate(at.x, at.y);
+
+        public void Tick(float dt, GameState s, BoardView board, BoardOverlay o)
+        {
+            _now += dt;
+            if (_layer.panel == null) return;
+
+            var seen = new HashSet<int>();
+            foreach (var u in s.Units.Where(x => !x.Dead && !x.Docked))
+            {
+                var world = board.UnitPosition(u.Id);
+                if (!world.HasValue) continue;
+                seen.Add(u.Id);
+                if (!_units.TryGetValue(u.Id, out var tag))
+                {
+                    tag = new UnitTag(_layer);
+                    _units[u.Id] = tag;
+                }
+                tag.Update(_c, u);
+                Place(tag.Feet, ToPanel(world.Value));
+                var height = u.Def == "warden" ? 1.05f : Figures.IsSmall(u.Def) ? 0.55f : u.Flying ? 0.78f : 0.82f;
+                Place(tag.Head, ToPanel(world.Value + Vector3.up * height));
+            }
+            foreach (var id in _units.Keys.Where(k => !seen.Contains(k)).ToList())
+            {
+                _units[id].Remove();
+                _units.Remove(id);
+            }
+
+            seen.Clear();
+            foreach (var x in s.Objects.Where(b => !b.Destroyed && b.Kind != ObjectKind.Mine))
+            {
+                seen.Add(x.Id);
+                if (!_objects.TryGetValue(x.Id, out var tag))
+                {
+                    tag = new ObjectTag(_layer);
+                    _objects[x.Id] = tag;
+                }
+                tag.Update(x);
+                Place(tag.Anchor, ToPanel(Iso.Tile(x.Pos.X, x.Pos.Y, x.Kind == ObjectKind.Corpse ? 0.15f : 0.68f)));
+            }
+            foreach (var id in _objects.Keys.Where(k => !seen.Contains(k)).ToList())
+            {
+                _objects[id].Anchor.RemoveFromHierarchy();
+                _objects.Remove(id);
+            }
+
+            RebuildChips(s, o);
+            foreach (var (el, world) in _chips) Place(el, ToPanel(world));
+
+            for (var i = _floats.Count - 1; i >= 0; i--)
+            {
+                var f = _floats[i];
+                var t = (_now - f.Start) / f.Duration;
+                if (t >= 1f)
+                {
+                    f.Label.RemoveFromHierarchy();
+                    _floats.RemoveAt(i);
+                    continue;
+                }
+                if (t < 0f) continue;
+                var p = ToPanel(f.World);
+                var w = f.Label.resolvedStyle.width;
+                var h = f.Label.resolvedStyle.height;
+                var w2 = float.IsNaN(w) ? 0f : w * 0.5f;
+                var h2 = float.IsNaN(h) ? 0f : h * 0.5f;
+                Place(f.Label, new Vector2(p.x - w2, p.y - h2 - f.Offset - 46f * t));
+                f.Label.style.opacity = t < 0.75f ? 1f : (1f - t) / 0.25f;
+            }
+        }
+
+        private void RebuildChips(GameState s, BoardOverlay o)
+        {
+            var pv = o.Preview != null && o.Preview.Ok ? o.Preview : null;
+            object? source = (object?)pv ?? o.Intents;
+            if (ReferenceEquals(source, _chipsFor) && _chipsShowIntents == o.ShowIntents) return;
+            _chipsFor = source;
+            _chipsShowIntents = o.ShowIntents;
+            ClearChips();
+            if (o.ShowIntents)
+            {
+                if (pv == null && o.Intents != null) AddIntentChips(o.Intents, s, false);
+                else if (pv?.Intents != null) AddIntentChips(pv.Intents, pv.State ?? s, true);
+            }
+            if (pv != null) AddHitBadges(pv);
+        }
+
+        private void AddChip(VisualElement child, Vector3 world)
+        {
+            var anchor = Ui.El("anchor");
+            anchor.Add(child);
+            _layer.Add(anchor);
+            _chips.Add((anchor, world));
+        }
+
+        /// <summary>The damage each unit takes this round if the turn ends now, and a cross on any unit that dies before it acts.</summary>
+        private void AddIntentChips(IntentReport rep, GameState s, bool faint)
+        {
+            var incoming = new OrderedMap<string, (Pos Pos, int Damage, bool Killed, EntityRef Ref)>(System.StringComparer.Ordinal);
+            foreach (var it in rep.Intents)
+            {
+                foreach (var h in it.Hits)
+                {
+                    if (h.Damage <= 0 && !h.Killed) continue;
+                    var key = h.Ref.ToString();
+                    var cur = incoming.TryGetValue(key, out var v) ? v : (h.Pos, 0, false, h.Ref);
+                    incoming[key] = (cur.Item1, cur.Item2 + h.Damage, cur.Item3 || h.Killed, h.Ref);
+                }
+            }
+            foreach (var pair in incoming)
+            {
+                var v = pair.Value;
+                var unit = v.Ref.Kind == EntityKind.Unit ? s.Units.FirstOrDefault(u => u.Id == v.Ref.Id) : null;
+                var pos = unit?.Pos ?? v.Pos;
+                var label = Ui.Text($"▼{v.Damage}{(v.Killed ? " KO" : "")}", faint ? "incoming-chip faint" : "incoming-chip");
+                AddChip(label, Iso.Tile(pos.X, pos.Y, 0.6f));
+            }
+            foreach (var it in rep.Intents.Where(i => i.DiesFirst))
+            {
+                AddChip(Ui.Text("✕", "dies-chip"), Iso.Tile(it.From.X, it.From.Y, 0.6f));
+            }
+        }
+
+        private void AddHitBadges(CommandPreview pv)
+        {
+            foreach (var h in pv.Hits)
+            {
+                var row = Ui.El("badge-row");
+                if (h.Friendly) row.Add(Ui.Text("!", "badge friendly"));
+                if (h.Damage > 0 || h.Absorbed > 0) row.Add(Ui.Text(h.Damage > 0 ? $"-{h.Damage}" : "0", h.Damage > 0 ? "badge damage" : "badge none"));
+                if (h.Healed > 0) row.Add(Ui.Text($"+{h.Healed}", "badge heal"));
+                foreach (var st in h.Statuses) row.Add(Ui.Text(st == StatusId.Poison ? "+PSN" : st == StatusId.Parasite ? "+PAR" : st == StatusId.Corrode ? "+COR" : st == StatusId.Pinned ? "PIN" : "SLW", "badge status"));
+                if (h.Killed) row.Add(Ui.Text("KO", "badge ko"));
+                if (row.childCount == 0) continue;
+                var pos = h.Ref.Kind == EntityKind.Unit ? pv.State?.Units.FirstOrDefault(u => u.Id == h.Ref.Id)?.Pos ?? h.Pos : h.Pos;
+                AddChip(row, Iso.Tile(pos.X, pos.Y, 1.02f));
+            }
+        }
+    }
+}

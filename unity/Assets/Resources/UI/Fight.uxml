@@ -1,0 +1,117 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="project://database/Assets/Resources/UI/Fight.uss" />
+    <ui:VisualElement name="root" class="root fill" picking-mode="Ignore">
+        <ui:VisualElement name="tags" class="fill" picking-mode="Ignore" />
+        <ui:VisualElement name="flash-alarm" class="fill flash alarm" picking-mode="Ignore" />
+        <ui:VisualElement name="flash-hurt" class="fill flash hurt" picking-mode="Ignore" />
+
+        <ui:VisualElement class="fill layout" picking-mode="Ignore">
+            <ui:VisualElement class="column-main" picking-mode="Ignore">
+                <ui:VisualElement name="status" class="panel status">
+                    <ui:VisualElement class="cell">
+                        <ui:Label class="cell-label" text="HP" />
+                        <ui:VisualElement name="hp-cells" class="cells" />
+                        <ui:Label name="hp-text" class="value" />
+                        <ui:VisualElement name="hp-pills" class="pills" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cell">
+                        <ui:Label class="cell-label" text="AP" />
+                        <ui:VisualElement name="ap-cells" class="cells" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cell">
+                        <ui:Label class="cell-label" text="Move" />
+                        <ui:VisualElement name="move-cells" class="cells" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cell">
+                        <ui:Label class="cell-label" text="Round" />
+                        <ui:Label name="round" class="value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cell">
+                        <ui:Label class="cell-label" text="Phase" />
+                        <ui:Label name="phase" class="value small" />
+                    </ui:VisualElement>
+                    <ui:Label name="incoming" class="incoming" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="board-area" class="board-area" picking-mode="Ignore">
+                    <ui:Label name="banner" class="banner hidden" picking-mode="Ignore" />
+                    <ui:Label name="alert" class="banner alert hidden" picking-mode="Ignore" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="panel action-panel">
+                    <ui:VisualElement name="action-row" class="action-row" />
+                    <ui:VisualElement class="controls">
+                        <ui:Button name="undo" class="btn" text="Undo move [Z]" focusable="false" />
+                        <ui:Button name="end-turn" class="btn primary" text="End turn [E]" focusable="false" />
+                        <ui:Button name="skip" class="btn hidden" text="Skip [Space]" focusable="false" />
+                        <ui:Label name="hint" class="hint" />
+                        <ui:Label class="control-label" text="Speed [F]" />
+                        <ui:VisualElement class="seg">
+                            <ui:Button name="speed-1" class="seg-btn" text="1x" focusable="false" />
+                            <ui:Button name="speed-2" class="seg-btn" text="2x" focusable="false" />
+                            <ui:Button name="speed-0" class="seg-btn" text="Skip" focusable="false" />
+                        </ui:VisualElement>
+                        <ui:Button name="intents" class="btn" text="Intents [I]" focusable="false" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="column-side">
+                <ui:VisualElement class="panel">
+                    <ui:VisualElement class="panel-head">
+                        <ui:Label class="panel-title" text="Intercom" />
+                        <ui:Button name="open-log" class="btn small" text="Log [L]" focusable="false" />
+                    </ui:VisualElement>
+                    <ui:Label name="intercom" class="intercom" />
+                </ui:VisualElement>
+                <ui:VisualElement class="panel">
+                    <ui:Label name="info-title" class="panel-title" text="Scanner" />
+                    <ui:VisualElement name="info-body" class="info-body" />
+                </ui:VisualElement>
+                <ui:VisualElement class="panel">
+                    <ui:VisualElement class="panel-head">
+                        <ui:Label class="panel-title" text="Minions" />
+                        <ui:Label name="minion-count" class="faint" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="minions" />
+                </ui:VisualElement>
+                <ui:VisualElement class="panel log-panel">
+                    <ui:Label class="panel-title" text="Combat log" />
+                    <ui:ScrollView name="log" class="log" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />
+
+        <ui:VisualElement name="start" class="fill overlay">
+            <ui:VisualElement class="card">
+                <ui:Label name="start-title" class="card-title" />
+                <ui:Label class="muted" text="Choose a loadout. Press its number, or click it." />
+                <ui:VisualElement name="presets" class="presets" />
+                <ui:Label name="start-error" class="warn hidden" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="end" class="fill overlay hidden" picking-mode="Ignore">
+            <ui:VisualElement class="card">
+                <ui:Label name="end-title" class="card-title" />
+                <ui:Label name="end-cause" class="muted" />
+                <ui:VisualElement class="row">
+                    <ui:Button name="again" class="btn primary" text="Fight again [R]" focusable="false" />
+                    <ui:Button name="change" class="btn" text="Change loadout" focusable="false" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="log-modal" class="fill overlay hidden">
+            <ui:VisualElement class="card wide">
+                <ui:VisualElement class="panel-head">
+                    <ui:Label class="card-title small" text="Transmission log" />
+                    <ui:Button name="close-log" class="btn small" text="Close [Esc]" focusable="false" />
+                </ui:VisualElement>
+                <ui:ScrollView name="log-lines" class="modal-lines" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
