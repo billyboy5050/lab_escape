@@ -8,7 +8,7 @@ Last reviewed: 2026-11-08.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity.
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core already exists in C# in `core/` (M9): it matches the TypeScript engine, and nothing uses it yet.
 
 | Milestone | Status |
 | --- | --- |
@@ -34,11 +34,10 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M9: C# rules core.** Needs the owner to approve installing the .NET SDK.
-2. **M10: C# simulator and CI.**
-3. **M11: Rooms as data, any size.**
-4. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
-5. **M13: Unity parity, retire the web client.**
+1. **M10: C# simulator and CI.** Starts from the tests `core/` does not have yet: see [the C# rules core](implementation-notes.md#the-c-rules-core).
+2. **M11: Rooms as data, any size.**
+3. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
+4. **M13: Unity parity, retire the web client.**
 
 Stages B to D follow: game systems, look and content, then the loop and a tester round.
 

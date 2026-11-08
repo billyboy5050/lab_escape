@@ -208,7 +208,6 @@ After one run, testers can explain the loop, name the three branches and say wha
 
 ## What the owner needs to do
 
-- **Before M9:** approve installing the .NET SDK, which is not on the owner's Mac (Homebrew works).
 - **Before M12:** install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and sign in with a Unity account. Git LFS is also needed then.
 - **Before M20:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored.
 
