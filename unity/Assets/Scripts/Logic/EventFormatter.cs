@@ -172,7 +172,8 @@ namespace LabEscape.Client
                 }
                 case UnitMoved e:
                 {
-                    var verb = e.Mode == MoveMode.Pull ? "is pulled" : e.Mode == MoveMode.Charge ? "charges" : e.Mode == MoveMode.Lunge ? "lunges" : "moves";
+                    var you = e.Id == 0;
+                    var verb = e.Mode == MoveMode.Pull ? (you ? "are pulled" : "is pulled") : e.Mode == MoveMode.Charge ? "charges" : e.Mode == MoveMode.Lunge ? (you ? "lunge" : "lunges") : you ? "move" : "moves";
                     return ($"{Who(e.Id)} {verb} {Tiles.Name(e.From)} → {Tiles.Name(e.To)}", LogKind.Ev);
                 }
                 case AbilityUsed e:

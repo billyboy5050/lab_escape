@@ -176,6 +176,14 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void TheLogSpeaksToThePlayerInTheSecondPerson()
+        {
+            var f = new EventFormatter(C);
+            var line = f.Format(new UnitMoved { Id = 0, From = new Pos(1, 7), To = new Pos(1, 5), Mode = MoveMode.Walk }, null);
+            Assert.That(line!.Text, Is.EqualTo("You move B8 \u2192 B6"));
+        }
+
+        [Test]
         public void TheFormatterNamesUnitsAfterTheyDie()
         {
             var f = new EventFormatter(C);
