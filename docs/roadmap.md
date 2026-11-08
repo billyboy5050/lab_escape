@@ -50,7 +50,7 @@ These were watch items for the playtests. No recorded play has confirmed or rule
 - **Tech's difficulty:** the owner found Tech hard to get a footing in and played it with few turrets, while the bot wins 72% of Tech fights with 10.5 turrets a fight on average. On 2026-10-20 the owner won with Tech for the first time, by holding with shields and a dozen turrets, but only in round 28 of 30, past the spec's 16-round alarm for winning fights; see [the owner's first Tech win](implementation-notes.md#the-owners-first-tech-win-2026-10-20).
 - **Friendly fire:** round 1 tripped the spec's alarm for too little, while the bot trips the one for too much on Hybrid.
 - **Hazard fires:** too few in round 1 (an alarm), largely because most fights ended early, and short of the target for the bot on Alien.
-- **Early losses:** half of round 1's losses came by round 3.
+- **Early losses:** half of the developer round's losses came in the first three rounds of the fight.
 - **The Warden** rarely reaching the player (bot 3% to 28%).
 
 Round 1's evidence for each is in the [developer round](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
