@@ -208,7 +208,7 @@ After one run, testers can explain the loop, name the three branches and say wha
 
 ## What the owner needs to do
 
-- **Before M12:** install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and sign in with a Unity account. Git LFS is also needed then.
+- **Before M13:** add Windows Build Support to the Unity install, and settle which Unity version to stay on (see the [roadmap](roadmap.md#decisions-waiting-on-the-owner)).
 - **Before M20:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored.
 
 ## What the owner has authorised

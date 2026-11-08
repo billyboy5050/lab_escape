@@ -8,7 +8,7 @@ Last reviewed: 2026-11-08.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory.
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13.
 
 | Milestone | Status |
 | --- | --- |
@@ -34,7 +34,7 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
+1. **M12 owner checkpoint.** A full Armory fight plays in `unity/` (see the README's [Unity client](../README.md#unity-client) section). The owner plays it and judges whether it feels at least as good as the web version. M13 waits on the answer; this is the point the [plan's risks](phase-2.md#risks) name for stopping if the 3D version does not feel right.
 2. **M13: Unity parity, retire the web client.**
 
 Stages B to D follow: game systems, look and content, then the loop and a tester round.
@@ -56,6 +56,7 @@ Round 1's evidence for each is in the [developer round](implementation-notes.md#
 
 Agents should not settle these on their own. Ask, and record the answer in the spec or the notes.
 
+- **Unity version.** The installed editor, 6000.6.8f1, is an update release, while the plan asks for the current LTS, which is 6.3. Nothing built so far depends on the difference, and moving up to a later LTS is simpler than moving back. Needed before M13, which also needs the Windows Build Support module added.
 - **How to source 3D art,** and where it will be stored: bought packs, commission or generated. Needed before M20. This repository is public, and paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository.
 - **Creep.** Whether Alien gets it, so that all three branches have six abilities. Needed by M17.
 - **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order). None had been called for by 2026-10-13.
@@ -65,6 +66,7 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 Items about the web client stop applying when M13 retires it. Anything that should survive moves into a Unity milestone at that point.
 
 - **Move the Armory into `content/rooms.json`.** Once the freeze ends at M13, M14 can add the file, put the Armory in it with the new rooms, and delete `map.json`, `waves.json`, `rules.roundCap` and `Content.map` and `Content.waves`. The tile types in `map.json` need a home of their own at that point. Until then the Armory is built from its old files so that its content hash does not move.
+- **Git LFS.** Nothing in `unity/` is binary yet. When the first binary asset arrives (sound at M13 or art at M20), add a `.gitattributes` for it and call `git lfs pre-push` from `.githooks/pre-push`: with `core.hooksPath` set, `git lfs install` does not put its hook where git will run it.
 - **Intercom lines per room.** `content/intercom.json` is written for the Armory and fires in every room, so a room of another size hears about the armory floor. This changes nothing headless. Lines need to belong to a room or a wing by M21.
 - **Report targets per room.** The simulator's targets and alarms, such as rounds to win and the Warden reaching the player by round 7, were set for the Armory. They still print for other rooms but mean little there. M16 should replace them.
 

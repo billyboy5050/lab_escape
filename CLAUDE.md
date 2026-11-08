@@ -54,6 +54,7 @@ Each fact has one home. Link to it rather than copying it.
 | C# core and simulator: build and test (needs the .NET SDK; `brew install dotnet` on a Mac) | `dotnet test core/Tests` | about 5 s |
 | C# simulator: the same commands and files as `npm run sim` | `dotnet run --project core/Sim -c Release -- --help` | |
 | Prove the C# simulator matches: regenerate every committed report and compare it byte for byte | `dotnet run --project core/Sim -c Release -- conformance` | about 75 s |
+| Unity tests and the Mac build, with the editor closed | The commands in the README's [Unity client](README.md#unity-client) section | under 1 min each |
 
 Times are for an 8-core machine.
 
@@ -100,6 +101,7 @@ A pull request is ready for review when every line that applies is true.
 
 - `npm run build` and `npm test` pass. CI runs both on every pull request.
 - **`core/` changed:** `dotnet test core/Tests` and the `conformance` check pass. CI runs both.
+- **`unity/` changed:** the Unity tests pass, and the fight has been played in the editor or a Mac build with a real mouse and keyboard. CI has no Unity licence, so neither runs there.
 - New or changed rules have tests, and the debug overlay can explain any new behaviour (spec, "Rules for every milestone").
 - No number is hard-coded in logic. Values live in `content/`, and any field the code reads with `!` is listed in `src/content/required.ts`.
 - **Content changed:** every generated file is regenerated (see "Regenerating generated files"), and the simulator figures in the implementation notes are updated if they moved.
@@ -128,6 +130,7 @@ The README's [code layout](README.md#code-layout) has the module table. The esse
 - A fight takes place in a room: its floor plan, hazards, waves and round cap (`RoomDef`). Rules code reads the fight's room through `w.room`, never `c.map`, `c.waves` or `rules.roundCap`, which exist for the Armory's files and the web client. See [rooms as data](docs/implementation-notes.md#rooms-as-data).
 - Imports point one way: `util` and `content` at the bottom, then `state`, `rules`, `effects` and `ai`, `engine`, then `preview` and `telemetry`, with `sim` and `client` on top. Never import upward; `rules` must not import `engine`, for example.
 - `core/` holds the same rules core, telemetry and simulator in C#, for the move to Unity. Until M13 it must behave exactly as the TypeScript does, so a fix to any of them in one language needs the same fix in the other. Keep `core/Core` to C# 9 and .NET Standard 2.1 with no Unity dependency. Implementation notes say where the two differ on purpose, for the [rules core](docs/implementation-notes.md#the-c-rules-core) and the [simulator](docs/implementation-notes.md#the-c-simulator).
+- `unity/` is the Unity client, and it decides no rules: legal actions come from `Actions`, and previews and intents from `Previews`, as in the web client. Scenes stay empty, because `Bootstrap` builds everything from data and code. Models and overlays are generated and the interface is UXML and USS, so changes stay reviewable. See [the Unity client](docs/implementation-notes.md#the-unity-client).
 
 ## Invariants
 
@@ -176,4 +179,6 @@ Do not ask about things this file or the docs already answer, or about routine c
 - A test that plays whole bot fights needs `BOT_FIGHT_TIMEOUT_MS` from `tests/helpers.ts` as its timeout. Such tests take a second or two locally but several times that on the CI runner, past Vitest's 5 s default.
 - Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values.
 - `npm test` prints a Vite warning about an extensionless import in `vite.config.ts`. It is harmless for now and listed in the roadmap.
+- Unity imports everything under `core/Core`, so .NET's output goes to `core/.build/` (set in `core/Directory.Build.props`). The `.meta` files Unity writes in that folder are ignored by git; nothing refers to them.
+- `Assets/Scenes/Fight.unity` and `Assets/Resources/UI/Panel.asset` are generated once and committed. The menu item Lab Escape > Recreate Scene And Panel remakes them.
 - Enter and Space behave differently when a button has focus. That logic lives in `src/client/actionKeys.ts` and is tested; keep keyboard handling there and in `src/client/screens/FightScreen.tsx`.
