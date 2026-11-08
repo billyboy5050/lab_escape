@@ -103,6 +103,7 @@ namespace LabEscape.Core
         {
             var settings = new JObject();
             if (Settings.MaxWaves.HasValue) settings["maxWaves"] = Settings.MaxWaves.Value;
+            if (Settings.Room != null) settings["room"] = Settings.Room;
             var o = new JObject
             {
                 ["format"] = Format,
@@ -125,6 +126,7 @@ namespace LabEscape.Core
             var settings = new FightSettings();
             var maxWaves = r["settings"]!["maxWaves"];
             if (maxWaves != null) settings.MaxWaves = (int)Math.Min(J.Number(maxWaves), int.MaxValue); // A larger number holds nothing back either way.
+            settings.Room = J.StrOf(r["settings"]!["room"]);
             return new FightRecord
             {
                 Format = J.StrOf(r["format"]) ?? "",
@@ -270,6 +272,8 @@ namespace LabEscape.Core
             {
                 var w = settings["maxWaves"];
                 if (w != null && (!J.IsInteger(w) || J.Number(w) < 1)) Add($"settings.maxWaves must be a whole number of at least 1 (got {Hash.Stringify(w)})");
+                var room = settings["room"];
+                if (room != null && room.Type != JTokenType.String) Add($"settings.room must be a room ID (got {Hash.Stringify(room)})");
             }
             if (!(r["commands"] is JArray commands)) Add("commands must be a list");
             else CheckCommands(commands, Add);
@@ -360,7 +364,10 @@ namespace LabEscape.Core
                 if (problems.Count > MaxProblems) shown.Add("(further problems not shown)");
                 throw new ReplayMismatch("The replay file is malformed:\n  - " + string.Join("\n  - ", shown));
             }
-            return FightRecord.FromChecked(rec);
+            var record = FightRecord.FromChecked(rec);
+            var room = record.Settings.Room;
+            if (room != null && !c.Rooms.ContainsKey(room)) throw new ReplayMismatch($"Replay was played in room \"{room}\", which this content does not have");
+            return record;
         }
 
         /// <summary>The same check on a record held in memory, which may have been edited since it was made.</summary>

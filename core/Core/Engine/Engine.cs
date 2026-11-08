@@ -283,7 +283,7 @@ namespace LabEscape.Core
                 }
                 case DebugForceWave _:
                 {
-                    if (s.WavesSpawned >= w.C.Waves.Count) throw new IllegalCommand("No waves left");
+                    if (s.WavesSpawned >= w.Room.Waves.Count) throw new IllegalCommand("No waves left");
                     w.Root("debug: force wave", null, () =>
                     {
                         var idx = s.WavesSpawned;

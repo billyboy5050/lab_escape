@@ -27,6 +27,10 @@ namespace LabEscape.Core
     /// <summary>Tile addressing: columns A.. left to right, rows 1.. top to bottom. "D5" is column D (x=3), row 5 (y=4).</summary>
     public static class Tiles
     {
+        /// <summary>The largest room a tile name can address: columns A to Z, rows 1 to 99.</summary>
+        public const int MaxColumns = 26;
+        public const int MaxRows = 99;
+
         public static string Name(Pos p) => ((char)(65 + p.X)).ToString() + (p.Y + 1).ToString(CultureInfo.InvariantCulture);
 
         /// <summary>Parses a tile name. Throws FormatException for anything that is not a tile name.</summary>

@@ -204,6 +204,7 @@ namespace LabEscape.Sim
             var p = GameStates.PlayerOf(s);
             if (p == null) return -1_000_000;
             var rs = c.Rules.Statuses;
+            var board = c.RoomFor(s.Settings.Room).Board;
             var v = p.Hp * 100;
             if (p.Statuses.Poison != null) v -= p.Statuses.Poison.Remaining * rs.Poison.Damage * 90;
             if (p.Statuses.Parasite != null) v -= p.Statuses.Parasite.Remaining * rs.Parasite.Damage * 90;
@@ -219,7 +220,7 @@ namespace LabEscape.Sim
                     var armor = u.Armor - (u.Statuses.Corrode?.Stacks ?? 0);
                     v -= 30 * Math.Max(0, armor);
                     // Offensive potential: enemies the player can see within range 5.
-                    if (Grid.Cheb(u.Pos, p.Pos) <= 5 && c.Board.HasLos(u.Pos, p.Pos)) v += 6;
+                    if (Grid.Cheb(u.Pos, p.Pos) <= 5 && board.HasLos(u.Pos, p.Pos)) v += 6;
                 }
                 else if (u.Kind == UnitKind.Minion)
                 {

@@ -301,7 +301,7 @@ export function validateContent(f: ContentFiles): string[] {
         return null;
       }
       const t = parseTile(name);
-      if (t.x < 0 || t.y < 0 || t.x >= width || t.y >= height) {
+      if (t.x < 0 || t.y < 0 || typeof width !== 'number' || t.x >= width || typeof height !== 'number' || t.y >= height) {
         p.push(`${where} "${name}" is off the map`);
         return null;
       }

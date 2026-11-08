@@ -194,7 +194,7 @@ function main(): Promise<void> | void {
       const file = positionals[1];
       if (!file) throw new Error('replay needs a FILE');
       const rec: unknown = JSON.parse(fs.readFileSync(file, 'utf8'));
-      const c = contentFor(overrides, files);
+      const c = contentFor(undefined, files);
       checkCompatible(c, rec);
       const r = replay(c, rec);
       const s = summarize(r.events, r.state);

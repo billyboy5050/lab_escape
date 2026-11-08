@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
@@ -177,7 +178,8 @@ namespace LabEscape.Core
         public string? Direction;
     }
 
-    public sealed class MapFile
+    /// <summary>A room ready to fight in: everything that differs from one fight's location to another's.</summary>
+    public sealed class RoomDef
     {
         public string Id = "";
         public string Name = "";
@@ -188,6 +190,10 @@ namespace LabEscape.Core
         public OrderedMap<string, TerrainDef> Terrain = new OrderedMap<string, TerrainDef>();
         public string PlayerStart = "";
         public List<MapHazard> Hazards = new List<MapHazard>();
+        public List<WaveDef> Waves = new List<WaveDef>();
+        public int RoundCap;
+        /// <summary>The room's board, built once with the content and shared by every state that uses it.</summary>
+        public Board Board = null!;
     }
 
     public sealed class WaveUnit { public string Def = ""; public string Tile = ""; }
@@ -248,14 +254,22 @@ namespace LabEscape.Core
         public OrderedMap<string, UpgradeDef> Upgrades = null!;
         public List<string> UpgradeOrder = null!;
         public OrderedMap<string, HazardDef> HazardDefs = null!;
-        public MapFile Map = null!;
-        public List<WaveDef> Waves = null!;
+        /// <summary>Every room by ID, the Armory first. Fights find theirs with RoomFor.</summary>
+        public OrderedMap<string, RoomDef> Rooms = null!;
+        /// <summary>The room a fight takes place in when its settings name none: the Armory, built from map.json, waves.json and rules.roundCap.</summary>
+        public RoomDef DefaultRoom = null!;
         public IntercomDef Intercom = null!;
         public List<PresetDef> Presets = null!;
         /// <summary>Hash of the canonical JSON of every content file. Replays are only valid against the same hash.</summary>
         public string Hash = "";
-        /// <summary>The map's board, built once with the content and shared by every state that uses it.</summary>
-        public Board Board = null!;
+
+        /// <summary>The room a fight takes place in. A fight that names none is in the Armory.</summary>
+        public RoomDef RoomFor(string? id)
+        {
+            if (id == null) return DefaultRoom;
+            if (!Rooms.TryGetValue(id, out var room)) throw new ArgumentException($"Unknown room \"{id}\"");
+            return room;
+        }
     }
 
     /// <summary>

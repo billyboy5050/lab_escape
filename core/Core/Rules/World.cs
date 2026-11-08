@@ -70,6 +70,8 @@ namespace LabEscape.Core
         public readonly Content C;
         public readonly GameState S;
         public readonly Board B;
+        /// <summary>The room this fight takes place in.</summary>
+        public readonly RoomDef Room;
         public readonly List<GameEvent> Events = new List<GameEvent>();
         public readonly List<Frame>? Frames;
         public readonly List<DeathHook> DeathHooks = new List<DeathHook>();
@@ -84,7 +86,8 @@ namespace LabEscape.Core
         {
             C = c;
             S = s;
-            B = c.Board;
+            Room = c.RoomFor(s.Settings.Room);
+            B = Room.Board;
             Frames = frames ? new List<Frame>() : null;
         }
 
@@ -517,7 +520,7 @@ namespace LabEscape.Core
 
         private bool AllEnemiesDown()
         {
-            var inPlay = Math.Min(S.Settings.MaxWaves ?? C.Waves.Count, C.Waves.Count);
+            var inPlay = Math.Min(S.Settings.MaxWaves ?? Room.Waves.Count, Room.Waves.Count);
             return S.WavesSpawned >= inPlay && !S.Units.Any(u => u.Team == Team.Enemy && !u.Dead);
         }
 

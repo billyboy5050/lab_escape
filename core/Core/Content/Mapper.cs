@@ -19,7 +19,18 @@ namespace LabEscape.Core
             var utilities = Table(J.Get(files["abilities"], "utilities")!, Utility);
             var upgrades = Table(files["upgrades"]!, Upgrade);
             var hazards = Table(files["hazards"]!, Hazard);
-            var map = MapOf(files["map"]!);
+            var armory = RoomOf(files["map"]!, files["waves"]!, Int(files["rules"], "roundCap"));
+            var rooms = new OrderedMap<string, RoomDef>(StringComparer.Ordinal);
+            rooms[armory.Id] = armory;
+            if (files.Root.Property("rooms") != null)
+            {
+                foreach (var file in (JArray)files["rooms"]!)
+                {
+                    var resolved = ContentLoader.ResolveRoom(files["map"]!, file);
+                    var room = RoomOf(resolved, J.Get(resolved, "waves")!, Int(resolved, "roundCap"));
+                    rooms[room.Id] = room;
+                }
+            }
             return new Content
             {
                 Files = files,
@@ -31,12 +42,11 @@ namespace LabEscape.Core
                 Upgrades = upgrades,
                 UpgradeOrder = ((JArray)files["upgrades"]!).Select(u => Str(u, "id")).ToList(),
                 HazardDefs = hazards,
-                Map = map,
-                Waves = ((JArray)files["waves"]!).Select(Wave).ToList(),
+                Rooms = rooms,
+                DefaultRoom = armory,
                 Intercom = Intercom(files["intercom"]!),
                 Presets = ((JArray)files["presets"]!).Select(Preset).ToList(),
                 Hash = Hash.HashJson(files.Root),
-                Board = new Board(map),
             };
         }
 
@@ -262,7 +272,7 @@ namespace LabEscape.Core
             Cue = OptStr(h, "cue") ?? "",
         };
 
-        private static MapFile MapOf(JToken m)
+        private static RoomDef RoomOf(JToken m, JToken waves, int roundCap)
         {
             var legend = new OrderedMap<string, string>(StringComparer.Ordinal);
             foreach (var pair in ((JObject)J.Get(m, "legend")!).Properties()) legend[pair.Name] = pair.Value.Value<string>()!;
@@ -277,7 +287,7 @@ namespace LabEscape.Core
                     BlocksProjectile = Flag(pair.Value, "blocksProjectile"),
                 };
             }
-            return new MapFile
+            var room = new RoomDef
             {
                 Id = OptStr(m, "id") ?? "",
                 Name = OptStr(m, "name") ?? "",
@@ -294,7 +304,11 @@ namespace LabEscape.Core
                     Tiles = StrList(J.Get(h, "tiles")),
                     Direction = OptStr(h, "direction"),
                 }).ToList(),
+                Waves = ((JArray)waves).Select(Wave).ToList(),
+                RoundCap = roundCap,
             };
+            room.Board = new Board(room);
+            return room;
         }
 
         private static WaveDef Wave(JToken w) => new WaveDef

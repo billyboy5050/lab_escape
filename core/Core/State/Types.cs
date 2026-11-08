@@ -382,9 +382,12 @@ namespace LabEscape.Core
         /// <summary>Number of waves in play. Fewer than all holds the later waves back, and clearing the last one in play wins.</summary>
         public int? MaxWaves;
 
-        public FightSettings Clone() => new FightSettings { MaxWaves = MaxWaves };
+        /// <summary>The ID of the room the fight takes place in. A fight that names none is in the Armory.</summary>
+        public string? Room;
 
-        internal void Write(JsonOut o) => o.BeginObject().Opt("maxWaves", MaxWaves).EndObject();
+        public FightSettings Clone() => new FightSettings { MaxWaves = MaxWaves, Room = Room };
+
+        internal void Write(JsonOut o) => o.BeginObject().Opt("maxWaves", MaxWaves).OptText("room", Room).EndObject();
     }
 
     public sealed class IntercomEntry
@@ -539,13 +542,14 @@ namespace LabEscape.Core
         public static GameState CreateInitial(Content c, Loadout loadout, FightSettings? settings = null)
         {
             var pdef = c.Units["player"];
+            var room = c.RoomFor(settings?.Room);
             var player = new Unit
             {
                 Id = 0,
                 Def = "player",
                 Team = Team.Player,
                 Kind = UnitKind.Player,
-                Pos = Tiles.Parse(c.Map.PlayerStart),
+                Pos = Tiles.Parse(room.PlayerStart),
                 Hp = pdef.Hp,
                 MaxHp = pdef.Hp,
                 Armor = pdef.Armor,
@@ -556,7 +560,7 @@ namespace LabEscape.Core
                 Round = 0,
                 Phase = Phase.RoundStart,
                 Units = new List<Unit> { player },
-                Hazards = c.Map.Hazards.Select(h => new Hazard
+                Hazards = room.Hazards.Select(h => new Hazard
                 {
                     Id = h.Id,
                     Def = h.Def,
