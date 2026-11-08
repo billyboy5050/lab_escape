@@ -58,6 +58,8 @@ The bot sees the same previews and intents a player does, but it checks every ca
 
 ## What the developer playtest round says (spec round 1)
 
+Written before the later sessions. Where this section looks ahead to rounds 2 and 3, read it with [what the outside testers said](#what-the-outside-testers-said-2026-11-08): playtesting closed without those rounds' metrics being recorded.
+
 The owner played 22 fights to the end, on 2026-10-03 and 2026-10-07. The playtest report counted 21 of them: Alien 10, Tech 6 and Hybrid 5. It left out one custom-loadout fight played with wave 3 held back. Result: 3 wins (Hybrid twice, Alien once) and 18 losses. The owner found no major bugs. The one reported, the Scout Drone dying at once, is the rules as written (see below).
 
 **How the figures were gathered.** Round 1 ran on a checkout from before 2026-10-06: engine 0.1.0, with no tester IDs. `main` has been at engine 0.1.1 since PR #3, which changed only how units that die in the same effect as the player are reported. The playtest report refuses a replay from another engine version (invariant 4 in CLAUDE.md), so the owner copied the fights and restamped them as 0.1.1. That is sound for these figures, which do not use what changed. Every replay also ran to its end without a rejected command. The report was then run with `npm run sim -- telemetry <folder> --include-unlabelled`.
@@ -154,4 +156,20 @@ The owner won with Tech for the first time on 2026-10-20, on the restyled client
 - **Length is the alarm.** 28 rounds is well past the 16-round alarm for winning fights and two rounds from the cap, where an undecided fight is a loss. The standoff and the tail account for the extra rounds, not late waves.
 - **Friendly fire stayed on the player's side.** 13 HP of the player's own damage hit their minions and shields (turret shots into a drone and into shields, a drone zap into a turret, the round-17 mines into a shield, a Sidearm shot into a drone). None hit the player.
 - **Hazards keep firing in a long fight.** 11 fires, against round 1's average of 0.62; ten of them hit the player's side.
-- **One fight by one experienced player.** It is evidence for the roadmap's Tech item, not a finding. The spec tunes on playtest evidence, and round 2 shows whether first-time players see the same.
+- **One fight by one experienced player.** It is evidence for the roadmap's Tech item, not a finding. The spec tunes on playtest evidence, and nothing recorded since shows whether first-time players see the same.
+
+## What the outside testers said (2026-11-08)
+
+Other people played further sessions, including people who had never seen the game. On 2026-11-08 the owner reported their feedback, marked the playtests successful and moved the project on to the [full-game phase](phase-2.md).
+
+**What the testers said:**
+
+- The game seems fun, but they want to see more before saying whether they would play a full game.
+- They did not understand the eventual roguelite loop.
+- The tech trees do not read as separate, and the upgrades are confusing.
+
+**The owner's reading:** these problems should go away when a build is earned by progressing through the game, rather than picked whole at the start. The weapons and abilities need some rework, and the Occult path has to be added.
+
+**What was not measured.** The owner has not received the testers' recordings, and the `telemetry/` folder in the owner's checkout holds only the owner's own fights and one agent test. So there are no figures for these sessions: none of the spec's first-time or informed metrics, no answers to the three questions asked after each attempt, and no record of how many people played or how many attempts they made. The decision rests on the testers' verbal feedback. The measured human evidence is still only the developer round and the owner's Tech win above.
+
+If the recordings arrive, `npm run sim -- telemetry` can read any replay made on the current engine and content, and the results belong in this section.

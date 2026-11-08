@@ -6,7 +6,7 @@ Instructions for AI agents and people working on Lab Escape. `AGENTS.md` is a sy
 
 Lab Escape: Armory Lockdown is a playable prototype of one room of a tactics roguelite, built to find out whether a single fight is fun before anything else is added. It has a deterministic TypeScript rules engine that runs headless in Node, a React and Vite web client, telemetry and replays, and a headless simulator with bots. Every number is data in `content/*.json`; behaviour is code.
 
-Milestones M0 to M6 in the spec are done and M7's tooling is built, but M7 itself is not done: its acceptance criteria need the first full playtest round and its recorded metrics. The project is now in its playtest and tuning phase: see [docs/roadmap.md](docs/roadmap.md).
+Milestones M0 to M7 in the spec are done: the owner closed playtesting as successful on 2026-11-08. The project is now in its full-game phase, which moves the game to Unity and then builds out runs, rooms, events, the Occult branch and three wings: see [docs/phase-2.md](docs/phase-2.md) for the plan and [docs/roadmap.md](docs/roadmap.md) for what is next. Until milestone M13 retires it, the TypeScript prototype described here stays in use, and the commands in this file apply to it.
 
 ## Start here, every session
 
@@ -30,6 +30,7 @@ Each fact has one home. Link to it rather than copying it.
 | How the tooling reads the spec where it is silent, simulator and playtest findings, known limitations | [docs/implementation-notes.md](docs/implementation-notes.md) |
 | How to run, play, tune and simulate; the code layout | [README.md](README.md) |
 | Status, what is next, decisions waiting on the owner | [docs/roadmap.md](docs/roadmap.md) |
+| The plan for the full-game phase: the move to Unity, its milestones and what the owner has decided | [docs/phase-2.md](docs/phase-2.md) |
 | The one-page rules sheet handed to first-time players | [docs/rules-sheet.html](docs/rules-sheet.html) |
 | Work in progress, one note per branch | [docs/work/](docs/work/) |
 | How to work here, and the invariants | this file |
@@ -148,6 +149,7 @@ The spec is the source of truth, and the spec itself says to update it when impl
 - Tuning changes only `content/` and goes on a `tune/` branch.
 - Gather evidence with the simulator: `npm run sim -- tune --param units.warden.hp --values 12,16,20`, then `presets --seeds 1000` for the values you keep. Put the before and after figures in the pull request.
 - The greedy bot looks one action ahead and shows the ceiling for a careful player, not how people play. Tune on bot figures alone only when the owner asks; otherwise wait for playtest evidence (see the roadmap).
+- In the full-game phase no rule or content value changes until M13, while the port is compared against the TypeScript engine. After that, new rooms, enemies and rewards may take their first values from the simulator, because the owner has asked for that ([docs/phase-2.md](docs/phase-2.md)). Existing Armory values still wait for evidence.
 
 ## Ask the owner before
 
