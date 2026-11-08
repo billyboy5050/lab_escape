@@ -51,7 +51,9 @@ Each fact has one home. Link to it rather than copying it.
 | Quick balance check while iterating (prints only) | `npm run sim -- batch --preset hybrid --seeds 100` | seconds |
 | Re-record the golden replays | `npm run golden:record` | |
 | Playtest metrics from saved telemetry | `npm run sim -- telemetry [DIR]` | seconds |
-| C# rules core: build and test (needs the .NET SDK; `brew install dotnet` on a Mac) | `dotnet test core/Tests` | seconds |
+| C# core and simulator: build and test (needs the .NET SDK; `brew install dotnet` on a Mac) | `dotnet test core/Tests` | about 5 s |
+| C# simulator: the same commands and files as `npm run sim` | `dotnet run --project core/Sim -c Release -- --help` | |
+| Prove the C# simulator matches: regenerate every committed report and compare it byte for byte | `dotnet run --project core/Sim -c Release -- conformance` | about 75 s |
 
 Times are for an 8-core machine.
 
@@ -66,7 +68,7 @@ The golden replays and the committed reports describe the current rules and cont
 | `reports/random/` | `npm run sim -- presets --bot random --seeds 1000 --out reports/random` |
 | `reports/sweep-8-greedy.*` | `npm run sim -- sweep --seeds 1000 --out reports` |
 
-Content changes alter the content hash, so until this is done the golden test fails and the winning lines no longer load.
+Content changes alter the content hash, so until this is done the golden test fails and the winning lines no longer load. CI also regenerates the reports in C# and compares them with the committed files, so a report that is out of step fails there.
 
 The rules sheet (`docs/rules-sheet.html`) is written by hand, but every value it copies from `content/` carries a `data-c` tag with its content path, and `tests/rulesSheet.test.ts` checks them. If a content change fails that test, change the sheet's text to match, keep the tags, and check that it still prints on one page (print preview in a browser, at A4 and at Letter).
 
@@ -97,7 +99,7 @@ These rules are mandatory. `main` is always green and changes only through merge
 A pull request is ready for review when every line that applies is true.
 
 - `npm run build` and `npm test` pass. CI runs both on every pull request.
-- **`core/` changed:** `dotnet test core/Tests` passes. CI does not run it until M10.
+- **`core/` changed:** `dotnet test core/Tests` and the `conformance` check pass. CI runs both.
 - New or changed rules have tests, and the debug overlay can explain any new behaviour (spec, "Rules for every milestone").
 - No number is hard-coded in logic. Values live in `content/`, and any field the code reads with `!` is listed in `src/content/required.ts`.
 - **Content changed:** every generated file is regenerated (see "Regenerating generated files"), and the simulator figures in the implementation notes are updated if they moved.
@@ -124,13 +126,13 @@ The README's [code layout](README.md#code-layout) has the module table. The esse
 - Previews and enemy intents run the same engine on a copy of the state (`src/preview`). The UI never re-implements a rule.
 - Abilities and upgrades are small code behaviours keyed by ID (`src/effects`) that read every number from content. The spec's "Abilities and upgrades in code" explains why this is code and not a data language.
 - Imports point one way: `util` and `content` at the bottom, then `state`, `rules`, `effects` and `ai`, `engine`, then `preview` and `telemetry`, with `sim` and `client` on top. Never import upward; `rules` must not import `engine`, for example.
-- `core/` holds the same rules core in C#, for the move to Unity. Until M13 it must behave exactly as the TypeScript does, so a fix to the rules core in one language needs the same fix in the other. Keep `core/Core` to C# 9 and .NET Standard 2.1 with no Unity dependency. [Implementation notes](docs/implementation-notes.md#the-c-rules-core) say where the two differ on purpose.
+- `core/` holds the same rules core, telemetry and simulator in C#, for the move to Unity. Until M13 it must behave exactly as the TypeScript does, so a fix to any of them in one language needs the same fix in the other. Keep `core/Core` to C# 9 and .NET Standard 2.1 with no Unity dependency. Implementation notes say where the two differ on purpose, for the [rules core](docs/implementation-notes.md#the-c-rules-core) and the [simulator](docs/implementation-notes.md#the-c-simulator).
 
 ## Invariants
 
 Breaking one of these breaks replays, previews or the balance data, often silently.
 
-1. **Determinism.** The engine (`state`, `rules`, `effects`, `ai`, `engine`, `preview`, `content`) uses no `Math.random`, no clock and no floating-point arithmetic in rules: positions and damage are integers. Nothing depends on hash or iteration order, and ties resolve by explicit orders (the spec and the implementation notes list them, with unit ID last). Bots get randomness only from the seeded generator in `src/sim/rng.ts`. The same batch with the same seeds gives identical results whatever the worker count; a test checks it.
+1. **Determinism.** The engine (`state`, `rules`, `effects`, `ai`, `engine`, `preview`, `content`) uses no `Math.random`, no clock and no floating-point arithmetic in rules: positions and damage are integers. Nothing depends on hash or iteration order, and ties resolve by explicit orders (the spec and the implementation notes list them, with unit ID last). Bots get randomness only from the seeded generator in `src/sim/rng.ts` (`core/Sim/Rng.cs` in C#). The same batch with the same seeds gives identical results whatever the worker count; a test checks it.
 2. **Numbers are data.** A value hard-coded in logic is a bug (spec, Build order).
 3. **Content is validated before use.** `validateContent` must pass, and hot reload rejects invalid content and keeps the old values. A collection or block the game reads without a fallback is a reported problem, never an empty default.
 4. **Replays are tied to the engine version and the content hash.** Any content change alters the hash, so the golden replays and `reports/winning-line-*.json` stop loading until they are regenerated. A rule change that alters what an existing command log produces must bump `ENGINE_VERSION` in `src/state/state.ts`, so old replays (including playtest telemetry) are refused instead of silently replaying differently.

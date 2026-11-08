@@ -32,6 +32,61 @@ namespace LabEscape.Core
             return sb.ToString();
         }
 
+        /// <summary>JSON.stringify(value, null, space): the multi-line form the reports and replay files are written in.</summary>
+        public static string Stringify(JToken? value, int space)
+        {
+            if (value == null) return "undefined";
+            var sb = new StringBuilder();
+            WriteIndented(sb, value, new string(' ', space), "");
+            return sb.ToString();
+        }
+
+        private static void WriteIndented(StringBuilder sb, JToken value, string gap, string indent)
+        {
+            var inner = indent + gap;
+            var first = true;
+            switch (value)
+            {
+                case JObject obj:
+                    if (!obj.HasValues)
+                    {
+                        sb.Append("{}");
+                        return;
+                    }
+                    sb.Append("{\n");
+                    foreach (var key in OrderedKeys(obj, sortKeys: false))
+                    {
+                        if (!first) sb.Append(",\n");
+                        first = false;
+                        sb.Append(inner);
+                        JsText.AppendString(sb, key);
+                        sb.Append(": ");
+                        WriteIndented(sb, obj[key]!, gap, inner);
+                    }
+                    sb.Append('\n').Append(indent).Append('}');
+                    return;
+                case JArray list:
+                    if (list.Count == 0)
+                    {
+                        sb.Append("[]");
+                        return;
+                    }
+                    sb.Append("[\n");
+                    foreach (var item in list)
+                    {
+                        if (!first) sb.Append(",\n");
+                        first = false;
+                        sb.Append(inner);
+                        WriteIndented(sb, item, gap, inner);
+                    }
+                    sb.Append('\n').Append(indent).Append(']');
+                    return;
+                default:
+                    Write(sb, value, sortKeys: false);
+                    return;
+            }
+        }
+
         private static void Write(StringBuilder sb, JToken? value, bool sortKeys)
         {
             if (value == null)

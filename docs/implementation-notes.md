@@ -42,7 +42,7 @@ The rules themselves are in the spec. On 2026-10-13 the owner confirmed every re
 
 `core/` is the rules core ported to C# (M9). It reads the same content files and must behave exactly as the TypeScript engine does until M13.
 
-**How it was proven (2026-11-08).** The C# content hash equals the hash the TypeScript engine recorded. Each golden replay reproduces its `golden/*.events.jsonl` byte for byte, and its event and final-state hashes match. A one-off comparison then ran 3,150 fights from the TypeScript engine through the C# one: 3,000 random-bot fights over presets and random builds, 150 greedy-bot fights, six content variants and random debug commands. At each of the 47,022 steps it compared the events, frames, state, legal commands, action statuses, move options, intents and a preview, and it also tried 47,484 random or illegal commands and compared the verdict and error text. There were no differences. M10 repeats this at scale with the committed simulator reports.
+**How it was proven (2026-11-08).** The C# content hash equals the hash the TypeScript engine recorded. Each golden replay reproduces its `golden/*.events.jsonl` byte for byte, and its event and final-state hashes match. A one-off comparison then ran 3,150 fights from the TypeScript engine through the C# one: 3,000 random-bot fights over presets and random builds, 150 greedy-bot fights, six content variants and random debug commands. At each of the 47,022 steps it compared the events, frames, state, legal commands, action statuses, move options, intents and a preview, and it also tried 47,484 random or illegal commands and compared the verdict and error text. There were no differences. The simulator's `conformance` command now repeats this at scale: see [the C# simulator](#the-c-simulator).
 
 **JavaScript behaviour the port reproduces**, in case a change touches one of these:
 
@@ -59,7 +59,30 @@ The rules themselves are in the spec. On 2026-10-13 the owner confirmed every re
 - `Command.Parse` throws on an unknown command type or debug operation, where the TypeScript `step` does nothing and returns ok.
 - JSON.NET replaces a lone surrogate in a JSON string, so content holding one would hash differently. The hash code itself handles them as JavaScript does.
 
-**Tests not yet ported.** These depend on code that M10 brings across: the telemetry half of the "summaries count HP actually lost" test, the replay-compatibility and fight-session tests, the batch runs, and anything using the greedy bot. `core/Tests/Support/Bots.cs` holds the seeded generator and the random bot until the simulator owns them. Tests of the web client and dev server have no C# counterpart.
+Tests of the web client and dev server have no C# counterpart.
+
+## The C# simulator
+
+`core/Sim` is `src/sim` ported to C# (M10), on the telemetry code in `core/Core/Telemetry`. Telemetry is in the library rather than the tool because the Unity client will record fights with it too.
+
+**How it was proven (2026-11-08).** `conformance` reruns the greedy and random presets and the sweep, 1,000 seeds each (7,000 fights), and compares the 18 committed reports byte for byte. All 18 matched, and CI now checks this on every pull request. A one-off comparison then ran the same commands through both simulators and compared exit codes, printed output and every file written, per-fight CSVs included: 21 commands (other bots, overrides, wave 3 held back, sweep sizes, negative seeds, `tune`, `golden`, `replay` and bad options), `telemetry` under five sets of options on 52 mixed folders, and 670,000 random cases of number formatting, `toFixed`, `localeCompare`, `Math.round` and indented JSON against Node. The only difference was the wording of an operating system's file error.
+
+**JavaScript behaviour the port reproduces**, in case a change touches one of these:
+
+- `JsText.ToFixed` works on the double's exact binary value and rounds a tie up, as `toFixed` does. A .NET format string is not guaranteed to.
+- `Hash.Stringify(value, 2)` is `JSON.stringify(value, null, 2)`, the form of the stats and replay files.
+- `Stats.RoundHalfUp` is `Math.round`; `Math.Round` sends a tie to the even number.
+- `LocaleOrder` is `localeCompare` for ASCII, in ICU's order: punctuation, digits, then letters with lower case before upper. The tool runs without culture data, and an ordinal comparison would sort tester IDs differently.
+- `StrictJson` refuses what `JSON.parse` refuses. JSON.NET alone accepts comments, single quotes and bare `NaN`.
+- `Options.ParseInteger` reads a number as `Number()` does (`1e3`, `0x10`), and `ParsedArgs` follows Node's `parseArgs`, so a value starting with a dash needs the `--from=-3` form.
+
+**Where the two differ on purpose.**
+
+- Threads share one `Content`, which is only read, where each TypeScript worker builds its own.
+- A seed or count too large for a 64-bit integer is refused, where JavaScript carries on with a rounded number.
+- The wording of errors from the file system and from a JSON parser is .NET's.
+
+**Speed.** 300 greedy Hybrid fights took 7.9 s against 17.0 s for the TypeScript, on 34 s of processor time against 135 s (a 10-core Mac, 2026-11-08). `conformance` takes about 75 s there.
 
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
 

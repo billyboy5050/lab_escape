@@ -8,7 +8,7 @@ Last reviewed: 2026-11-08.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core already exists in C# in `core/` (M9): it matches the TypeScript engine, and nothing uses it yet.
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet.
 
 | Milestone | Status |
 | --- | --- |
@@ -34,10 +34,9 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M10: C# simulator and CI.** Starts from the tests `core/` does not have yet: see [the C# rules core](implementation-notes.md#the-c-rules-core).
-2. **M11: Rooms as data, any size.**
-3. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
-4. **M13: Unity parity, retire the web client.**
+1. **M11: Rooms as data, any size.**
+2. **M12: Unity fight in greybox.** Needs the owner to install Unity Hub and the current LTS editor with Mac, Windows and Web build support, and to sign in; Git LFS too. Ends with an owner checkpoint.
+3. **M13: Unity parity, retire the web client.**
 
 Stages B to D follow: game systems, look and content, then the loop and a tester round.
 
@@ -68,7 +67,7 @@ Items about the web client stop applying when M13 retires it. Anything that shou
 
 - **Loadout size in the sweep.** At 8 of 11 any two builds share at least 5 abilities, which weakens the test of whether loadouts play differently. The owner kept 8 for every playtest round (2026-10-13), so 6 of 11 is tried in the simulator instead: run `npm run sim -- sweep --size 6 --seeds 1000 --out <scratch folder>`, compare the win-rate lift and the spread of winning loadouts with the committed 8-ability sweep (`reports/sweep-8-greedy.txt`), and add the findings to the implementation notes.
 - **Ability rules during a fight.** The action bar's tooltip shows an ability's name, or why it cannot be used, but never its rule text, so in a fight the full rule is only on the loadout screen and the rules sheet carries a short version. Add each ability's `text` to its action button's tooltip.
-- **Simulator worker threads.** In a fresh container (Node 22.22.0, tsx 4.23.15), `npm run sim` with more than one worker fails with "Cannot find module .../src/sim/batch" from `src/sim/worker.ts`, though the parent passes its tsx flags to the workers. `--workers 1` works, and no test runs the real worker pool. M10 replaces the worker pool, so fix this only if it gets in the way before then.
+- **Simulator worker threads.** In a fresh container (Node 22.22.0, tsx 4.23.15), `npm run sim` with more than one worker fails with "Cannot find module .../src/sim/batch" from `src/sim/worker.ts`, though the parent passes its tsx flags to the workers. `--workers 1` works, and no test runs the real worker pool. The C# simulator does not have this problem, so fix it only if it gets in the way before M13 retires the TypeScript simulator.
 - **Readable hazard fires on the result screen.** The fight summary names a hazard by its map ID and an object by its number (`vent_b5→player`, `gun→object 5`), and the result screen prints them as they are. Name them as the board does ("Gas vent B5", "shield segment", "egg") in `src/telemetry/summary.ts` or where `src/client/screens/ResultScreen.tsx` prints them.
 - **Tile-by-tile movement animation.** Multi-tile moves animate as one straight slide between the start and end tiles.
 - **Modifier keys on game shortcuts.** Only the action keys (`1` to `=`) and V (board view) ignore Ctrl, Cmd and Alt. The others fire with them held: Ctrl or Cmd+Z undoes a move, Ctrl or Cmd+E ends the turn, and Ctrl or Cmd+F and +L change the speed and toggle the log while the browser opens find or the address bar. Check for modifiers before every game shortcut in `src/client/screens/FightScreen.tsx` (and the backtick in `src/client/App.tsx`), with a tested helper in `src/client/actionKeys.ts`.

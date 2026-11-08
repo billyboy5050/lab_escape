@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LabEscape.Sim;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using static LabEscape.Core.Tests.Helpers;
@@ -13,7 +14,7 @@ namespace LabEscape.Core.Tests
     {
         private static string[] Presets() => C.Presets.Select(p => p.Id).ToArray();
 
-        private static JToken Golden(string preset) => JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".json")));
+        private static JToken GoldenFile(string preset) => JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".json")));
 
         private static (List<GameEvent> Events, GameState State) Replay(JToken record)
         {
@@ -38,7 +39,7 @@ namespace LabEscape.Core.Tests
         [TestCaseSource(nameof(Presets))]
         public void RecordWasMadeWithThisEngineAndContent(string preset)
         {
-            var record = Golden(preset)["record"]!;
+            var record = GoldenFile(preset)["record"]!;
             Assert.That(record["engineVersion"]!.Value<string>(), Is.EqualTo(GameStates.EngineVersion));
             Assert.That(C.Hash, Is.EqualTo(record["contentHash"]!.Value<string>()), "the C# content hash must equal the hash the TypeScript engine recorded");
         }
@@ -47,7 +48,7 @@ namespace LabEscape.Core.Tests
         public void EventLogIsIdenticalLineByLine(string preset)
         {
             var expected = File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".events.jsonl")).TrimEnd('\n').Split('\n');
-            var (events, _) = Replay(Golden(preset)["record"]!);
+            var (events, _) = Replay(GoldenFile(preset)["record"]!);
             for (var i = 0; i < expected.Length && i < events.Count; i++)
             {
                 Assert.That(events[i].ToJson(), Is.EqualTo(expected[i]), $"event {i} differs");
@@ -58,7 +59,7 @@ namespace LabEscape.Core.Tests
         [TestCaseSource(nameof(Presets))]
         public void HashesOfEventsAndFinalStateMatch(string preset)
         {
-            var golden = Golden(preset);
+            var golden = GoldenFile(preset);
             var (events, state) = Replay(golden["record"]!);
             var eventArray = new JArray(events.Select(e => JsonIn.Parse(e.ToJson())));
             Assert.That(events.Count, Is.EqualTo(golden["eventCount"]!.Value<int>()));
@@ -66,6 +67,35 @@ namespace LabEscape.Core.Tests
             Assert.That(Hash.HashJson(JsonIn.Parse(state.ToJson())), Is.EqualTo(golden["finalStateHash"]!.Value<string>()));
             Assert.That(state.Outcome?.Result, Is.EqualTo(Names.Parse<FightResult>(golden["outcome"]!.Value<string>()!)));
             Assert.That(state.Round, Is.EqualTo(golden["rounds"]!.Value<int>()));
+        }
+
+        [TestCaseSource(nameof(Presets))]
+        public void TheGoldenCheckPasses(string preset)
+        {
+            var expected = JsText.Trim(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".events.jsonl"))).Split('\n');
+            var r = Golden.Verify(C, GoldenFile(preset), expected);
+            Assert.That(r.Problem ?? "ok", Is.EqualTo("ok"));
+        }
+
+        [TestCaseSource(nameof(Presets))]
+        public void RecordingAGoldenWritesTheCommittedFileExactly(string preset)
+        {
+            var (golden, events) = Golden.Record(C, preset);
+            Assert.That(Hash.Stringify(golden, 2) + "\n", Is.EqualTo(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".json"))));
+            Assert.That(Records.EventsToJsonl(events), Is.EqualTo(File.ReadAllText(Path.Combine(RepoRoot, "golden", preset + ".events.jsonl"))));
+        }
+
+        [Test]
+        public void AChangedEventLogIsReportedWithWhereItFirstDiffers()
+        {
+            var golden = GoldenFile("tech");
+            golden["eventsHash"] = "changed";
+            var expected = JsText.Trim(File.ReadAllText(Path.Combine(RepoRoot, "golden", "tech.events.jsonl"))).Split('\n');
+            expected[3] = "{}";
+            var r = Golden.Verify(C, golden, expected);
+            Assert.That(r.Ok, Is.False);
+            Assert.That(r.FirstDifference, Is.EqualTo(3));
+            Assert.That(r.Problem, Does.Contain("first difference at event 3"));
         }
     }
 }

@@ -32,7 +32,7 @@ Outside testers found the game fun but want to see more before saying they would
 | Today | Size | In Unity |
 | --- | --- | --- |
 | Rules core (`state`, `rules`, `effects`, `ai`, `engine`, `preview`, `content`) | 4,200 lines | C# library with no Unity dependency |
-| Simulator and telemetry | 1,900 lines | C# console tool on the same library |
+| Simulator and telemetry | 1,900 lines | Telemetry in the C# library, the simulator a C# console tool on it |
 | Rule tests | Most of 3,700 lines | NUnit, which Unity's test tools also use |
 | Web client and styles | 8,400 lines | Rewritten as the Unity client |
 | `content/*.json` | | Unchanged, still the single source of every number |

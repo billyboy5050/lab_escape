@@ -1,15 +1,13 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
+using LabEscape.Sim;
 using NUnit.Framework;
 using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>
-    /// Ported from tests/determinism.test.ts. The tests that need the greedy bot, command records or the fight session come
-    /// across with the simulator and telemetry in M10.
-    /// </summary>
+    /// <summary>Ported from tests/determinism.test.ts.</summary>
     public class DeterminismTests
     {
         /// <summary>States drawn by playing a random bot for a random number of commands, the same way the TypeScript test does.</summary>
@@ -67,22 +65,68 @@ namespace LabEscape.Core.Tests
         [Test]
         public void ReplayingACommandLogReproducesTheFightExactly()
         {
-            foreach (var id in new[] { "tech", "alien", "hybrid" })
+            var ids = new[] { "tech", "alien", "hybrid" };
+            for (var i = 0; i < ids.Length; i++)
             {
-                var bot = new RandomBot(100);
-                var game = Engine.NewGame(C, PresetLoadout(id));
-                var state = game.State;
-                var log = new List<Command>();
-                while (state.Outcome == null)
-                {
-                    var cmd = bot.Decide(C, state);
-                    log.Add(cmd);
-                    state = Run(state, cmd).State;
-                }
-                var replay = Engine.NewGame(C, PresetLoadout(id)).State;
-                foreach (var cmd in log) replay = Run(replay, Command.Parse(JsonIn.Parse(cmd.ToJson()))).State;
-                Assert.That(replay.ToJson(), Is.EqualTo(state.ToJson()));
+                var r = Runner.RunFight(C, PresetLoadout(ids[i]), new GreedyBot(100 + i));
+                Assert.That(Records.Replay(C, r.Record).State.ToJson(), Is.EqualTo(r.State.ToJson()));
             }
+        }
+
+        [Test]
+        public void AReplayIsOnlyValidAgainstTheSameEngineVersionAndContentHash()
+        {
+            var r = Runner.RunFight(C, PresetLoadout("tech"), new RandomBot(3));
+            var tuned = ContentWith(("units.warden.hp", 16));
+            Assert.That(tuned.Hash, Is.Not.EqualTo(C.Hash));
+            Assert.Throws<ReplayMismatch>(() => Records.CheckCompatible(tuned, r.Record));
+            Assert.Throws<ReplayMismatch>(() => Records.Replay(tuned, r.Record));
+        }
+
+        [Test]
+        public void TheSameBotAndSeedAlwaysPlaysTheSameFight()
+        {
+            var a = Runner.RunFight(C, PresetLoadout("hybrid"), new GreedyBot(5));
+            var b = Runner.RunFight(C, PresetLoadout("hybrid"), new GreedyBot(5));
+            Assert.That(a.Record.Commands.Select(x => x.ToJson()), Is.EqualTo(b.Record.Commands.Select(x => x.ToJson())));
+            Assert.That(a.Summary.ToToken().ToString(), Is.EqualTo(b.Summary.ToToken().ToString()));
+        }
+
+        [Test]
+        public void FreeMovesCanBeUndoneSeveralLevelsDeepUntilApIsSpent()
+        {
+            var f = new FightSession(C, PresetLoadout("tech"), now: () => 0);
+            var start = f.State;
+            Assert.That(f.Apply(Move("B7")).Ok, Is.True);
+            Assert.That(f.Apply(Move("C7")).Ok, Is.True);
+            Assert.That(f.CanUndo, Is.True);
+            f.Undo();
+            f.Undo();
+            Assert.That(f.State.ToJson(), Is.EqualTo(start.ToJson()));
+            Assert.That(f.Record.Commands, Is.Empty);
+            f.Apply(Move("B7"));
+            f.Apply(new SprintCommand());
+            Assert.That(f.CanUndo, Is.False);
+        }
+
+        [Test]
+        public void AMoveThatSetsSomethingOffCommitsTheTurn()
+        {
+            var f = new FightSession(C, PresetLoadout("tech"), now: () => 0);
+            f.Apply(Ability("proximity_mine", "B6"));
+            Assert.That(f.CanUndo, Is.False);
+            var r = f.Apply(Move("B7", "B6"));
+            Assert.That(r.Commits, Is.True);
+            Assert.That(f.CanUndo, Is.False);
+        }
+
+        [Test]
+        public void TheCommandLogOfASessionReplaysToTheSameState()
+        {
+            var f = new FightSession(C, PresetLoadout("alien"), now: () => 0);
+            var bot = new GreedyBot(11);
+            for (var i = 0; i < 30 && !f.Over; i++) f.Apply(bot.Decide(C, f.State));
+            Assert.That(Records.Replay(C, f.Record).State.ToJson(), Is.EqualTo(f.State.ToJson()));
         }
 
         [Test]

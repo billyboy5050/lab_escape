@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 
 namespace LabEscape.Core
@@ -68,6 +69,42 @@ namespace LabEscape.Core
         }
 
         public static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        /// <summary>
+        /// Number.prototype.toFixed. It works on the double's exact binary value and rounds a tie up, as the ECMAScript
+        /// specification says; the committed reports are compared byte for byte, so a .NET format string will not do.
+        /// </summary>
+        public static string ToFixed(double value, int digits)
+        {
+            if (double.IsNaN(value)) return "NaN";
+            if (double.IsInfinity(value)) return value > 0 ? "Infinity" : "-Infinity";
+            if (Math.Abs(value) >= 1e21) return Number(value);
+            var bits = BitConverter.DoubleToInt64Bits(Math.Abs(value));
+            var exponent = (int)((bits >> 52) & 0x7ff);
+            var mantissa = bits & 0xfffffffffffffL;
+            if (exponent == 0) exponent = 1;
+            else mantissa |= 1L << 52;
+            exponent -= 1075; // The magnitude is exactly mantissa * 2^exponent.
+            var scaled = mantissa * BigInteger.Pow(10, digits);
+            BigInteger n;
+            if (exponent >= 0)
+            {
+                n = scaled << exponent;
+            }
+            else
+            {
+                var divisor = BigInteger.One << -exponent;
+                n = BigInteger.DivRem(scaled, divisor, out var remainder);
+                if (remainder * 2 >= divisor) n += 1;
+            }
+            var text = n.ToString(CultureInfo.InvariantCulture);
+            if (digits > 0)
+            {
+                text = text.PadLeft(digits + 1, '0');
+                text = text.Substring(0, text.Length - digits) + "." + text.Substring(text.Length - digits);
+            }
+            return value < 0 ? "-" + text : text;
+        }
 
         /// <summary>
         /// The shortest decimal digits that round-trip to the same double. Tried one precision at a time, because what
