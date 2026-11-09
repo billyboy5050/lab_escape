@@ -112,6 +112,8 @@ Not ported yet, and left for M13 by the milestone table: sound, the title, brief
 
 The editor reads `content/` directly. A player cannot, so `ContentBuildStep` copies the files into `Assets/Resources/Content` before each build; that copy is ignored by git.
 
+**The first web build (2026-11-09).** The phase plan names download size and preview speed on the web as risks to check at M13, so the greybox fight was built for the web early. It built in 98 s and is an 11.7 MB download: 8.9 MB of engine and game code and 2.8 MB of data, both gzip-compressed. In a Chromium browser on a 10-core Mac the fight played from the preset picker through an enemy phase, with the mouse and the keys. While an action was selected and its targets hovered, frames stayed at about 8 ms, and none of 370 took longer than 13 ms, so previews are not slow at the Armory's size. One fault showed: the arrow in `Sidearm → E2` and the dash in `1–9` were blank, because the web player has no system font to fall back on (see the [roadmap](roadmap.md#smaller-items)). The size is before any art or sound, and the project still lists every built-in module, physics included.
+
 The room is built from `RoomDef`, so other rooms should draw without changes, but only the Armory has been looked at. The two far walls follow the room's bounding rectangle, so a non-rectangular room will need its own edges at M14.
 
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
