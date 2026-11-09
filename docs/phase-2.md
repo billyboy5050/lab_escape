@@ -1,6 +1,6 @@
 # Phase 2: the full game
 
-The plan for the phase after the MVP, agreed with the owner on 2026-11-08. It moves the game to Unity, then builds a complete, replayable roguelite on top of it.
+The plan for the phase after the MVP, agreed with the owner on 2026-11-08. It moves the game to Unity, then builds a complete, replayable roguelite on top of it. The order of its later milestones was revised on 2026-11-09, after a review of the repository, so that testers play a run after the first wing and not after the third.
 
 This file is the build plan. [spec.md](spec.md) stays the source of truth for the rules, and each milestone that changes a rule updates the spec in its own pull request. [Design Doc v0.1](https://claude.ai/code/artifact/d8804d7d-d61e-412c-8d4e-6b06a5496111) holds the design intent. [roadmap.md](roadmap.md) says which milestone is next.
 
@@ -26,6 +26,7 @@ Outside testers found the game fun but want to see more before saying they would
 | When to move | Port first, before any new feature |
 | Look | 3D with a fixed isometric camera; the top-down view goes away |
 | Platforms | Mac and Windows, plus a web build for testers |
+| When testers first play a run | After the Weapons wing, before the other two wings are built (decided 2026-11-09) |
 
 ## The move to Unity
 
@@ -133,6 +134,8 @@ From the design document's Proposed roster: three roles plus an elite each.
 
 The Armory was balanced around 11 picks, and a run gives about 5 by its finale, so it gets a finale variant. The original stays in Sandbox.
 
+The Weapons wing is built first and shown to testers (M22) before the Xeno and Ritual wings are started. A run is one wing, so one finished wing is already a complete run. What testers make of it decides whether the other two are built as planned, changed or cut.
+
 ### Light meta, late
 
 Wing clears persist, and clearing all three shows a placeholder ending. Lost runs still advance use-based unlocks that widen the reward pool, plus a short memory fragment.
@@ -164,7 +167,7 @@ Each is one branch and pull request. Sizes are relative effort.
 | M10 | C# simulator and CI | Same seeds reproduce the committed reports; C# tests run inside the existing `check` job | M |
 | M11 | Rooms as data, any size | Armory plays identically from the new room model; rooms of other sizes load and play headless | M |
 | M12 | Unity fight in greybox | A full Armory fight plays on the isometric camera with previews, intents and HUD. **Owner checkpoint:** it feels at least as good as the web version | L |
-| M13 | Unity parity, retire the web client | All screens, debug overlay, telemetry, sound, shortcuts, content hot reload; Mac, Windows and web builds run; preview speed acceptable on web | L |
+| M13 | Unity parity, retire the web client | Debug overlay, telemetry, sound, shortcuts, content hot reload; working greybox versions of the title, briefing, loadout and result screens; Mac, Windows and web builds run; preview speed acceptable on web | L |
 | | **Stage B: game systems** | | |
 | M14 | Room shapes: halls, hallways, big hazards | One room of each shape plays and stays readable; `zone` and `beam` have tests | L |
 | M15 | Run skeleton with events | A 3-room run plays, events grant its upgrades, it resumes after a restart; same seed and choices give the same run | L |
@@ -172,16 +175,22 @@ Each is one branch and pull request. Sizes are relative effort.
 | M17 | Kit rework and branch presentation | Weapons, paths, fusions and Build screen in; spec updated, `ENGINE_VERSION` bumped | L |
 | M18 | Occult core | Debt previews match results; forecast shows; debt carries between rooms | L |
 | M19 | Occult complete | Offering and sigil loops suppressed in tests; an Occult start can win a room | M |
-| | **Stage C: look and content** | | |
+| | **Stage C: one wing, shown to testers** | | |
 | M20 | Art slice | One room, the player and one enemy at final quality; style guide; web size budget held | M |
-| M21 | Weapons wing | Four shapes, finale, its events and workshop. **Owner checkpoint:** the owner plays it end to end before the other two are built | L |
-| M22 | Xeno wing | Enemies, AI, models, rooms, events, signature, finale | L |
-| M23 | Ritual wing | Same | L |
-| | **Stage D: loop and test** | | |
-| M24 | Failure pays | Progress survives restarts and rejects corrupt saves | M |
-| M25 | In-game onboarding, run export, tester round | Testers can send one file; round played | M |
+| M21 | Weapons wing | Four shapes, finale, its events and workshop; every unit and room in the wing at the art slice's quality. **Owner checkpoint:** the owner plays it end to end before testers do | L |
+| M22 | In-game onboarding, run export, first tester round | Testers can send one file; round played on the Weapons wing. **Owner checkpoint:** from its results the owner decides whether Xeno and Ritual are built as planned, changed or cut | M |
+| | **Stage D: the rest of the game** | | |
+| M23 | Xeno wing | Enemies, AI, models, rooms, events, signature, finale | L |
+| M24 | Ritual wing | Same | L |
+| M25 | Failure pays, closing tester round | Progress survives restarts and rejects corrupt saves; round played with all three wings | M |
 
 Rooms as data comes before the Unity client, so the client is written once for many rooms. Armory's existing map and wave files stay where they are until M13, so the web game keeps working. M18 depends on M17, because Occult is authored on the new weapon and path schema. Greybox models carry gameplay through Stage B, so game work never waits on art.
+
+M13 ports the title, briefing and result screens only as far as they work, because M15 rebuilds that flow around a run (choose a branch, choose a wing, run end), and the loadout screen only as the picker for Sandbox mode. Its effort goes to what Stage B builds on: the debug overlay, telemetry, hot reload and the three builds. A web build has no disk to save telemetry to, so it offers each fight's files as a download, as the web client's result screen does.
+
+The first tester round (M22) comes after one wing and before the other two. The phase exists to answer a question only testers can answer, and the two later wings are most of its new content: 8 enemies and 10 of the 14 new rooms. Testers did not engage with the game's placeholder look before the restyle of 2026-10-20, so the wing they play has to look finished, which is why M21 includes its art. The closing round (M25) repeats the measures on the whole game.
+
+M22 to M25 were renumbered on 2026-11-09 to keep the numbers in build order. Before that date M22 and M23 were the Xeno and Ritual wings, M24 was Failure pays and M25 was the only tester round.
 
 ## Technical notes for Stage B onward
 
@@ -191,25 +200,28 @@ Rooms as data comes before the Unity client, so the client is written once for m
 - Saves and progress are shape-checked (invariant 7 in CLAUDE.md).
 - Weapons are abilities with a slot field, and level paths gate existing upgrade IDs, so upgrade behaviour code carries over.
 
-## How success is measured (M25)
+## How success is measured (M22 and M25)
 
-After one run, testers can explain the loop, name the three branches and say what each upgrade they took did. Most start another run after a loss, and most say they would play the full game. In the simulator, every branch and wing pair has a winning run and no reward lifts win rate by more than 25 points.
+Both tester rounds use the same measures: M22 on the Weapons wing alone, M25 on all three wings.
+
+After one run, testers can explain the loop, name the three branches and say what each upgrade they took did. Most start another run after a loss, and most say they would play the full game. In the simulator, every branch has a winning run in every wing built so far, and no reward lifts win rate by more than 25 points.
 
 ## Risks
 
 - Stage A is five milestones with nothing new for players. The M12 checkpoint is where to stop if the 3D version does not feel right.
-- 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can produce only greybox.
+- 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can produce only greybox. The first tester round needs about half the models (the player, its minions and the Weapons wing's enemies) and one room kit, so M21 cannot finish until that art exists.
+- No outsider plays a run before M22. Until then the run, the kit rework and Occult rest on the owner's reading of what testers said, with no recorded play behind it.
 - **This repository is public.** Paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository before M20.
 - A 3D web build risks download size and slow previews. Both are checked at M13.
 - Content volume: 14 new rooms, 8 new enemies and 3 signature entities. Cut signature entities first, then one room shape per wing.
 - Large rooms can drag, because moves and ranges were set for 8×8. Spawn points set the pace, and M16 measures rounds to first contact.
 - HP attrition over 5 rooms is measured from M16.
-- The recordings from the last tester round have not been received, so M25 adds a one-file export.
+- The recordings from the last tester round have not been received, so M22 adds a one-file export before the first round.
 
 ## What the owner needs to do
 
 - **Before M13:** add Windows Build Support to the Unity install, and settle which Unity version to stay on (see the [roadmap](roadmap.md#decisions-waiting-on-the-owner)).
-- **Before M20:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored.
+- **Before M14:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored. Art is first used at M20, but commissioning or choosing it takes time that agents cannot shorten, so deciding before Stage B starts lets it be made while Stage B is built in greybox.
 
 ## What the owner has authorised
 
