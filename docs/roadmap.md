@@ -4,7 +4,7 @@ Where the project stands, what comes next, and what is waiting on a decision. Wo
 
 Keep this file current. A pull request that finishes an item deletes it here, and one that turns up new work adds it; git history keeps the record of what was done. Order within "Up next" is priority order.
 
-Last reviewed: 2026-11-08.
+Last reviewed: 2026-11-09.
 
 ## Where things stand
 
@@ -37,11 +37,11 @@ The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2
 1. **M12 owner checkpoint.** A full Armory fight plays in `unity/` (see the README's [Unity client](../README.md#unity-client) section). The owner plays it and judges whether it feels at least as good as the web version. M13 waits on the answer; this is the point the [plan's risks](phase-2.md#risks) name for stopping if the 3D version does not feel right.
 2. **M13: Unity parity, retire the web client.**
 
-Stages B to D follow: game systems, look and content, then the loop and a tester round.
+Stages B to D follow: game systems, then one wing shown to testers, then the other two wings and the light meta.
 
 ## Inputs to the kit rework (M17)
 
-These were watch items for the playtests. No recorded play has confirmed or ruled out any of them, so they stand as open questions for the kit rework and the M25 tester round. Do not tune on bot figures alone.
+These were watch items for the playtests. No recorded play has confirmed or ruled out any of them, so they stand as open questions for the kit rework and the first tester round (M22). Do not tune on bot figures alone.
 
 - **Scout Drone:** kept as a fragile decoy with chain-damage utility for the playtests. Whether players understand it or find it useful is unmeasured; see the [owner decision and evidence](implementation-notes.md#what-the-developer-playtest-round-says-spec-round-1).
 - **Tech's difficulty:** the owner found Tech hard to get a footing in and played it with few turrets, while the bot wins 72% of Tech fights with 10.5 turrets a fight on average. On 2026-10-20 the owner won with Tech for the first time, by holding with shields and a dozen turrets, but only in round 28 of 30, past the spec's 16-round alarm for winning fights; see [the owner's first Tech win](implementation-notes.md#the-owners-first-tech-win-2026-10-20).
@@ -57,7 +57,7 @@ Round 1's evidence for each is in the [developer round](implementation-notes.md#
 Agents should not settle these on their own. Ask, and record the answer in the spec or the notes.
 
 - **Unity version.** The installed editor, 6000.6.8f1, is an update release, while the plan asks for the current LTS, which is 6.3. Nothing built so far depends on the difference, and moving up to a later LTS is simpler than moving back. Needed before M13, which also needs the Windows Build Support module added.
-- **How to source 3D art,** and where it will be stored: bought packs, commission or generated. Needed before M20. This repository is public, and paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository.
+- **How to source 3D art,** and where it will be stored: bought packs, commission or generated. Needed before M14, so the art can be made while Stage B is built in greybox; the first tester round (M22) waits on about half of it. This repository is public, and paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository.
 - **Creep.** Whether Alien gets it, so that all three branches have six abilities. Needed by M17.
 - **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order). None had been called for by 2026-10-13.
 
