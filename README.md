@@ -241,6 +241,14 @@ $U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Bu
 
 The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`.
 
+The web build needs the editor's Web Build Support module:
+
+```bash
+$U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Builds.Web
+```
+
+It lands in `unity/Builds/Web/`. Its files are gzip-compressed, so it has to come from a web server that sends `Content-Encoding: gzip` for the `.gz` files; opening `index.html` from the disk does not work.
+
 | Folder | What it holds |
 | --- | --- |
 | `unity/Assets/Scripts/Logic` | No Unity code: the animation queue (`FightFlow`), targeting (`ActionModel`) and log text (`EventFormatter`) |

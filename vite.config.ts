@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
-import { telemetryDir, telemetryFile } from './src/dev/telemetryPath';
+import type { Plugin } from 'vite';
+import { defineConfig } from 'vitest/config';
+import { telemetryDir, telemetryFile } from './src/dev/telemetryPath.ts';
 
 /**
  * Dev-server endpoint that saves each fight's telemetry (replay, summary, events) under telemetry/,
@@ -49,4 +50,6 @@ function telemetrySink(): Plugin {
 export default defineConfig({
   plugins: [react(), telemetrySink()],
   server: { port: 5173 },
+  // Only this checkout's tests: agent worktrees under .claude/worktrees/ hold whole copies of the repository, tests included.
+  test: { include: ['tests/**/*.test.{ts,tsx}'] },
 });

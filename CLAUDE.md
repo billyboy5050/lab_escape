@@ -42,7 +42,7 @@ Each fact has one home. Link to it rather than copying it.
 | Task | Command | Time |
 | --- | --- | --- |
 | Install dependencies and turn on the git hooks | `npm install` | |
-| All tests | `npm test` | about 3 s |
+| All tests | `npm test` | about 5 s |
 | One test file, or tests by name | `npx vitest run tests/hazards.test.ts`, `npx vitest run -t "value rule"` | |
 | Typecheck | `npm run typecheck` | about 1 s |
 | Typecheck and static build (what CI runs, with the tests) | `npm run build` | about 2 s |
@@ -178,7 +178,7 @@ Do not ask about things this file or the docs already answer, or about routine c
 - A fight that throws writes its command log to `reports/error-seed-<N>.json`. That is a bug repro, not a report: turn it into a test or attach it to the fix, and do not commit it under `reports/`.
 - A test that plays whole bot fights needs `BOT_FIGHT_TIMEOUT_MS` from `tests/helpers.ts` as its timeout. Such tests take a second or two locally but several times that on the CI runner, past Vitest's 5 s default.
 - Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values.
-- `npm test` prints a Vite warning about an extensionless import in `vite.config.ts`. It is harmless for now and listed in the roadmap.
+- `npm test` runs only the files under `tests/` (`test.include` in `vite.config.ts`). Without that limit Vitest also finds the tests in every agent worktree under `.claude/worktrees/`, which are copies of other branches.
 - Unity imports everything under `core/Core`, so .NET's output goes to `core/.build/` (set in `core/Directory.Build.props`). The `.meta` files Unity writes in that folder are ignored by git; nothing refers to them.
 - `Assets/Scenes/Fight.unity` and `Assets/Resources/UI/Panel.asset` are generated once and committed. The menu item Lab Escape > Recreate Scene And Panel remakes them.
 - Enter and Space behave differently when a button has focus. That logic lives in `src/client/actionKeys.ts` and is tested; keep keyboard handling there and in `src/client/screens/FightScreen.tsx`.
