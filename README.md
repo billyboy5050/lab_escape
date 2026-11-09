@@ -2,7 +2,7 @@
 
 The playable MVP described in the [spec](docs/spec.md): one 8x8 room, three hidden waves, the Tech and Alien kits, 12 upgrades, the lab's hazard AI, telemetry, replays and a headless simulator.
 
-Milestones M0 to M7 are done: the owner closed playtesting as successful on 2026-11-08. The full-game phase comes next, moving the game to Unity and building it out; see the [phase plan](docs/phase-2.md) and the [roadmap](docs/roadmap.md). Until that move is finished, everything below describes this TypeScript prototype.
+Milestones M0 to M7 are done: the owner closed playtesting as successful on 2026-11-08. The full-game phase comes next, moving the game to Unity and building it out; see the [phase plan](docs/phase-2.md) and the [roadmap](docs/roadmap.md). Until that move is finished, everything below describes this TypeScript prototype, except the last two sections: the [C# core and simulator](#c-core-and-simulator) and the [Unity client](#unity-client).
 
 ## Documents
 
@@ -207,8 +207,45 @@ dotnet run --project core/Sim -c Release -- conformance
 
 | Folder | What it is |
 | --- | --- |
-| `core/Core` | The library: one namespace, `LabEscape.Core`, with a folder for each module in `src/`. It targets .NET Standard 2.1 and C# 9, the level Unity's LTS compiles, and has no Unity dependency |
+| `core/Core` | The library: one namespace, `LabEscape.Core`, with a folder for each module in `src/`. It targets .NET Standard 2.1 and C# 9, the level Unity's LTS compiles, and has no Unity dependency. It is also a local Unity package, which is why .NET's build output goes to `core/.build/` |
 | `core/Sim` | The simulator, on the library: bots, batches, reports, golden replays and playtest metrics (`src/sim`), as a console tool |
 | `core/Tests` | NUnit tests: the rule, telemetry and simulator tests from `tests/`, the golden replays and the hash vectors |
 
 The same names are used on both sides, with C# capitalisation: `step` is `Engine.Step`, `newGame` is `Engine.NewGame`, `previewCommand` is `Previews.PreviewCommand`. `GameObject` is `BoardObject` and the `Debug` event is `DebugEvent`, so they cannot clash with Unity's types.
+
+## Unity client
+
+`unity/` is the game moving to Unity ([phase plan](docs/phase-2.md#the-move-to-unity)). It plays one full fight in greybox on a fixed isometric camera, with previews, intents and a HUD, on the C# rules core. The web game above stays the playable version until M13.
+
+Needs Unity 6000.6.8f1 with Mac build support. In Unity Hub choose Add, pick the `unity` folder and open it, then press Play: every scene starts the game. Pick a loadout, and the fight begins.
+
+The keys are the web game's. The number keys, `-` and `=` pick an action, **E** or Enter ends the turn, **Z** undoes a move, **Esc** cancels, **Space** skips the animation, **F** changes the speed, **I** shows or hides intents, **L** opens the intercom log, and **Tab** switches the grapple's mode. The mouse wheel zooms, and when zoomed in the right or middle button, **W A S D** or the arrow keys pan.
+
+Close the editor before running these, because batch mode cannot share a project with an open editor. `U` is the editor's binary:
+
+```bash
+U=/Applications/Unity/Hub/Editor/6000.6.8f1/Unity.app/Contents/MacOS/Unity
+```
+
+```bash
+$U -batchmode -nographics -projectPath unity -runTests -testPlatform EditMode -testResults /tmp/edit.xml
+```
+
+```bash
+$U -batchmode -projectPath unity -runTests -testPlatform PlayMode -testResults /tmp/play.xml
+```
+
+```bash
+$U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Builds.Mac
+```
+
+The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`.
+
+| Folder | What it holds |
+| --- | --- |
+| `unity/Assets/Scripts/Logic` | No Unity code: the animation queue (`FightFlow`), targeting (`ActionModel`) and log text (`EventFormatter`) |
+| `unity/Assets/Scripts/Board` | The camera, room, unit models, overlays and effects, all built from code |
+| `unity/Assets/Scripts/Hud` | Fills in the interface, and the tags anchored to the board |
+| `unity/Assets/Scripts/FightDirector.cs` | Reads input and ties the rest together |
+| `unity/Assets/Resources/UI` | The interface, in UI Toolkit's text formats: `Fight.uxml` and `Fight.uss` |
+| `unity/Assets/Tests` | EditMode: the golden replays on Unity's runtime, and the client logic. PlayMode: the real fight screen |

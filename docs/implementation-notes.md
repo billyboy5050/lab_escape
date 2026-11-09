@@ -95,6 +95,25 @@ Tests of the web client and dev server have no C# counterpart.
 
 **Speed.** 300 greedy Hybrid fights took 7.9 s against 17.0 s for the TypeScript, on 34 s of processor time against 135 s (a 10-core Mac, 2026-11-08). `conformance` takes about 75 s there.
 
+## The Unity client
+
+M12 built one fight in `unity/`, in greybox. It runs the C# rules core and keeps the web client's behaviour, so the owner can compare the two.
+
+Where it differs from the web client on purpose:
+
+- **One view.** A fixed isometric camera, as the [phase plan](phase-2.md#the-move-to-unity) decides, with pan and zoom. The top-down view and its V key are gone.
+- **A unit's side is still its base shape.** Round for the player's side, a square that this camera shows as a diamond for the lab's soldiers, a hexagon for the Warden.
+- **Words where the web client has icons.** Statuses read `PSN 2`, `COR 1` and `PIN`, and armor reads `ARM 2`, because greybox has no icon art. Each is a word or number as well as a colour.
+- **Moves walk tile by tile.** The web client slides straight from start to end.
+- **One dark theme,** in the web client's dark colours.
+- **The buttons take no keyboard focus,** so Space and Enter always mean skip and end turn. The web client's focus rules in `src/client/actionKeys.ts` have nothing to act on here.
+
+Not ported yet, and left for M13 by the milestone table: sound, the title, briefing and result screens, the debug overlay and step mode, saving telemetry, replay loading from the interface and content hot reload. The start screen is a plain preset picker and the loadout screen does not exist yet.
+
+The editor reads `content/` directly. A player cannot, so `ContentBuildStep` copies the files into `Assets/Resources/Content` before each build; that copy is ignored by git.
+
+The room is built from `RoomDef`, so other rooms should draw without changes, but only the Armory has been looked at. The two far walls follow the room's bounding rectangle, so a non-rectangular room will need its own edges at M14.
+
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
 
 From `npm run sim -- presets --seeds 1000` and `npm run sim -- sweep --seeds 1000`; the full reports are in `reports/`. Rerun them after any rule or content change and update this section with the new figures.

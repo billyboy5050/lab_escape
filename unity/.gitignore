@@ -1,0 +1,22 @@
+# Rebuilt by Unity on every machine.
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+
+# Written by Unity and the IDE integrations.
+/.vscode/
+/.vs/
+/.idea/
+*.csproj
+*.sln
+*.slnx
+*.pidb
+*.userprefs
+*.DS_Store
+# Copied from content/ by the build step; content/ is the only source.
+/Assets/Resources/Content/
+/Assets/Resources/Content.meta
