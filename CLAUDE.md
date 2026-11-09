@@ -42,7 +42,7 @@ Each fact has one home. Link to it rather than copying it.
 | Task | Command | Time |
 | --- | --- | --- |
 | Install dependencies and turn on the git hooks | `npm install` | |
-| All tests | `npm test` | about 3 s |
+| All tests | `npm test` | about 5 s |
 | One test file, or tests by name | `npx vitest run tests/hazards.test.ts`, `npx vitest run -t "value rule"` | |
 | Typecheck | `npm run typecheck` | about 1 s |
 | Typecheck and static build (what CI runs, with the tests) | `npm run build` | about 2 s |

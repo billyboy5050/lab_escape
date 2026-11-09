@@ -4,7 +4,7 @@ Where the project stands, what comes next, and what is waiting on a decision. Wo
 
 Keep this file current. A pull request that finishes an item deletes it here, and one that turns up new work adds it; git history keeps the record of what was done. Order within "Up next" is priority order.
 
-Last reviewed: 2026-11-08.
+Last reviewed: 2026-11-09.
 
 ## Where things stand
 
@@ -59,6 +59,9 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 - **Unity version.** The installed editor, 6000.6.8f1, is an update release, while the plan asks for the current LTS, which is 6.3. Nothing built so far depends on the difference, and moving up to a later LTS is simpler than moving back. Needed before M13, which also needs the Windows Build Support module added.
 - **How to source 3D art,** and where it will be stored: bought packs, commission or generated. Needed before M20. This repository is public, and paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository.
 - **Creep.** Whether Alien gets it, so that all three branches have six abilities. Needed by M17.
+- **Unity tests in CI.** CI runs nothing in `unity/`: its EditMode and PlayMode tests and its builds run only on a developer's machine, and once M13 retires the web client that is the whole game client. Running them on GitHub needs a Unity licence stored as a repository secret. Needed by M13. Whatever the answer, client logic with no Unity code (`unity/Assets/Scripts/Logic`) could also be compiled and tested by `dotnet test`, as `core/` is, which needs no licence.
+- **The design document is outside the repository.** The spec and the phase plan cite Design Doc v0.1 for the design intent, the enemy rosters and what is deferred, and it is a private document in the owner's Claude account. Codex, a cloud agent or a new contributor cannot read it. Either export it to `docs/`, or copy the parts M17 to M23 rely on into the plan. Needed by M17.
+- **Merged branches on GitHub.** The repository's "Automatically delete head branches" setting is off, and on 2026-11-09 the remote still held 11 branches that were already merged into `main`. CLAUDE.md asks for a branch to be deleted after its merge, which an agent cannot do when the owner merges later. Turning the setting on, and deleting the 11, are the owner's call.
 - **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order). None had been called for by 2026-10-13.
 
 ## Smaller items
@@ -66,6 +69,9 @@ Agents should not settle these on their own. Ask, and record the answer in the s
 Items about the web client stop applying when M13 retires it. Anything that should survive moves into a Unity milestone at that point.
 
 - **Move the Armory into `content/rooms.json`.** Once the freeze ends at M13, M14 can add the file, put the Armory in it with the new rooms, and delete `map.json`, `waves.json`, `rules.roundCap` and `Content.map` and `Content.waves`. The tile types in `map.json` need a home of their own at that point. Until then the Armory is built from its old files so that its content hash does not move.
+- **Git hooks after M13.** `npm install` turns the hooks on, through `prepare` in `package.json`. When M13 deletes the TypeScript, the hooks need another way in, CLAUDE.md's "Start here" needs the new step, CI drops its Node steps, and `tests/rulesSheet.test.ts` needs a C# counterpart or the rules sheet retires with the web client.
+- **Symbols missing in the web build.** The Unity client's text uses `→`, `–`, `—`, `…` and `⚠` (11 lines in `FightDirector.cs`, `ActionModel.cs` and `EventFormatter.cs`). In the web build of 2026-11-09 the arrow and the en dash drew as blanks, and the others are likely to: the web player has no system font to fall back on. M13 should ship a font that has them or write them in plain ASCII, and the friendly-fire `⚠` needs a mark that survives either way.
+- **Web build size.** 11.7 MB in greybox ([the first web build](implementation-notes.md#the-unity-client)). `unity/Packages/manifest.json` still lists every built-in module, and the web player starts PhysX, which nothing uses. Removing unused modules is the first thing to try when M13 or M20 sets the size budget.
 - **Git LFS.** Nothing in `unity/` is binary yet. When the first binary asset arrives (sound at M13 or art at M20), add a `.gitattributes` for it and call `git lfs pre-push` from `.githooks/pre-push`: with `core.hooksPath` set, `git lfs install` does not put its hook where git will run it.
 - **Intercom lines per room.** `content/intercom.json` is written for the Armory and fires in every room, so a room of another size hears about the armory floor. This changes nothing headless. Lines need to belong to a room or a wing by M21.
 - **Report targets per room.** The simulator's targets and alarms, such as rounds to win and the Warden reaching the player by round 7, were set for the Armory. They still print for other rooms but mean little there. M16 should replace them.
