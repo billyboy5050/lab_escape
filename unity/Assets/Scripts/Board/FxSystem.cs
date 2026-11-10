@@ -199,7 +199,7 @@ namespace LabEscape.Client
             Add(Kind.Tracer, flight, from, to, c, 0.9f, 0.11f);
             Add(Kind.Line, flight + 0.2f, from, to, Palette.WithAlpha(c, 0.42f), 0f, 0.028f);
             Glow(to, Color.white, 0.26f, flight);
-            Ring(to, c, 0.26f, 0.035f, flight);
+            Ring(to, c, 0.36f, 0.04f, flight, 0.14f);
             Light(to, c, 1.3f, 1.6f, 0.14f, flight);
         }
 
@@ -287,8 +287,8 @@ namespace LabEscape.Client
                 return;
             }
             var tint = e.TargetSide == Team.Enemy ? Fire : Palette.Danger;
-            Add(Kind.Glow, 0.16f, at, at, Color.white, 0.2f + 0.03f * Mathf.Min(e.Amount, 6));
-            Add(Kind.Glow, 0.26f, at, at, tint, 0.3f + 0.04f * Mathf.Min(e.Amount, 6));
+            // One short burst of light. The figure flashes white and is thrown; a glow that lingered would smother both.
+            Add(Kind.Glow, 0.12f, at, at, Color.Lerp(Color.white, tint, 0.3f), 0.26f + 0.04f * Mathf.Min(e.Amount, 6));
             Light(at, tint, 1.2f, 1.6f, 0.14f);
             if (dir.sqrMagnitude < 0.0001f) return;
             Embers(at, dir, e.TargetSide == Team.Enemy ? SparkColour : Palette.Hex(0xffb0a0), 4 + 2 * Mathf.Min(e.Amount, 6), 2.2f + 0.35f * Mathf.Min(e.Amount, 6), seed);

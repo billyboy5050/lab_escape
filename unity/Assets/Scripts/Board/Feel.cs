@@ -76,14 +76,15 @@ namespace LabEscape.Client
         // ---- bodies
         /// <summary>How fast a hit shoves a unit of the player's weight, per point of damage and at the least.</summary>
         public const float ShoveBase = 2.6f;
-        public const float ShovePerDamage = 1.1f;
-        public const float ShoveHz = 3.6f;
-        public const float ShoveDamping = 0.82f;
+        public const float ShovePerDamage = 1.2f;
+        /// <summary>The springs that bring a body back are slow and well damped: knocked fast, recovering slowly, is what reads as mass.</summary>
+        public const float ShoveHz = 2.6f;
+        public const float ShoveDamping = 0.9f;
         /// <summary>Degrees a second a hit tips a body over, and the spring that stands it back up.</summary>
-        public const float TipBase = 520f;
-        public const float TipPerDamage = 170f;
-        public const float LeanHz = 3.2f;
-        public const float LeanDamping = 0.42f;
+        public const float TipBase = 380f;
+        public const float TipPerDamage = 105f;
+        public const float LeanHz = 2.4f;
+        public const float LeanDamping = 0.5f;
         public const float SquashHz = 5.5f;
         public const float SquashDamping = 0.36f;
         /// <summary>
@@ -181,7 +182,7 @@ namespace LabEscape.Client
         public static float Swing(float heft) => 1f / Mathf.Pow(Mathf.Max(0.2f, heft), 0.4f);
 
         /// <summary>How much a blow moves a body: heavy ones shrug it off.</summary>
-        public static float Give(float heft) => 1f / Mathf.Pow(Mathf.Max(0.2f, heft), 0.8f);
+        public static float Give(float heft) => 1f / Mathf.Pow(Mathf.Max(0.2f, heft), 1.2f);
 
         /// <summary>A fixed number from 0 to 1 for decoration only, so a replay draws the same debris.</summary>
         public static float Noise(int a, int b, int salt)
