@@ -289,6 +289,33 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void BlowsOneAfterAnotherShareOneStop()
+        {
+            // A blast reaches three units a few hundredths apart: the board stops once, for the longest of them.
+            var clock = new BoardClock();
+            var stopped = 0f;
+            float Run(float seconds)
+            {
+                var ran = 0f;
+                for (var t = 0f; t < seconds - 0.0001f; t += 0.01f) ran += clock.Step(0.01f);
+                stopped += seconds - ran;
+                return ran;
+            }
+            clock.Freeze(0.07f);
+            Run(0.1f);
+            clock.Freeze(0.09f);
+            Run(0.1f);
+            clock.Freeze(0.06f);
+            Run(0.1f);
+            Assert.That(stopped, Is.EqualTo(0.09f).Within(0.001f));
+
+            Run(0.3f);
+            clock.Freeze(0.05f);
+            Run(0.1f);
+            Assert.That(stopped, Is.EqualTo(0.14f).Within(0.001f), "a blow after a pause is a new one");
+        }
+
+        [Test]
         public void TheSlowedClockEasesBackToFullSpeed()
         {
             var clock = new BoardClock();

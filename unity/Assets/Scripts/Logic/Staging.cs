@@ -154,7 +154,7 @@ namespace LabEscape.Client
         /// <summary>A blast reaches a tile this long after the one before it.</summary>
         public const float Ripple = 0.07f;
         /// <summary>After the blow that ends the fight, before the result is shown.</summary>
-        public const float FinalHold = 2.2f;
+        public const float FinalHold = 1.6f;
 
         /// <summary>A unit's step, in beats: heavier units take longer over each one.</summary>
         public static float StepFor(float heft) => Step * (0.75f + 0.25f * heft);

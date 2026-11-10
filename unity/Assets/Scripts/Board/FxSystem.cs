@@ -259,7 +259,7 @@ namespace LabEscape.Client
                 Add(Kind.Shock, 0.42f, floor, floor, Palette.WithAlpha(Color.Lerp(c, Color.white, 0.5f), 0.95f), 2.1f, 0.16f);
                 Embers(centre, Vector3.zero, SparkColour, 16, 3.4f, seed);
                 Chunks(centre, Vector3.zero, Rubble, 9, 2.6f, seed + 1);
-                Light(centre, c, 3.4f, 4.6f, 0.4f);
+                Light(centre, c, 2.3f, 4.2f, 0.4f);
             }
             else if (kind == AreaKind.Sweep)
             {
@@ -287,8 +287,8 @@ namespace LabEscape.Client
                 return;
             }
             var tint = e.TargetSide == Team.Enemy ? Fire : Palette.Danger;
-            Glow(at, Color.white, 0.2f + 0.03f * Mathf.Min(e.Amount, 6));
-            Glow(at, tint, 0.36f + 0.04f * Mathf.Min(e.Amount, 6));
+            Add(Kind.Glow, 0.16f, at, at, Color.white, 0.2f + 0.03f * Mathf.Min(e.Amount, 6));
+            Add(Kind.Glow, 0.26f, at, at, tint, 0.3f + 0.04f * Mathf.Min(e.Amount, 6));
             Light(at, tint, 1.2f, 1.6f, 0.14f);
             if (dir.sqrMagnitude < 0.0001f) return;
             Embers(at, dir, e.TargetSide == Team.Enemy ? SparkColour : Palette.Hex(0xffb0a0), 4 + 2 * Mathf.Min(e.Amount, 6), 2.2f + 0.35f * Mathf.Min(e.Amount, 6), seed);
@@ -343,7 +343,6 @@ namespace LabEscape.Client
                     var big = e.Def == "warden" ? 1.5f : 1f;
                     var c = e.Def == "player" ? Palette.Danger : e.Team == Team.Enemy ? Fire : Figures.IsSmall(e.Def) ? Green : PlayerShot;
                     var dir = Feel.From(cue, e.Pos);
-                    Ring(at, c, 0.56f * big, 0.05f);
                     Embers(at, dir, c, 8, 2.6f, seed);
                     Chunks(at, dir, Palette.UnitColor(e.Def, e.Team), Figures.IsSmall(e.Def) ? 6 : 4, 2.2f, seed + 1);
                     Add(Kind.Smoke, 0.9f, at, at, Smoke, 0.3f * big, 0f, 0.3f);

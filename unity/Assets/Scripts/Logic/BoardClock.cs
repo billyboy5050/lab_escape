@@ -9,17 +9,29 @@ namespace LabEscape.Client
     /// </summary>
     public sealed class BoardClock
     {
+        /// <summary>Blows this close together count as one: a blast that reaches three units stops the board once.</summary>
+        private const float BurstGap = 0.2f;
+
         private float _freeze;
+        private float _burst;
+        private float _sinceBlow = float.MaxValue;
         private float _slow = 1f;
         private float _slowFor;
         private float _slowLeft;
 
         public bool Frozen => _freeze > 0f;
 
-        /// <summary>Stops the board for this long. Blows landing together share the longest stop instead of adding up.</summary>
+        /// <summary>
+        /// Stops the board for this long. Blows that land together, or one just after another, share the longest stop: each adds
+        /// only what it asks for beyond what the burst has already had.
+        /// </summary>
         public void Freeze(float seconds)
         {
-            if (seconds > _freeze) _freeze = seconds;
+            if (_sinceBlow > BurstGap) _burst = 0f;
+            _sinceBlow = 0f;
+            if (seconds <= _burst) return;
+            _freeze += seconds - _burst;
+            _burst = seconds;
         }
 
         /// <summary>Runs the board at `factor` of its speed for this many real seconds, easing back over the last third.</summary>
@@ -32,12 +44,16 @@ namespace LabEscape.Client
         public void Reset()
         {
             _freeze = 0f;
+            _burst = 0f;
+            _sinceBlow = float.MaxValue;
             _slowLeft = 0f;
         }
 
         /// <summary>Turns a step of real time into the board's time.</summary>
         public float Step(float dt)
         {
+            // The gap between blows is counted while the board runs, not while it is stopped.
+            if (_freeze <= 0f && _sinceBlow < float.MaxValue) _sinceBlow += dt;
             if (_freeze > 0f)
             {
                 var held = Math.Min(_freeze, dt);

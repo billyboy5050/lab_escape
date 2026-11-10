@@ -106,7 +106,8 @@ namespace LabEscape.Client
 
         private IEnumerator Start()
         {
-            yield return null;
+            // The interface is laid out over the first few frames, and the camera frames the room in what it leaves free.
+            for (var wait = 0; wait < 4; wait++) yield return null;
             _d.ScriptedPointer = true;
             if (_film != null)
             {

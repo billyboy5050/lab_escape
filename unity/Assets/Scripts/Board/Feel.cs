@@ -75,36 +75,47 @@ namespace LabEscape.Client
     {
         // ---- bodies
         /// <summary>How fast a hit shoves a unit of the player's weight, per point of damage and at the least.</summary>
-        public const float ShoveBase = 1.5f;
-        public const float ShovePerDamage = 0.55f;
+        public const float ShoveBase = 2.6f;
+        public const float ShovePerDamage = 1.1f;
         public const float ShoveHz = 3.6f;
         public const float ShoveDamping = 0.82f;
         /// <summary>Degrees a second a hit tips a body over, and the spring that stands it back up.</summary>
-        public const float TipBase = 260f;
-        public const float TipPerDamage = 90f;
+        public const float TipBase = 520f;
+        public const float TipPerDamage = 170f;
         public const float LeanHz = 3.2f;
         public const float LeanDamping = 0.42f;
         public const float SquashHz = 5.5f;
         public const float SquashDamping = 0.36f;
+        /// <summary>
+        /// How hard things squash a body, as the speed given to its squash spring. About 10 flattens it by a sixth before it
+        /// springs back; negative is shorter and wider, positive taller and thinner.
+        /// </summary>
+        public const float HitSquash = -6f;
+        public const float HitSquashPerDamage = -1.5f;
+        public const float BlockSquash = -4f;
+        public const float RecoilSquash = 5.5f;
+        public const float BlowSquash = -8f;
+        public const float SlamSquash = -10f;
+        public const float PulseSquash = 8f;
         /// <summary>The pose a unit holds while it gathers: leaning back from its target, and crouched.</summary>
         public const float WindupLean = 13f;
         public const float WindupCrouch = -0.16f;
         public const float WindupBack = 0.07f;
         /// <summary>The kick of a gun on the unit that fires it.</summary>
-        public const float RecoilShove = 1.5f;
-        public const float RecoilTip = 170f;
+        public const float RecoilShove = 2.4f;
+        public const float RecoilTip = 300f;
         /// <summary>How far a melee lunge carries a unit towards its target, and how long it takes to come back.</summary>
         public const float StrikeReach = 0.46f;
         public const float StrikeReturn = 0.26f;
         public const float WalkLean = 9f;
         public const float WalkHop = 0.085f;
-        public const float FootfallSquash = 1.4f;
+        public const float FootfallSquash = -4.2f;
         public const float DashLean = 24f;
         public const float DashStretch = 0.2f;
         /// <summary>A wave unit falls from this height, stretched, and lands this hard.</summary>
         public const float DropHeight = 5.5f;
         public const float DropStretch = 0.22f;
-        public const float LandSquash = 4.2f;
+        public const float LandSquash = -4.2f;
 
         // ---- deaths
         public const float Gravity = 15f;
@@ -139,24 +150,32 @@ namespace LabEscape.Client
         public const float SlamTrauma = 0.75f;
         public const float HazardTrauma = 0.3f;
         /// <summary>Trauma from something landing, for a body of the player's weight falling from a walk; drops and deaths scale it.</summary>
-        public const float ThudTrauma = 0.11f;
+        public const float ThudTrauma = 0.22f;
+        /// <summary>A landing also knocks the view down, by this many tiles for each point of weight, up to a limit.</summary>
+        public const float ThudKick = 0.022f;
+        public const float ThudKickMost = 0.14f;
         public const float TraumaDecay = 1.7f;
-        public const float ShakeTiles = 0.2f;
+        public const float ShakeTiles = 0.16f;
         public const float ShakeHz = 23f;
         /// <summary>The camera is knocked along a blow's direction, this many tiles, and springs back.</summary>
         public const float KickBase = 0.03f;
         public const float KickPerDamage = 0.028f;
         public const float BlastPunch = 0.045f;
+        public const float SlamKick = 0.18f;
         public const float KickHz = 5f;
         public const float KickDamping = 0.55f;
         public const float PunchHz = 4.2f;
         public const float PunchDamping = 0.5f;
 
         // ---- the entrance
-        /// <summary>Seconds the fight waits on its title before the first wave falls.</summary>
-        public const float OpenerLead = 1.25f;
+        /// <summary>
+        /// Seconds the fight waits on its title before the first wave falls. The title has gone and the camera has all but come
+        /// to rest by then, so nothing covers the tiles the wave lands on.
+        /// </summary>
+        public const float OpenerLead = 1.35f;
+        public const float OpenerTitle = 1.05f;
         public const float OpenerZoom = 1.42f;
-        public const float OpenerEase = 1.9f;
+        public const float OpenerEase = 1.5f;
 
         /// <summary>How light or heavy a thing swings: springs slow down for heavy bodies.</summary>
         public static float Swing(float heft) => 1f / Mathf.Pow(Mathf.Max(0.2f, heft), 0.4f);

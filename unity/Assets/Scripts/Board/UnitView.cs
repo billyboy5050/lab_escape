@@ -197,7 +197,7 @@ namespace LabEscape.Client
             var give = Feel.Give(Heft) * kick;
             _shove.Push(-_heading * (Feel.RecoilShove * give));
             _lean.Push(-_heading * (Feel.RecoilTip * give));
-            _squash.Velocity += 1.4f * kick;
+            _squash.Velocity += Feel.RecoilSquash * kick;
         }
 
         /// <summary>Throws itself at the next tile and comes back. The blow lands when `seconds` is up.</summary>
@@ -244,7 +244,7 @@ namespace LabEscape.Client
             var give = Feel.Give(Heft);
             if (blocked)
             {
-                _squash.Velocity -= 1.1f;
+                _squash.Velocity += Feel.BlockSquash;
                 _lean.Push(dir * (70f * give));
                 return;
             }
@@ -254,18 +254,18 @@ namespace LabEscape.Client
                 _shove.Push(dir * ((Feel.ShoveBase + Feel.ShovePerDamage * size) * give));
                 _lean.Push(dir * ((Feel.TipBase + Feel.TipPerDamage * size) * give));
             }
-            _squash.Velocity -= 1.5f + 0.3f * size;
+            _squash.Velocity += Feel.HitSquash + Feel.HitSquashPerDamage * size;
         }
 
         /// <summary>A heal, or anything else that should make the figure swell for a moment.</summary>
         public void Pulse()
         {
-            _squash.Velocity += 2.2f;
+            _squash.Velocity += Feel.PulseSquash;
         }
 
         private void Footfall(float weight)
         {
-            _squash.Velocity -= Feel.FootfallSquash;
+            _squash.Velocity += Feel.FootfallSquash;
             Thud = Mathf.Max(Thud, Heft * weight);
         }
 
@@ -284,7 +284,7 @@ namespace LabEscape.Client
                     _struck = true;
                     Stand();
                     _lean.Push(_heading * 240f);
-                    _squash.Velocity -= 2.2f;
+                    _squash.Velocity += Feel.BlowSquash;
                 }
                 if (_lungeT >= _lungeOut + Feel.StrikeReturn) _lungeT = -1f;
             }
@@ -295,7 +295,8 @@ namespace LabEscape.Client
             _squash.Tick(dt, Feel.SquashHz * swing, Feel.SquashDamping);
             _grow.Tick(dt, 5.2f, 0.42f);
             _yaw = Mathf.MoveTowardsAngle(_yaw, _targetYaw, dt * 900f);
-            if (_flash > 0f) _flash = Mathf.Max(0f, _flash - dt * 5.5f);
+            // White for the length of the stop, then gone in a tenth of a second: a flash, not a glow.
+            if (_flash > 0f) _flash = Mathf.Max(0f, _flash - dt * 10f);
             Compose(time);
         }
 
@@ -354,7 +355,7 @@ namespace LabEscape.Client
                     _lean.Aim(Vector3.zero);
                     _lean.Push(dir * 320f);
                     _squash.Target = 0f;
-                    _squash.Velocity -= Feel.LandSquash * 0.6f;
+                    _squash.Velocity += Feel.SlamSquash;
                     Thud = Mathf.Max(Thud, Heft * 1.4f);
                     Arrive();
                     break;
@@ -379,7 +380,7 @@ namespace LabEscape.Client
                     Model.Plate.localScale = Vector3.one;
                     _squash.Target = 0f;
                     _squash.Value = -0.28f;
-                    _squash.Velocity = -Feel.LandSquash;
+                    _squash.Velocity = Feel.LandSquash;
                     Thud = Mathf.Max(Thud, Heft * 2.2f);
                     _motion = Motion.None;
                     break;
@@ -503,7 +504,7 @@ namespace LabEscape.Client
         public void Hit()
         {
             _flash = 1f;
-            _squash.Velocity -= 2.4f;
+            _squash.Velocity -= 9f;
         }
 
         public void Tick(float dt)

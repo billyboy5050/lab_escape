@@ -46,7 +46,8 @@ namespace LabEscape.Client
         {
             C = c;
             Session = new FightSession(c, loadout, settings, meta);
-            Shown = Session.State;
+            // Until the opening has played, the screen shows the room as the fight finds it: the player and nobody else.
+            Shown = Session.StartFrames.Count > 0 ? GameStates.CreateInitial(c, loadout, settings) : Session.State;
             _fmt = new EventFormatter(c, Session.State);
         }
 

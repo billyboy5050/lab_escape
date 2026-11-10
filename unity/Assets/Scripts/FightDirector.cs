@@ -175,7 +175,7 @@ namespace LabEscape.Client
             var hostiles = flow.Session.StartFrames.SelectMany(f => f.Events).OfType<WaveSpawned>().FirstOrDefault()?.Units.Count ?? 0;
             if (player != null) _cam.Open(Iso.Tile(player.Pos.X, player.Pos.Y));
             _board!.Ambience.Strike();
-            _hud.ShowOpener(room.Name, hostiles > 0 ? $"{hostiles} hostiles inbound" : "", Feel.OpenerLead + 0.35f);
+            _hud.ShowOpener(room.Name, hostiles > 0 ? $"{hostiles} hostiles inbound" : "", Feel.OpenerTitle);
             flow.Begin(Feel.OpenerLead);
         }
 
@@ -252,7 +252,7 @@ namespace LabEscape.Client
                 case Charged c:
                     _clock.Freeze(Feel.SlamStop * pace);
                     _cam.Shake(Feel.SlamTrauma);
-                    _cam.Kick(Iso.Tile(c.Dir.X, c.Dir.Y) - Iso.Tile(0f, 0f), 0.3f);
+                    _cam.Kick(Iso.Tile(c.Dir.X, c.Dir.Y) - Iso.Tile(0f, 0f), Feel.SlamKick);
                     _cam.Punch(Feel.BlastPunch);
                     break;
                 case HazardFired _:
@@ -271,7 +271,9 @@ namespace LabEscape.Client
         /// <summary>Something heavy landed: the floor passes it on to the camera. A light footstep does not.</summary>
         private void OnThud(Vector3 at, float weight)
         {
-            if (weight >= 0.9f) _cam.Shake(weight * Feel.ThudTrauma);
+            if (weight < 0.9f) return;
+            _cam.Shake(weight * Feel.ThudTrauma);
+            _cam.Kick(Vector3.down, Mathf.Min(Feel.ThudKickMost, weight * Feel.ThudKick));
         }
 
         // ------------------------------------------------------------------ player actions
