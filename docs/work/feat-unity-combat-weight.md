@@ -14,7 +14,7 @@ No rule or content value changes: the engine, `content/` and the generated files
 
 ## Status
 
-Built, tested and documented. Two things stand between this and ready for review: the mouse has not been tried by hand, and Codex has not reviewed the latest push.
+Built, tested, documented and played by hand. One thing stands between this and ready for review: Codex's review of the latest push, which had started but not reported when the session ended (2026-11-10). CI passes.
 
 ## Done so far
 
@@ -22,14 +22,13 @@ Built, tested and documented. Two things stand between this and ready for review
 - The board plays cues as their moments come and is brought level with the state between frames (`BoardView.Level`).
 - Figures on springs, with weight from their data; drop-in waves, toppling bodies, machines that break apart; hit-stop and a slow final blow on `BoardClock`; camera shake, kick and punch; effects that fall, bounce, scorch and throw light; damage numbers that are thrown; HP bars that keep what was lost for a moment; banners that are set down; the fight's entrance.
 - `-labFilm` on the smoke run, which is how the motion was looked at and tuned.
-- 49 EditMode and 11 PlayMode tests pass. The web build was made and played in a browser; the Mac build was played with the keyboard.
+- 49 EditMode and 11 PlayMode tests pass. The web build was made and played in a browser. The Mac build was played with the mouse and the keyboard: picking a loadout, hovering for a preview, moving, undoing, picking an action and shooting, the End turn button, the wheel's zoom, and the keys for ending a turn, fighting again and skipping.
 - Docs: README (Unity client), implementation notes ([how a frame is animated](../implementation-notes.md#how-a-frame-is-animated)), roadmap (two follow-ups), CLAUDE.md (one architecture point, two gotchas).
 
 ## Next steps
 
-1. Play the Mac build with the mouse: move by clicking a tile, pick an action and click a target, click End turn. An agent can only do this with the game's window in front (CLAUDE.md, Gotchas). The mouse code did not change, and the PlayMode tests cover picking tiles from screen points, but the definition of done asks for it by hand.
-2. Answer Codex's review of the latest push: check each finding, fix or decline it, reply and resolve.
-3. Delete this note in the last commit, then `gh pr ready 23`.
+1. Read Codex's review of the latest push (`gh pr view 23 --comments`, and `gh api repos/billyboy5050/lab_escape/pulls/23/comments` for the inline findings). Check each finding, fix or decline it, reply and resolve. After any push, comment `@codex review` again.
+2. Delete this note in the last commit, then `gh pr ready 23`.
 
 ## Decisions
 
