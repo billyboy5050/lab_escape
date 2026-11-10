@@ -352,6 +352,60 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void ALogLineIsWrittenWhenItsEventIsSeen()
+        {
+            var raw = JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-tech.json")));
+            var record = Records.CheckCompatible(C, raw);
+            var flow = new FightFlow(C, record.Loadout, record.Settings);
+            flow.Begin();
+            flow.Skip();
+            Assert.That(flow.Apply(record.Commands[0]).Ok, Is.True);
+            flow.Skip();
+            // The line's second command is a Sidearm shot that wounds a guard.
+            var before = flow.Log.Count;
+            Assert.That(flow.Apply(record.Commands[1]).Ok, Is.True);
+            var blow = flow.Stage.Cues.First(c => c.Kind == CueKind.Event && c.Event is DamageDealt);
+            Assert.That(blow.At, Is.GreaterThan(0f));
+            bool Reported() => flow.Log.Skip(before).Any(l => l.Text.Contains("kinetic"));
+
+            Assert.That(flow.Log.Count, Is.GreaterThan(before), "the shot is announced as it is taken");
+            Assert.That(Reported(), Is.False, "but not what it did");
+            flow.Tick(blow.At * 0.9f);
+            Assert.That(Reported(), Is.False, "nor while it is in flight");
+            flow.Tick(blow.At * 0.2f);
+            Assert.That(Reported(), Is.True, "the damage is logged as it lands");
+        }
+
+        [TestCaseSource(nameof(RecordedFights))]
+        public void WatchedOrSkippedAFightLeavesTheSameLog(string path)
+        {
+            var raw = JsonIn.Parse(File.ReadAllText(GameContent.RepoPath(path.Split('/'))));
+            var record = Records.CheckCompatible(C, raw["record"] ?? raw);
+            var watched = new FightFlow(C, record.Loadout, record.Settings);
+            var skipped = new FightFlow(C, record.Loadout, record.Settings);
+            watched.Begin();
+            skipped.Begin();
+            skipped.Skip();
+            var n = 0;
+            foreach (var cmd in record.Commands)
+            {
+                // The watched fight is skipped part of the way through every third command, as a player would.
+                for (var i = 0; i < 4000 && watched.Busy; i++)
+                {
+                    watched.Tick(0.03f);
+                    if (n % 3 == 2 && i == 5) watched.Skip();
+                }
+                Assert.That(watched.Busy, Is.False);
+                n++;
+                Assert.That(watched.Apply(cmd).Ok, Is.True);
+                Assert.That(skipped.Apply(cmd).Ok, Is.True);
+                skipped.Skip();
+            }
+            for (var i = 0; i < 4000 && watched.Busy; i++) watched.Tick(0.03f);
+            Assert.That(watched.Log.Select(l => l.Text).ToList(), Is.EqualTo(skipped.Log.Select(l => l.Text).ToList()));
+        }
+
+        [Test]
         public void TheEntranceHoldsTheFirstFrameBackAndASkipCutsIt()
         {
             var p = C.Presets.First(x => x.Id == "hybrid");

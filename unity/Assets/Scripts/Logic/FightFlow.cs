@@ -17,6 +17,9 @@ namespace LabEscape.Client
         private readonly Queue<Frame> _queue = new Queue<Frame>();
         private readonly EventFormatter _fmt;
         private bool _waiting;
+        /// <summary>The state the frame on screen ends on, and how many of its cues have had their log line written.</summary>
+        private GameState? _stageState;
+        private int _logged;
 
         public readonly Content C;
         public readonly FightSession Session;
@@ -87,6 +90,25 @@ namespace LabEscape.Client
                 Pump();
                 FrameTime = _waiting ? over : 0f;
             }
+            if (_waiting) WriteLog(FrameTime);
+        }
+
+        /// <summary>
+        /// Writes the log lines of the frame on screen whose moment has come. A line appears as its event is seen, so the log
+        /// never says a shot hit before the shot has been fired.
+        /// </summary>
+        private void WriteLog(float upTo)
+        {
+            if (_stageState == null) return;
+            var cues = Stage.Cues;
+            while (_logged < cues.Count && cues[_logged].At <= upTo)
+            {
+                var cue = cues[_logged++];
+                if (cue.Kind != CueKind.Event) continue;
+                var line = _fmt.Format(cue.Event, _stageState);
+                if (line != null) Log.Add(line);
+            }
+            if (Log.Count > 600) Log.RemoveRange(0, Log.Count - 600);
         }
 
         public StepResult Apply(Command cmd)
@@ -143,10 +165,14 @@ namespace LabEscape.Client
                 Finish(false);
                 return;
             }
+            WriteLog(float.MaxValue);
             var f = _queue.Dequeue();
             Stage = Staging.Plan(C, Shown, f.Events);
             FrameTime = 0f;
+            _stageState = f.State;
+            _logged = 0;
             ShowFrame(f);
+            WriteLog(0f);
             _waiting = true;
         }
 
@@ -157,18 +183,25 @@ namespace LabEscape.Client
             // A frame can hold several phase starts (an empty minion phase, then the enemy phase): show the last.
             var ph = f.Events.OfType<PhaseStarted>().LastOrDefault(e => e.Phase != Phase.RoundStart);
             if (ph != null) Banner = BannerFor(ph.Phase);
-            AppendLog(f.Events, f.State);
             FrameShown?.Invoke(f.State, Stage);
         }
 
         private void Flush()
         {
             _waiting = false;
+            WriteLog(float.MaxValue);
             IReadOnlyList<GameEvent> last = Array.Empty<GameEvent>();
+            // The frames nobody watched are logged in the order they would have been seen, so a skipped fight and a
+            // watched one leave the same log.
+            var before = Shown;
             while (_queue.Count > 0)
             {
                 var f = _queue.Dequeue();
-                AppendLog(f.Events, f.State);
+                Stage = Staging.Plan(C, before, f.Events);
+                _stageState = f.State;
+                _logged = 0;
+                WriteLog(float.MaxValue);
+                before = f.State;
                 last = f.Events;
             }
             FrameEvents = last;
@@ -178,7 +211,10 @@ namespace LabEscape.Client
         private void Finish(bool jumped)
         {
             _waiting = false;
+            WriteLog(float.MaxValue);
             Stage = Stage.Empty;
+            _stageState = null;
+            _logged = 0;
             FrameTime = 0f;
             // The animation is over and the player can act: this is when a new turn's clock starts.
             Session.TurnReady();
@@ -187,16 +223,6 @@ namespace LabEscape.Client
             Banner = null;
             if (jumped) Snapped?.Invoke(Shown);
             else Settled?.Invoke(Shown);
-        }
-
-        private void AppendLog(IEnumerable<GameEvent> events, GameState s)
-        {
-            foreach (var e in events)
-            {
-                var line = _fmt.Format(e, s);
-                if (line != null) Log.Add(line);
-            }
-            if (Log.Count > 600) Log.RemoveRange(0, Log.Count - 600);
         }
 
         private static string? BannerFor(Phase p)

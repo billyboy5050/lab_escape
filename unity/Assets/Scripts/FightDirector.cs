@@ -162,6 +162,10 @@ namespace LabEscape.Client
             _clock.Reset();
             _finalFrame = false;
             Open(room);
+            // A fight can start after this frame's Update has run. Frame the room now, or its first frame is drawn through a
+            // camera that has not been told where the board is.
+            _hud.SetFreeAreaOn(_cam);
+            _cam.Tick(0f);
         }
 
         /// <summary>
