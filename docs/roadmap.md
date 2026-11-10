@@ -4,11 +4,11 @@ Where the project stands, what comes next, and what is waiting on a decision. Wo
 
 Keep this file current. A pull request that finishes an item deletes it here, and one that turns up new work adds it; git history keeps the record of what was done. Order within "Up next" is priority order.
 
-Last reviewed: 2026-11-09.
+Last reviewed: 2026-11-10.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13.
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13. On 2026-11-10 that fight's animation was reworked for weight, at the owner's request: see [how a frame is animated](implementation-notes.md#how-a-frame-is-animated).
 
 | Milestone | Status |
 | --- | --- |
@@ -70,6 +70,8 @@ Items about the web client stop applying when M13 retires it. Anything that shou
 
 - **Move the Armory into `content/rooms.json`.** Once the freeze ends at M13, M14 can add the file, put the Armory in it with the new rooms, and delete `map.json`, `waves.json`, `rules.roundCap` and `Content.map` and `Content.waves`. The tile types in `map.json` need a home of their own at that point. Until then the Armory is built from its old files so that its content hash does not move.
 - **Git hooks after M13.** `npm install` turns the hooks on, through `prepare` in `package.json`. When M13 deletes the TypeScript, the hooks need another way in, CLAUDE.md's "Start here" needs the new step, CI drops its Node steps, and `tests/rulesSheet.test.ts` needs a C# counterpart or the rules sheet retires with the web client.
+- **Sound on the Unity fight's cues.** M13 ports the sound. Every blow, landing and footfall now has its own moment (`BoardView.CuePlayed` and `BoardView.Thudded`), so a sound belongs on those. One started when its frame arrives would play before the thing it belongs to.
+- **A reduced-motion setting in Unity.** The web client shortens its effects under the system's reduced-motion setting. The Unity fight shakes and kicks the camera, stops the clock and flashes the screen, and has nothing to turn them down. M13 should add the setting; `Feel.cs` holds the numbers it would scale.
 - **Symbols missing in the web build.** The Unity client's text uses `→`, `–`, `—`, `…` and `⚠` (11 lines in `FightDirector.cs`, `ActionModel.cs` and `EventFormatter.cs`). In the web build of 2026-11-09 the arrow and the en dash drew as blanks, and the others are likely to: the web player has no system font to fall back on. M13 should ship a font that has them or write them in plain ASCII, and the friendly-fire `⚠` needs a mark that survives either way.
 - **Web build size.** 11.7 MB in greybox ([the first web build](implementation-notes.md#the-unity-client)). `unity/Packages/manifest.json` still lists every built-in module, and the web player starts PhysX, which nothing uses. Removing unused modules is the first thing to try when M13 or M20 sets the size budget.
 - **Git LFS.** Nothing in `unity/` is binary yet. When the first binary asset arrives (sound at M13 or art at M20), add a `.gitattributes` for it and call `git lfs pre-push` from `.githooks/pre-push`: with `core.hooksPath` set, `git lfs install` does not put its hook where git will run it.

@@ -105,6 +105,9 @@ Where it differs from the web client on purpose:
 - **A unit's side is still its base shape.** Round for the player's side, a square that this camera shows as a diamond for the lab's soldiers, a hexagon for the Warden.
 - **Words where the web client has icons.** Statuses read `PSN 2`, `COR 1` and `PIN`, and armor reads `ARM 2`, because greybox has no icon art. Each is a word or number as well as a colour.
 - **Moves walk tile by tile.** The web client slides straight from start to end.
+- **A frame's events are staged in time.** The web client starts every effect of a frame at once. See [how a frame is animated](#how-a-frame-is-animated).
+- **A fight has an entrance.** The lights strike, the room's name is set down, the camera pulls back from the player and the first wave falls in. Space skips it.
+- **The log follows the screen.** A line is written when its event is seen, so the log never reports a hit before the shot is fired. Watched or skipped, a fight leaves the same log.
 - **One dark theme,** in the web client's dark colours.
 - **The buttons take no keyboard focus,** so Space and Enter always mean skip and end turn. The web client's focus rules in `src/client/actionKeys.ts` have nothing to act on here.
 
@@ -115,6 +118,34 @@ The editor reads `content/` directly. A player cannot, so `ContentBuildStep` cop
 **The first web build (2026-11-09).** The phase plan names download size and preview speed on the web as risks to check at M13, so the greybox fight was built for the web early. It built in 98 s and is an 11.7 MB download: 8.9 MB of engine and game code and 2.8 MB of data, both gzip-compressed. In a Chromium browser on a 10-core Mac the fight played from the preset picker through an enemy phase, with the mouse and the keys. While an action was selected and its targets hovered, frames stayed at about 8 ms, and none of 370 took longer than 13 ms, so previews are not slow at the Armory's size. One fault showed: the arrow in `Sidearm → E2` and the dash in `1–9` were blank, because the web player has no system font to fall back on (see the [roadmap](roadmap.md#smaller-items)). The size is before any art or sound, and the project still lists every built-in module, physics included.
 
 The room is built from `RoomDef`, so other rooms should draw without changes, but only the Armory has been looked at. The two far walls follow the room's bounding rectangle, so a non-rectangular room will need its own edges at M14.
+
+### How a frame is animated
+
+The owner asked on 2026-11-10 for animation with weight behind it. Until then every event in a frame started at the same instant: a shot, its damage number and the death it caused appeared together, and each frame held the queue for a flat `rules.ui.secondsPerActor`.
+
+**Staging.** The engine resolves a whole action at once and lists its events in the order they caused each other. `Staging` (in `Logic`, no Unity code) turns that order into moments, called cues: a unit gathers, fires, the shot flies, it lands, the target reacts, and only then does the next thing start. It reads the events and never the rules.
+
+- Every length is in beats, and one beat is `rules.ui.secondsPerActor`, so content keeps its single knob for pace. The lengths themselves are constants at the top of `Staging.cs`.
+- A blow from the next tile with nothing in flight is staged as a melee strike. A unit's death is staged at the blow that killed it, wherever its event sits in the list. A blast reaches farther tiles a moment later. A wave falls in one unit after another.
+- A frame holds the queue for as long as its stage needs. A frame with nothing to show passes at once, where it used to hold for a tenth of a second: 31 to 46 frames of each winning line are like that.
+- Measured over the three winning lines, a fight's animation takes 47.7 s where it took 52.6 s (Tech), 49.5 s where it took 47.5 s (Hybrid) and 58.0 s where it took 52.3 s (Alien), before the stops below. The fight is no slower; the time moved from waiting to blows.
+
+**The board lags the state on purpose.** While a frame plays, the board shows each event as its cue comes. A unit keeps its figure and its HP bar until the blow lands, and a wave unit has no figure until it starts to fall. Between frames, and after a skip or an undo, `BoardView.Level` brings the board level with the state: a figure for every unit and object in it, on its tile, showing its HP, and nothing else. PlayMode tests check that before every command of a winning line and after a skip part way through a turn.
+
+**The board's clock.** `BoardClock` stops the board for 0.02 to 0.12 s when a blow lands, longer for a bigger one, and plays the blow that ends the fight at about a fifth of its speed. Blows within a fifth of a second share the longest stop, so a blast that reaches three units stops the board once. The interface and the camera stay on real time. The 2x speed doubles this clock instead of shortening each frame, so everything on the board keeps its proportions.
+
+**Weight.** Figures ride on springs (`UnitView`). A hit shoves and tips a body away from where it came from and squashes it; the springs that bring it back are slow and well damped, because a body that is knocked fast and recovers slowly reads as heavy, and one that wobbles reads as rubber. A unit gathers before it acts and recoils after. A wave unit falls stretched and lands squashed. A body that dies is knocked off its feet and falls, a machine or an object breaks into its parts, and a hatchling bursts. How heavy a unit is comes from its data: its HP plus twice its armor, against the player's (`Heft`). The Warden is three times the player and a hatchling a third, so new enemies get a weight without a line of code.
+
+The camera shakes by the square of its trauma, is kicked the way a blow went and punched in by a blast. Sparks and debris fall and bounce, landings throw dust, blasts leave scorch marks, and effects throw light on the room through four point lights in the greybox shader.
+
+Every number that sets how this feels is in `Feel.cs`. None of them is a rule, and none is in `content/`.
+
+**Looking at it.** A screenshot cannot show whether a motion has weight. The smoke run's `-labFilm` saves every frame of chosen animations (README, [Unity client](../README.md#unity-client)); the first pass was tuned from those frames.
+
+Not done here:
+
+- **Sound.** It is the other half of weight, and M13 ports it. See the [roadmap](roadmap.md#smaller-items).
+- **A reduced-motion setting.** The web client has one. See the [roadmap](roadmap.md#smaller-items).
 
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
 
