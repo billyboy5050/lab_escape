@@ -149,8 +149,8 @@ namespace LabEscape.Client
             for (var i = 0; i < n; i++)
             {
                 var a = i * Mathf.PI * 2f / n + Noise(seed, i, 31) * 0.7f;
-                var out2 = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * (reach * (0.7f + 0.6f * Noise(seed, i, 32)));
-                Add(Kind.Dust, 0.38f + 0.1f * Mathf.Min(weight, 3f), at, out2, DustColour, 0.07f + 0.035f * Mathf.Min(weight, 4f));
+                var away = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * (reach * (0.7f + 0.6f * Noise(seed, i, 32)));
+                Add(Kind.Dust, 0.38f + 0.1f * Mathf.Min(weight, 3f), at, away, DustColour, 0.07f + 0.035f * Mathf.Min(weight, 4f));
             }
             if (weight >= 1.5f) Add(Kind.Shock, 0.3f, at, at, Palette.WithAlpha(DustColour, 0.7f), 0.5f + 0.18f * Mathf.Min(weight, 5f), 0.07f);
         }
