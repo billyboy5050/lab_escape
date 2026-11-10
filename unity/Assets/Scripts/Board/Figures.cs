@@ -23,18 +23,28 @@ namespace LabEscape.Client
 
         private static readonly MaterialPropertyBlock Block = new MaterialPropertyBlock();
         private readonly List<Part> _parts = new List<Part>();
+        private readonly List<Transform> _bodyParts = new List<Transform>();
         private float _alpha = -1f;
         private float _flash = -1f;
 
         public readonly GameObject Root;
 
-        /// <summary>The part of the model that moves on its own; its base plate stays on the floor.</summary>
+        /// <summary>The part of the model that moves on its own: it leans, squashes, hops and falls.</summary>
         public readonly Transform Body;
+
+        /// <summary>The base plate, which stays flat on the floor under the body and says whose side a unit is on.</summary>
+        public readonly Transform Plate;
+
+        /// <summary>The body's pieces, which fly apart when a machine or an object breaks.</summary>
+        public IReadOnlyList<Transform> BodyParts => _bodyParts;
 
         public Model(string name, Transform parent)
         {
             Root = new GameObject(name);
             Root.transform.SetParent(parent, false);
+            var plate = new GameObject("plate");
+            plate.transform.SetParent(Root.transform, false);
+            Plate = plate.transform;
             var body = new GameObject("body");
             body.transform.SetParent(Root.transform, false);
             Body = body.transform;
@@ -54,6 +64,7 @@ namespace LabEscape.Client
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
             _parts.Add(new Part(r, colour));
+            if (parent == Body) _bodyParts.Add(t);
         }
 
         public void Paint(float alpha, float flash = 0f)
@@ -103,7 +114,7 @@ namespace LabEscape.Client
         /// <summary>The base plate says whose side a unit is on: round for yours, a diamond for the lab's soldiers, a hexagon for the Warden.</summary>
         private static void BasePlate(Model m, string def, Team team, Color colour)
         {
-            var kit = new Kit(m, m.Root.transform);
+            var kit = new Kit(m, m.Plate);
             var dark = Palette.Shade(colour, 0.28f);
             var k = IsSmall(def) ? 0.7f : 1f;
             if (def == "warden")

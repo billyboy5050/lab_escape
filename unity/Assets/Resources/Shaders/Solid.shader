@@ -1,5 +1,6 @@
 // The greybox's one lit material. A fixed key light and fill are worked out in the vertex stage, so the three visible faces of
-// a block read apart without any light objects, shadow maps or a render pipeline package.
+// a block read apart without any light objects, shadow maps or a render pipeline package. The room's brightness and up to four
+// short-lived point lights (a muzzle flash, a blast) come from global values that Lighting.cs sets.
 Shader "LabEscape/Solid"
 {
     Properties
@@ -33,28 +34,43 @@ Shader "LabEscape/Solid"
             {
                 float4 pos : SV_POSITION;
                 fixed4 color : COLOR;
+                float3 world : TEXCOORD0;
+                float lit : TEXCOORD1;
             };
 
             fixed4 _Color;
             float _Flash;
+            float4 _LabAmbient;
+            float4 _LabLightPos[4];
+            float4 _LabLightCol[4];
 
             v2f vert(appdata v)
             {
                 v2f o;
                 UNITY_SETUP_INSTANCE_ID(v);
                 o.pos = UnityObjectToClipPos(v.vertex);
+                o.world = mul(unity_ObjectToWorld, v.vertex).xyz;
                 float3 n = UnityObjectToWorldNormal(v.normal);
                 float key = saturate(dot(n, normalize(float3(0.45, 0.85, -0.2))));
-                float light = 0.5 + 0.75 * key;
-                fixed4 c = v.color * _Color;
-                c.rgb = lerp(c.rgb * light, float3(1, 1, 1), _Flash);
-                o.color = c;
+                o.lit = 0.5 + 0.75 * key;
+                o.color = v.color * _Color;
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                return i.color;
+                float3 base = i.color.rgb;
+                float3 c = base * i.lit * _LabAmbient.rgb;
+                for (int k = 0; k < 4; k++)
+                {
+                    float3 d = _LabLightPos[k].xyz - i.world;
+                    float r = _LabLightPos[k].w;
+                    float a = saturate(1.0 - dot(d, d) / (r * r));
+                    // Mostly the surface's own colour lit up, plus a little of the light's, so dark steel still catches it.
+                    c += (base * 1.6 + 0.07) * _LabLightCol[k].rgb * (a * a);
+                }
+                c = lerp(c, float3(1, 1, 1), _Flash);
+                return fixed4(c, i.color.a);
             }
             ENDCG
         }

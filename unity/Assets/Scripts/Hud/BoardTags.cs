@@ -69,29 +69,37 @@ namespace LabEscape.Client
                 Head.RemoveFromHierarchy();
             }
 
-            public void Update(Content c, Unit u)
+            /// <summary>`hp` is the HP on show; `ghost` is the HP before the last blow while that still shows, else the same.</summary>
+            public void Update(Content c, Unit u, int hp, int ghost)
             {
                 var st = u.Statuses;
                 var armor = Mathf.Max(0, u.Armor - (st.Corrode?.Stacks ?? 0));
                 var def = c.Units[u.Def];
-                var sig = $"{u.Hp}/{u.MaxHp}/{armor}/{u.Ammo}/{u.MaxAmmo}/{u.Charges}/{u.MaxCharges}/{u.DroneState}/{st.Poison?.Remaining}/{st.Parasite?.Remaining}/{st.Corrode?.Stacks}/{st.Pinned != null}/{st.Slowed != null}";
+                var sig = $"{hp}/{ghost}/{u.MaxHp}/{armor}/{u.Ammo}/{u.MaxAmmo}/{u.Charges}/{u.MaxCharges}/{u.DroneState}/{st.Poison?.Remaining}/{st.Parasite?.Remaining}/{st.Corrode?.Stacks}/{st.Pinned != null}/{st.Slowed != null}";
                 if (sig == _sig) return;
                 _sig = sig;
 
                 _bar.Clear();
-                var low = u.Hp <= u.MaxHp / 3f;
-                var shown = Mathf.Max(0, u.Hp);
+                var low = hp <= u.MaxHp / 3f;
+                var shown = Mathf.Max(0, hp);
+                var lost = Mathf.Max(shown, Mathf.Min(u.MaxHp, ghost));
                 if (u.MaxHp <= 10)
                 {
-                    for (var i = 0; i < u.MaxHp; i++) _bar.Add(Ui.El($"hp-seg{(i < shown ? " full" : "")}{(low ? " low" : "")}"));
+                    for (var i = 0; i < u.MaxHp; i++) _bar.Add(Ui.El($"hp-seg{(i < shown ? " full" : i < lost ? " ghost" : "")}{(low ? " low" : "")}"));
                 }
                 else
                 {
                     var fill = Ui.El($"hp-fill{(low ? " low" : "")}");
                     fill.style.width = Length.Percent(100f * shown / u.MaxHp);
                     _bar.Add(fill);
+                    if (lost > shown)
+                    {
+                        var chunk = Ui.El("hp-fill ghost");
+                        chunk.style.width = Length.Percent(100f * (lost - shown) / u.MaxHp);
+                        _bar.Add(chunk);
+                    }
                 }
-                _hp.text = u.Hp.ToString();
+                _hp.text = hp.ToString();
 
                 _row.Clear();
                 if (u.MaxAmmo.HasValue) _row.Add(Pips(u.MaxAmmo.Value, u.Ammo ?? 0, "ammo"));
@@ -134,9 +142,9 @@ namespace LabEscape.Client
                 layer.Add(Anchor);
             }
 
-            public void Update(BoardObject o)
+            public void Update(BoardObject o, int? hp)
             {
-                var sig = $"{o.Kind}/{o.Timer}/{o.Hp}/{o.Decay}";
+                var sig = $"{o.Kind}/{o.Timer}/{hp}/{o.Decay}";
                 if (sig == _sig) return;
                 _sig = sig;
                 _row.Clear();
@@ -144,13 +152,13 @@ namespace LabEscape.Client
                 {
                     case ObjectKind.Egg:
                         _row.Add(Ui.Text($"T{o.Timer}", "tag-chip"));
-                        _row.Add(Ui.Text($"{o.Hp} HP", "tag-chip"));
+                        _row.Add(Ui.Text($"{hp} HP", "tag-chip"));
                         break;
                     case ObjectKind.Corpse:
                         _row.Add(Ui.Text($"{o.Decay}", "tag-chip"));
                         break;
                     case ObjectKind.Shield:
-                        _row.Add(Ui.Text($"{o.Hp} HP", "tag-chip"));
+                        _row.Add(Ui.Text($"{hp} HP", "tag-chip"));
                         break;
                 }
             }
@@ -162,7 +170,9 @@ namespace LabEscape.Client
             public Vector3 World;
             public float Start;
             public float Duration;
-            public float Offset;
+            /// <summary>Pixels a second across the screen, and whether it is thrown up to fall back or simply rises.</summary>
+            public float Drift;
+            public bool Thrown;
         }
 
         private readonly VisualElement _layer;
@@ -200,15 +210,21 @@ namespace LabEscape.Client
             _chips.Clear();
         }
 
-        /// <summary>Starts a number or word that rises from a place on the board and fades.</summary>
-        public void Float(Vector3 world, string text, Color colour, int size, float offsetPixels, float delay, float scale)
+        /// <summary>
+        /// Starts a number or word at a place on the board. A `thrown` one, a damage number, lands big, shrinks to its size, and
+        /// is thrown the way the blow went to fall back under its own weight; the rest rise and fade.
+        /// </summary>
+        public void Float(Vector3 world, string text, Color colour, int size, Vector3 dir, bool thrown)
         {
             var l = Ui.Text(text, "float-text");
             l.style.color = colour;
             l.style.fontSize = size;
             l.style.opacity = 0f;
             _layer.Add(l);
-            _floats.Add(new FloatingText { Label = l, World = world, Start = _now + delay * scale, Duration = 1.05f * scale, Offset = offsetPixels });
+            // Numbers on one unit in quick succession fan out instead of stacking.
+            var fan = (_floats.Count % 3 - 1) * 26f;
+            var across = Vector3.Dot(dir, _cam.Right);
+            _floats.Add(new FloatingText { Label = l, World = world, Start = _now, Duration = thrown ? 0.95f : 0.85f, Drift = across * 95f + fan, Thrown = thrown });
         }
 
         private Vector2 ToPanel(Vector3 world) => RuntimePanelUtils.CameraTransformWorldToPanel(_layer.panel, world, _cam.Cam);
@@ -220,21 +236,25 @@ namespace LabEscape.Client
             _now += dt;
             if (_layer.panel == null) return;
 
+            // Tags follow the figures on the board, not the state: a unit keeps its bar until the blow that kills it has landed.
             var seen = new HashSet<int>();
-            foreach (var u in s.Units.Where(x => !x.Dead && !x.Docked))
+            foreach (var pair in board.Units)
             {
-                var world = board.UnitPosition(u.Id);
-                if (!world.HasValue) continue;
-                seen.Add(u.Id);
-                if (!_units.TryGetValue(u.Id, out var tag))
+                var v = pair.Value;
+                if (!v.Arrived) continue;
+                seen.Add(pair.Key);
+                if (!_units.TryGetValue(pair.Key, out var tag))
                 {
                     tag = new UnitTag(_layer);
-                    _units[u.Id] = tag;
+                    _units[pair.Key] = tag;
                 }
-                tag.Update(_c, u);
-                Place(tag.Feet, ToPanel(world.Value));
+                var u = v.Data;
+                tag.Update(_c, u, v.ShownHp, v.GhostLeft > 0f ? v.GhostHp : v.ShownHp);
+                // A blow rattles the bar as well as the body.
+                var rattle = v.Jolt > 0f ? new Vector2(Mathf.Sin(_now * 71f), Mathf.Cos(_now * 53f)) * (5f * v.Jolt * v.Jolt) : Vector2.zero;
+                Place(tag.Feet, ToPanel(v.Position) + rattle);
                 var height = u.Def == "warden" ? 1.05f : Figures.IsSmall(u.Def) ? 0.55f : u.Flying ? 0.78f : 0.82f;
-                Place(tag.Head, ToPanel(world.Value + Vector3.up * height));
+                Place(tag.Head, ToPanel(v.Position + Vector3.up * height) + rattle);
             }
             foreach (var id in _units.Keys.Where(k => !seen.Contains(k)).ToList())
             {
@@ -243,15 +263,17 @@ namespace LabEscape.Client
             }
 
             seen.Clear();
-            foreach (var x in s.Objects.Where(b => !b.Destroyed && b.Kind != ObjectKind.Mine))
+            foreach (var pair in board.Objects)
             {
-                seen.Add(x.Id);
-                if (!_objects.TryGetValue(x.Id, out var tag))
+                var x = pair.Value.Data;
+                if (x.Kind == ObjectKind.Mine || !pair.Value.Arrived) continue;
+                seen.Add(pair.Key);
+                if (!_objects.TryGetValue(pair.Key, out var tag))
                 {
                     tag = new ObjectTag(_layer);
-                    _objects[x.Id] = tag;
+                    _objects[pair.Key] = tag;
                 }
-                tag.Update(x);
+                tag.Update(x, pair.Value.ShownHp);
                 Place(tag.Anchor, ToPanel(Iso.Tile(x.Pos.X, x.Pos.Y, x.Kind == ObjectKind.Corpse ? 0.15f : 0.68f)));
             }
             foreach (var id in _objects.Keys.Where(k => !seen.Contains(k)).ToList())
@@ -266,21 +288,28 @@ namespace LabEscape.Client
             for (var i = _floats.Count - 1; i >= 0; i--)
             {
                 var f = _floats[i];
-                var t = (_now - f.Start) / f.Duration;
+                var age = _now - f.Start;
+                var t = age / f.Duration;
                 if (t >= 1f)
                 {
                     f.Label.RemoveFromHierarchy();
                     _floats.RemoveAt(i);
                     continue;
                 }
-                if (t < 0f) continue;
                 var p = ToPanel(f.World);
                 var w = f.Label.resolvedStyle.width;
                 var h = f.Label.resolvedStyle.height;
                 var w2 = float.IsNaN(w) ? 0f : w * 0.5f;
                 var h2 = float.IsNaN(h) ? 0f : h * 0.5f;
-                Place(f.Label, new Vector2(p.x - w2, p.y - h2 - f.Offset - 46f * t));
-                f.Label.style.opacity = t < 0.75f ? 1f : (1f - t) / 0.25f;
+                // Thrown up at 150 pixels a second and pulled back at 330 a second each second; the others rise evenly.
+                var rise = f.Thrown ? 150f * age - 165f * age * age : 46f * t;
+                Place(f.Label, new Vector2(p.x - w2 + f.Drift * age, p.y - h2 - rise));
+                f.Label.style.opacity = t < 0.72f ? 1f : (1f - t) / 0.28f;
+                if (!f.Thrown) continue;
+                // It lands at nearly twice its size and settles in a tenth of a second.
+                var land = Mathf.Clamp01(age / 0.11f);
+                var scale = Mathf.Lerp(1.9f, 1f, 1f - (1f - land) * (1f - land));
+                f.Label.style.scale = new Scale(new Vector3(scale, scale, 1f));
             }
         }
 

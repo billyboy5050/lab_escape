@@ -58,6 +58,8 @@
 .cell-pip.full { background-color: var(--accent); border-color: var(--accent); }
 .cell-pip.hp.full { background-color: var(--good); border-color: var(--good); }
 .cell-pip.hp.full.low { background-color: var(--danger); border-color: var(--danger); }
+/* HP just lost stays white for a moment before the cell empties, on the status strip and on the bars over the board. */
+.cell-pip.hp.ghost { background-color: white; border-color: white; }
 .value { font-size: 18px; -unity-font-style: bold; padding: 0; margin-left: 6px; }
 .value.small { font-size: 14px; }
 .pills { flex-direction: row; margin-left: 8px; }
@@ -157,8 +159,8 @@
 .banner {
     position: absolute;
     top: 1%;
-    padding: 4px 34px;
-    font-size: 24px;
+    padding: 5px 40px;
+    font-size: 28px;
     -unity-font-style: bold;
     letter-spacing: 3px;
     color: var(--ink);
@@ -171,6 +173,12 @@
 .banner.enemy { border-color: #ff6b1f; color: #ffc9a8; }
 .banner.environment { border-color: var(--amber); color: #ffe1a3; }
 .banner.alert { top: 9%; border-color: var(--danger); color: var(--danger); }
+/* The fight's title, set down over the board as the lights come on. */
+.opener { position: absolute; top: 24%; align-items: center; padding: 14px 46px 16px 46px; background-color: rgba(4, 6, 8, 0.66); border-top-width: 2px; border-bottom-width: 2px; border-color: var(--danger); }
+.opener-title { font-size: 58px; -unity-font-style: bold; letter-spacing: 9px; color: var(--ink); padding: 0; margin: 0; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
+.opener-rule { height: 3px; width: 100%; background-color: var(--danger); margin: 6px 0 8px 0; }
+.opener-sub { font-size: 19px; -unity-font-style: bold; letter-spacing: 6px; color: var(--danger); padding: 0; margin: 0; }
+.vignette { position: absolute; left: 0; top: 0; width: 100%; height: 100%; -unity-background-scale-mode: stretch-to-fill; }
 .flash { opacity: 0; transition-property: opacity; transition-duration: 0.45s; }
 .flash.on { opacity: 1; transition-duration: 0s; }
 .alarm { background-color: rgba(255, 176, 32, 0.16); }
@@ -229,8 +237,10 @@
 .hp-seg { flex-grow: 1; flex-basis: 0; margin-right: 1px; background-color: #2a3338; }
 .hp-seg.full { background-color: var(--good); }
 .hp-seg.full.low { background-color: var(--danger); }
+.hp-seg.ghost { background-color: white; }
 .hp-fill { height: 100%; background-color: var(--good); }
 .hp-fill.low { background-color: var(--danger); }
+.hp-fill.ghost { background-color: white; }
 .hp-number { font-size: 13px; -unity-font-style: bold; color: var(--ink); padding: 0; margin-left: 4px; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
 .head-row { position: absolute; left: -90px; width: 180px; bottom: 2px; flex-direction: row; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
 .tag-chip {
