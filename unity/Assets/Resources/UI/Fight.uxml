@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="project://database/Assets/Resources/UI/Fight.uss" />
     <ui:VisualElement name="root" class="root fill" picking-mode="Ignore">
+        <ui:VisualElement name="vignette" class="vignette" picking-mode="Ignore" />
         <ui:VisualElement name="tags" class="fill" picking-mode="Ignore" />
         <ui:VisualElement name="flash-alarm" class="fill flash alarm" picking-mode="Ignore" />
         <ui:VisualElement name="flash-hurt" class="fill flash hurt" picking-mode="Ignore" />
@@ -36,6 +37,11 @@
                 <ui:VisualElement name="board-area" class="board-area" picking-mode="Ignore">
                     <ui:Label name="banner" class="banner hidden" picking-mode="Ignore" />
                     <ui:Label name="alert" class="banner alert hidden" picking-mode="Ignore" />
+                    <ui:VisualElement name="opener" class="opener hidden" picking-mode="Ignore">
+                        <ui:Label name="opener-title" class="opener-title" picking-mode="Ignore" />
+                        <ui:VisualElement class="opener-rule" picking-mode="Ignore" />
+                        <ui:Label name="opener-sub" class="opener-sub" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
 
                 <ui:VisualElement class="panel action-panel">
@@ -94,7 +100,7 @@
         </ui:VisualElement>
 
         <ui:VisualElement name="end" class="fill overlay hidden" picking-mode="Ignore">
-            <ui:VisualElement class="card">
+            <ui:VisualElement name="end-card" class="card">
                 <ui:Label name="end-title" class="card-title" />
                 <ui:Label name="end-cause" class="muted" />
                 <ui:VisualElement class="row">

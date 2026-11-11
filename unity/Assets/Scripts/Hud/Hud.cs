@@ -21,6 +21,74 @@ namespace LabEscape.Client
         }
     }
 
+    /// <summary>
+    /// How a banner arrives and leaves. It lands big and shrinks to its size in a sixth of a second, a little past it and back,
+    /// so it reads as something set down hard; it leaves by fading upward. Driven by hand each frame, on real time.
+    /// </summary>
+    public sealed class Entrance
+    {
+        private const float In = 0.17f;
+        private const float Out = 0.24f;
+
+        private readonly VisualElement _e;
+        private readonly float _from;
+        private float _age = -1f;
+        private float _leaveAt = float.MaxValue;
+
+        public Entrance(VisualElement e, float from = 1.6f)
+        {
+            _e = e;
+            _from = from;
+        }
+
+        public bool Showing => _age >= 0f;
+
+        public void Show()
+        {
+            _age = 0f;
+            _leaveAt = float.MaxValue;
+            Ui.Show(_e, true);
+            Apply();
+        }
+
+        /// <summary>Starts it leaving, once it has been up for at least `least` seconds.</summary>
+        public void Hide(float least = 0f)
+        {
+            if (_age < 0f || _leaveAt < float.MaxValue) return;
+            _leaveAt = Mathf.Max(_age, least);
+        }
+
+        public void HideNow()
+        {
+            _age = -1f;
+            Ui.Show(_e, false);
+        }
+
+        public void Tick(float dt)
+        {
+            if (_age < 0f) return;
+            _age += dt;
+            if (_age >= _leaveAt + Out)
+            {
+                HideNow();
+                return;
+            }
+            Apply();
+        }
+
+        private void Apply()
+        {
+            var k = Mathf.Clamp01(_age / In);
+            // Ease out with a little overshoot.
+            var back = 1f + 2.2f * Mathf.Pow(k - 1f, 3f) + 1.2f * Mathf.Pow(k - 1f, 2f);
+            var scale = Mathf.LerpUnclamped(_from, 1f, back);
+            var leaving = Mathf.Clamp01((_age - _leaveAt) / Out);
+            _e.style.scale = new Scale(new Vector3(scale, scale, 1f));
+            _e.style.opacity = Mathf.Clamp01(_age / 0.05f) * (1f - leaving);
+            _e.style.translate = new Translate(0f, -14f * leaving);
+        }
+    }
+
     /// <summary>The interface around the board. The layout and styling are in UI/Fight.uxml and UI/Fight.uss; this fills them in.</summary>
     public sealed class Hud
     {
@@ -30,14 +98,18 @@ namespace LabEscape.Client
         private readonly VisualElement _root;
         private readonly VisualElement _boardArea;
         private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
-        private readonly VisualElement _alarm, _hurt;
-        private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError;
+        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard;
+        private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
+        private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
         private readonly Button _undo, _endTurn, _skip, _intents, _speed0, _speed1, _speed2;
         private readonly ScrollView _log, _logLines;
         private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "";
         private int _logShown;
         private float _typed;
-        private float _alertLeft, _toastLeft;
+        private float _toastLeft;
+        private float _hpJolt;
+        private float _now;
+        private static Texture2D? _vignetteTexture;
 
         public readonly VisualElement TagLayer;
 
@@ -76,6 +148,11 @@ namespace LabEscape.Client
             _logModal = E("log-modal");
             _alarm = E("flash-alarm");
             _hurt = E("flash-hurt");
+            _vignette = E("vignette");
+            _opener = E("opener");
+            _endCard = E("end-card");
+            _openerTitle = L("opener-title");
+            _openerSub = L("opener-sub");
             _hpText = L("hp-text");
             _round = L("round");
             _phase = L("phase");
@@ -95,6 +172,11 @@ namespace LabEscape.Client
             _logLines = Q<ScrollView>("log-lines");
             _log.verticalScrollerVisibility = ScrollerVisibility.Hidden;
             _log.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            _bannerIn = new Entrance(_banner);
+            _alertIn = new Entrance(_alert);
+            _openerIn = new Entrance(_opener, 1.35f);
+            _endIn = new Entrance(_endCard, 1.3f);
+            _vignette.style.backgroundImage = new StyleBackground(Vignette());
 
             _undo = B("undo", () => UndoClicked?.Invoke());
             _endTurn = B("end-turn", () => EndTurnClicked?.Invoke());
@@ -107,6 +189,28 @@ namespace LabEscape.Client
             B("close-log", () => CloseLogClicked?.Invoke());
             B("again", () => AgainClicked?.Invoke());
             B("change", () => ChangeClicked?.Invoke());
+        }
+
+        /// <summary>A soft darkening towards the corners of the board, made in code so the project keeps no image files.</summary>
+        private static Texture2D Vignette()
+        {
+            if (_vignetteTexture != null) return _vignetteTexture;
+            const int n = 96;
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
+            var px = new Color32[n * n];
+            for (var y = 0; y < n; y++)
+            {
+                for (var x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
+                    var r = Mathf.Sqrt(dx * dx + dy * dy);
+                    px[y * n + x] = new Color(0f, 0f, 0f, 0.62f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.55f, 1.35f, r)));
+                }
+            }
+            t.SetPixels32(px);
+            t.Apply();
+            _vignetteTexture = t;
+            return t;
         }
 
         public bool PointerOverUi(Vector2 screen)
@@ -168,9 +272,11 @@ namespace LabEscape.Client
             _statusSig = _actionsSig = _infoSig = _minionSig = _intercomText = _bannerText = "";
             Ui.Show(_end, false);
             Ui.Show(_logModal, false);
-            Ui.Show(_banner, false);
-            Ui.Show(_alert, false);
-            _alertLeft = 0f;
+            _bannerIn.HideNow();
+            _alertIn.HideNow();
+            _openerIn.HideNow();
+            _endIn.HideNow();
+            _hpJolt = 0f;
         }
 
         public void ShowEnd(Outcome o)
@@ -181,7 +287,20 @@ namespace LabEscape.Client
             _endTitle.EnableInClassList("lose", !win);
             _endCause.text = o.Cause;
             Ui.Show(_end, true);
+            _endIn.Show();
         }
+
+        /// <summary>The fight's title, set down over the board as the lights come on. It leaves by itself.</summary>
+        public void ShowOpener(string title, string sub, float seconds)
+        {
+            _openerTitle.text = title.ToUpperInvariant();
+            _openerSub.text = sub.ToUpperInvariant();
+            Ui.Show(_openerSub, sub.Length > 0);
+            _openerIn.Show();
+            _openerIn.Hide(seconds);
+        }
+
+        public void HideOpener() => _openerIn.HideNow();
 
         public bool EndVisible => !_end.ClassListContains("hidden");
 
@@ -195,26 +314,31 @@ namespace LabEscape.Client
             foreach (var l in s.Intercom.Log) _logLines.Add(Ui.Text($"R{l.Round:00} · “{l.Text}”", "modal-line"));
         }
 
-        private static void FillCells(VisualElement row, int n, int max, string classes)
+        private static void FillCells(VisualElement row, int n, int max, string classes, int ghost = 0)
         {
             row.Clear();
-            for (var i = 0; i < Math.Max(max, n); i++) row.Add(Ui.El(i < n ? $"cell-pip {classes} full" : $"cell-pip {classes}"));
+            for (var i = 0; i < Math.Max(max, n); i++) row.Add(Ui.El(i < n ? $"cell-pip {classes} full" : i < ghost ? $"cell-pip {classes} ghost" : $"cell-pip {classes}"));
         }
 
-        public void UpdateStatus(Content c, GameState s, IntentReport? intents, bool busy)
+        /// <summary>
+        /// `shownHp` is the player's HP as the board shows it, which falls when a blow lands and not when the engine resolved it;
+        /// `ghostHp` is what it was before that blow, for as long as the board keeps it on show. Null for both reads the state.
+        /// </summary>
+        public void UpdateStatus(Content c, GameState s, IntentReport? intents, bool busy, int? shownHp = null, int? ghostHp = null)
         {
             var p = s.Units.FirstOrDefault(u => u.Id == 0);
-            var hp = p?.Hp ?? 0;
+            var hp = shownHp ?? p?.Hp ?? 0;
+            var ghost = ghostHp ?? hp;
             var maxHp = p?.MaxHp ?? c.Units["player"].Hp;
             var incoming = intents?.PlayerDamage ?? 0;
             var lethal = intents?.PlayerDies == true;
             var showIncoming = !busy && s.Phase == Phase.Player && intents != null;
-            var sig = $"{hp}/{maxHp}/{p?.Statuses.Poison?.Remaining}/{p?.Statuses.Parasite?.Remaining}/{s.Ap}/{s.Movement}/{s.Round}/{s.Phase}/{showIncoming}/{incoming}/{lethal}";
+            var sig = $"{hp}/{ghost}/{maxHp}/{p?.Statuses.Poison?.Remaining}/{p?.Statuses.Parasite?.Remaining}/{s.Ap}/{s.Movement}/{s.Round}/{s.Phase}/{showIncoming}/{incoming}/{lethal}";
             if (sig == _statusSig) return;
             _statusSig = sig;
 
             var low = hp <= maxHp / 3f;
-            FillCells(_hpCells, hp, maxHp, low ? "hp low" : "hp");
+            FillCells(_hpCells, hp, maxHp, low ? "hp low" : "hp", ghost);
             _hpText.text = $"{hp}/{maxHp}";
             _hpPills.Clear();
             if (p?.Statuses.Poison != null) _hpPills.Add(Pill($"Poisoned {p.Statuses.Poison.Remaining}", Palette.Poison));
@@ -355,24 +479,37 @@ namespace LabEscape.Client
             }
         }
 
+        /// <summary>
+        /// The phase banner. It is set down when a phase starts, and stays up a moment after the queue has run out, so "Your turn"
+        /// can be read while the player is already free to act.
+        /// </summary>
         public void UpdateBanner(string? text, bool over)
         {
-            var show = text != null && !over;
-            Ui.Show(_banner, show);
-            if (!show || text == _bannerText) return;
-            _bannerText = text!;
+            if (text == null || over)
+            {
+                if (over) _bannerIn.HideNow();
+                else _bannerIn.Hide(0.75f);
+                _bannerText = "";
+                return;
+            }
+            if (text == _bannerText) return;
+            _bannerText = text;
             _banner.text = text;
             _banner.EnableInClassList("minion", text == "Minion phase");
             _banner.EnableInClassList("enemy", text == "Enemy phase");
             _banner.EnableInClassList("environment", text == "Environment");
+            _bannerIn.Show();
         }
 
         public void Alert(string text, float seconds)
         {
             _alert.text = text;
-            _alertLeft = seconds;
-            Ui.Show(_alert, true);
+            _alertIn.Show();
+            _alertIn.Hide(seconds);
         }
+
+        /// <summary>The player has been hit: the HP row jumps.</summary>
+        public void JoltHp() => _hpJolt = 1f;
 
         public void Toast(string text)
         {
@@ -405,10 +542,26 @@ namespace LabEscape.Client
             _typed += dt * 60f;
             _intercom.text = text.Substring(0, Mathf.Min(text.Length, Mathf.CeilToInt(_typed)));
 
-            if (_alertLeft > 0f)
+            _now += dt;
+            _bannerIn.Tick(dt);
+            _alertIn.Tick(dt);
+            _openerIn.Tick(dt);
+            _endIn.Tick(dt);
+            if (_hpJolt > 0f)
             {
-                _alertLeft -= dt;
-                if (_alertLeft <= 0f) Ui.Show(_alert, false);
+                _hpJolt = Mathf.Max(0f, _hpJolt - dt * 3.2f);
+                var j = _hpJolt * _hpJolt;
+                _hpCells.style.translate = new Translate(Mathf.Sin(_now * 67f) * 7f * j, Mathf.Cos(_now * 49f) * 4f * j);
+                _hpText.style.scale = new Scale(new Vector3(1f + 0.5f * j, 1f + 0.5f * j, 1f));
+            }
+            // The vignette sits over the board and nothing else.
+            var b = _boardArea.worldBound;
+            if (b.width > 1f)
+            {
+                _vignette.style.left = b.x;
+                _vignette.style.top = b.y;
+                _vignette.style.width = b.width;
+                _vignette.style.height = b.height;
             }
             if (_toastLeft > 0f)
             {

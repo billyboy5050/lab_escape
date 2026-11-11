@@ -24,6 +24,44 @@ namespace LabEscape.Client.Tests
             while (d.Flow!.Busy) yield return null;
         }
 
+        private static FightRecord WinningLine(FightDirector d, string preset)
+        {
+            return Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", $"winning-line-{preset}.json"))));
+        }
+
+        /// <summary>
+        /// The board shows exactly the state: every unit and object in it has a figure, on its tile, showing its HP, and nothing
+        /// else has one. Staging lets the board lag the state while a frame plays; this must hold again whenever the queue is empty.
+        /// </summary>
+        private static void AssertBoardIsLevel(FightDirector d, string when)
+        {
+            var s = d.Flow!.Live;
+            var board = d.Board!;
+            var units = s.Units.Where(u => !u.Dead && !u.Docked).ToList();
+            Assert.That(board.Units.Keys.OrderBy(k => k), Is.EqualTo(units.Select(u => u.Id).OrderBy(k => k)), when + ": the figures are the units");
+            foreach (var u in units)
+            {
+                var v = board.Units[u.Id];
+                Assert.That(v.Tile, Is.EqualTo(u.Pos), when + $": unit {u.Id} is on its tile");
+                Assert.That(v.ShownHp, Is.EqualTo(u.Hp), when + $": unit {u.Id} shows its HP");
+                Assert.That((v.Ground - Iso.Tile(u.Pos.X, u.Pos.Y)).magnitude, Is.LessThan(0.6f), when + $": unit {u.Id} stands where its tile is, give or take a shove");
+            }
+            var objects = s.Objects.Where(o => !o.Destroyed).ToList();
+            Assert.That(board.Objects.Keys.OrderBy(k => k), Is.EqualTo(objects.Select(o => o.Id).OrderBy(k => k)), when + ": the props are the objects");
+            foreach (var o in objects) Assert.That(board.Objects[o.Id].ShownHp, Is.EqualTo(o.Hp), when + $": object {o.Id} shows its HP");
+        }
+
+        /// <summary>After a jump (a skip or an undo) nothing is still on its way: every prop is on its tile and can be seen.</summary>
+        private static void AssertPropsHaveArrived(FightDirector d, string when)
+        {
+            foreach (var o in d.Flow!.Live.Objects.Where(x => !x.Destroyed))
+            {
+                var p = d.Board!.Objects[o.Id];
+                Assert.That(p.Arrived, Is.True, when + $": {o.Kind} {o.Id} has arrived");
+                Assert.That((p.Position - Iso.Tile(o.Pos.X, o.Pos.Y)).magnitude, Is.LessThan(0.001f), when + $": {o.Kind} {o.Id} is on its tile");
+            }
+        }
+
         [UnityTest]
         [Timeout(600000)]
         public IEnumerator AWinningLinePlaysToVictory()
@@ -31,7 +69,7 @@ namespace LabEscape.Client.Tests
             yield return WaitForDirector();
             var d = FightDirector.Instance!;
             d.ScriptedPointer = true;
-            var record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-hybrid.json"))));
+            var record = WinningLine(d, "hybrid");
             d.StartFight(record.Loadout, record.Settings, "hybrid");
             d.Flow!.SetSpeed(FightSpeed.Fast);
             var n = 0;
@@ -39,6 +77,7 @@ namespace LabEscape.Client.Tests
             {
                 n++;
                 yield return WaitUntilIdle(d);
+                AssertBoardIsLevel(d, $"before command {n}");
                 d.SetPointer(SmokeRun.TileOf(cmd));
                 yield return null;
                 d.SetPointer(null);
@@ -49,6 +88,128 @@ namespace LabEscape.Client.Tests
             yield return null;
             Assert.That(d.Flow!.Live.Outcome?.Result, Is.EqualTo(FightResult.Win));
             Assert.That(d.EndScreenShown, Is.True);
+            AssertBoardIsLevel(d, "at the end");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheFirstWaveIsSeenToArrive()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            var p = d.Content!.Presets[0];
+            d.StartFight(new Loadout(p.Abilities, p.Upgrades), new FightSettings(), p.Id);
+            d.Flow!.SetSpeed(FightSpeed.Fast);
+            Assert.That(d.Flow.Busy, Is.True, "the entrance is playing");
+            Assert.That(d.Board!.Units.Keys, Is.EqualTo(new[] { 0 }), "the room opens on the player alone");
+            yield return null;
+            Assert.That(d.Board!.Units.Keys, Is.EqualTo(new[] { 0 }), "and nobody else is there while the title is up");
+            yield return WaitUntilIdle(d);
+            Assert.That(d.Board!.Units.Count, Is.GreaterThan(1));
+            AssertBoardIsLevel(d, "after the entrance");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AUnitsHpFallsWhenTheBlowLandsAndNotBefore()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            var record = WinningLine(d, "tech");
+            d.StartFight(record.Loadout, record.Settings, "tech");
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            yield return WaitUntilIdle(d);
+            // The line's second command is a Sidearm shot that wounds a guard.
+            Assert.That(d.Commit(record.Commands[0])!.Ok, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Normal);
+            Assert.That(d.Commit(record.Commands[1])!.Ok, Is.True);
+
+            var stage = d.Flow!.Stage;
+            var blow = stage.Cues.First(c => c.Kind == CueKind.Event && c.Event is DamageDealt);
+            var hurt = (DamageDealt)blow.Event;
+            var view = d.Board!.Units[hurt.Target.Id];
+            var before = view.ShownHp;
+            Assert.That(blow.At, Is.GreaterThan(0f), "the shot has to be gathered and to fly first");
+            Assert.That(d.Flow!.Live.Units.First(u => u.Id == hurt.Target.Id).Hp, Is.EqualTo(hurt.HpAfter), "the engine has already resolved it");
+            Assert.That(before, Is.EqualTo(hurt.HpAfter + hurt.HpLost), "and the board has not shown it yet");
+
+            var sawItWait = false;
+            while (ReferenceEquals(d.Flow!.Stage, stage) && d.Flow.FrameTime < blow.At)
+            {
+                Assert.That(view.ShownHp, Is.EqualTo(before), $"{d.Flow.FrameTime:0.000}s into the frame, before the blow at {blow.At:0.000}s");
+                sawItWait = true;
+                yield return null;
+            }
+            Assert.That(sawItWait, Is.True);
+            yield return WaitUntilIdle(d);
+            Assert.That(view.ShownHp, Is.EqualTo(hurt.HpAfter));
+            AssertBoardIsLevel(d, "after the shot");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator ASkipPartWayThroughLeavesTheBoardLevel()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            var record = WinningLine(d, "tech");
+            d.StartFight(record.Loadout, record.Settings, "tech");
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            yield return WaitUntilIdle(d);
+            // Up to the end of the second turn, where turrets and guards trade shots and a guard dies.
+            for (var i = 0; i < 7; i++) Assert.That(d.Commit(record.Commands[i])!.Ok, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Normal);
+            var frames = 0;
+            d.Flow.FrameShown += (state, stage) => frames++;
+            Assert.That(d.Commit(record.Commands[7])!.Ok, Is.True);
+            // Into the third frame of the turn, and a few drawn frames past its start, whatever the machine's speed.
+            while (frames < 3 && d.Flow!.Busy) yield return null;
+            for (var i = 0; i < 3 && d.Flow!.Busy; i++) yield return null;
+            Assert.That(d.Flow!.Busy, Is.True, "still in the middle of the turn's animation");
+            d.Flow.Skip();
+            yield return null;
+            Assert.That(d.Flow!.Busy, Is.False);
+            AssertBoardIsLevel(d, "after the skip");
+            AssertPropsHaveArrived(d, "after the skip");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator ASkipLeavesNoPropStillOnItsWay()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            var record = WinningLine(d, "tech");
+            d.StartFight(record.Loadout, record.Settings, "tech");
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            yield return WaitUntilIdle(d);
+
+            // The eighth command ends a turn in which a guard dies. Its corpse waits, unseen, for the body to fall.
+            for (var i = 0; i < 7; i++) Assert.That(d.Commit(record.Commands[i])!.Ok, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Normal);
+            Assert.That(d.Commit(record.Commands[7])!.Ok, Is.True);
+            while (d.Flow!.Busy && !d.Board!.Objects.Values.Any(p => p.Data.Kind == ObjectKind.Corpse && !p.Arrived)) yield return null;
+            Assert.That(d.Flow!.Busy, Is.True, "a corpse is waiting for its body while the turn is still playing");
+            d.Flow.Skip();
+            yield return null;
+            AssertBoardIsLevel(d, "after skipping a death");
+            AssertPropsHaveArrived(d, "after skipping a death");
+
+            // The fourteenth throws a mine, which is in the air for a moment.
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            for (var i = 8; i < 13; i++) Assert.That(d.Commit(record.Commands[i])!.Ok, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Normal);
+            Assert.That(d.Commit(record.Commands[13])!.Ok, Is.True);
+            while (d.Flow!.Busy && !d.Board!.Objects.Values.Any(p => p.Data.Kind == ObjectKind.Mine && !p.Arrived)) yield return null;
+            Assert.That(d.Flow!.Busy, Is.True, "the mine is in the air while its frame is still playing");
+            d.Flow.Skip();
+            yield return null;
+            AssertBoardIsLevel(d, "after skipping a throw");
+            AssertPropsHaveArrived(d, "after skipping a throw");
         }
 
         [UnityTest]

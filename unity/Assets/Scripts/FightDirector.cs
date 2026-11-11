@@ -47,6 +47,8 @@ namespace LabEscape.Client
         private PresetDef? _preset;
         private FightSettings _settings = new FightSettings();
         private Loadout? _loadout;
+        private readonly BoardClock _clock = new BoardClock();
+        private bool _finalFrame;
 
         public FightFlow? Flow { get; private set; }
 
@@ -63,6 +65,9 @@ namespace LabEscape.Client
         /// <summary>Set by a scripted run: the tile to treat as under the pointer, instead of reading the mouse.</summary>
         public bool ScriptedPointer { get; set; }
 
+        /// <summary>Set by a filmed run: every frame advances the game by exactly this long, however long it took to draw.</summary>
+        public float? FixedStep { get; set; }
+
         public bool Idle => Flow != null && Flow.Idle;
 
         public bool EndScreenShown => _hud.EndVisible;
@@ -73,6 +78,7 @@ namespace LabEscape.Client
             QualitySettings.antiAliasing = 4;
             QualitySettings.vSyncCount = 1;
             Application.targetFrameRate = -1;
+            Lighting.Reset();
             _cam = new IsoCamera();
             var go = new GameObject("HUD");
             go.transform.SetParent(transform, false);
@@ -146,10 +152,35 @@ namespace LabEscape.Client
             Flow = new FightFlow(c, loadout, settings, meta);
             _model = new ActionModel(c);
             _tags = new BoardTags(_hud.TagLayer, c, _cam);
-            _board = new BoardView(c, c.RoomFor(settings.Room), _cam, _tags, Flow.Shown);
+            var room = c.RoomFor(settings.Room);
+            _board = new BoardView(c, room, _cam, _tags, Flow.Shown);
+            _board.CuePlayed += OnCue;
+            _board.Thudded += OnThud;
             Flow.FrameShown += OnFrameShown;
+            Flow.Settled += OnSettled;
             Flow.Snapped += OnSnapped;
-            Flow.Begin();
+            _clock.Reset();
+            _finalFrame = false;
+            Open(room);
+            // A fight can start after this frame's Update has run. Frame the room now, or its first frame is drawn through a
+            // camera that has not been told where the board is.
+            _hud.SetFreeAreaOn(_cam);
+            _cam.Tick(0f);
+        }
+
+        /// <summary>
+        /// The fight's entrance: the lights strike, the room's name is set down, and the camera pulls back from the player to the
+        /// room while the first wave falls in. Space skips it like any other animation.
+        /// </summary>
+        private void Open(RoomDef room)
+        {
+            var flow = Flow!;
+            var player = flow.Shown.Units.FirstOrDefault(u => u.Id == 0);
+            var hostiles = flow.Session.StartFrames.SelectMany(f => f.Events).OfType<WaveSpawned>().FirstOrDefault()?.Units.Count ?? 0;
+            if (player != null) _cam.Open(Iso.Tile(player.Pos.X, player.Pos.Y));
+            _board!.Ambience.Strike();
+            _hud.ShowOpener(room.Name, hostiles > 0 ? $"{hostiles} hostiles inbound" : "", Feel.OpenerTitle);
+            flow.Begin(Feel.OpenerLead);
         }
 
         private void TearDownFight()
@@ -162,52 +193,91 @@ namespace LabEscape.Client
             _hover = null;
             _preview = null;
             _previewKey = "";
+            _cam.Still();
         }
 
-        private float FxScale => Flow!.Speed == FightSpeed.Fast ? 0.55f : 1f;
-
-        private void OnFrameShown(GameState s, IReadOnlyList<GameEvent> events)
+        private void OnFrameShown(GameState s, Stage stage)
         {
-            _board!.Show(s, events, Flow!.FrameSeconds(events), false);
-            _board.Fx.Play(events, s, FxScale);
-            React(events);
+            _finalFrame = stage.Has<FightEnded>();
+            _board!.Play(s, stage);
         }
+
+        private void OnSettled(GameState s) => _board!.Settle(s);
 
         private void OnSnapped(GameState s)
         {
-            _board!.Show(s, Flow!.FrameEvents, 0f, true);
+            _board!.Snap(s);
+            _board.Ambience.Steady();
+            _clock.Reset();
+            _cam.Still();
+            _hud.HideOpener();
         }
 
-        /// <summary>What a frame's events do to the board as a whole: a shake, the alarm, the red edges when the player is hurt.</summary>
-        private void React(IReadOnlyList<GameEvent> events)
+        /// <summary>
+        /// What a cue does beyond the board: the blow stops the clock for a moment, shakes and kicks the camera, and the alarm
+        /// and the red edges flash. This is where a hit gets most of its weight.
+        /// </summary>
+        private void OnCue(Cue cue)
         {
-            bool? heavy = null;
-            var alarm = false;
-            var hurt = false;
-            foreach (var e in events)
+            if (cue.Kind != CueKind.Event || Flow == null) return;
+            // At 2x the stops are half as long, like everything else.
+            var pace = 1f / Flow.TimeScale;
+            switch (cue.Event)
             {
-                switch (e)
+                case DamageDealt d when d.Target.Kind == EntityKind.Unit:
                 {
-                    case AreaEffect a when a.Kind == AreaKind.Blast || a.Kind == AreaKind.Burst:
-                    case Charged _:
-                        heavy = true;
-                        break;
-                    case HazardFired _:
-                        alarm = true;
-                        heavy ??= false;
-                        break;
-                    case WaveSpawned w when w.Wave > 1:
-                        alarm = true;
-                        _hud.Alert("Reinforcements", 1.6f);
-                        break;
-                    case DamageDealt d when d.Target.Kind == EntityKind.Unit && d.Target.Id == 0 && d.Amount > 0:
-                        hurt = true;
-                        heavy ??= false;
-                        break;
+                    var onPlayer = d.Target.Id == 0;
+                    _clock.Freeze(Feel.HitStop(d.Amount, d.Killed, onPlayer) * pace);
+                    if (d.Amount <= 0) break;
+                    var size = Mathf.Min(d.Amount, 6);
+                    _cam.Shake(Feel.HitTrauma(d.Amount, d.Killed, onPlayer));
+                    _cam.Kick(Feel.From(cue, d.Pos), Feel.KickBase + Feel.KickPerDamage * size);
+                    if (onPlayer)
+                    {
+                        _hud.Flash(false, true);
+                        _hud.JoltHp();
+                    }
+                    if (d.Killed && _finalFrame)
+                    {
+                        // The blow that ends the fight is the one to linger on.
+                        _clock.Slow(Feel.FinalSlow, Feel.FinalSlowSeconds);
+                        _cam.Punch(0.08f);
+                    }
+                    break;
                 }
+                case AreaEffect a when a.Kind == AreaKind.Blast || a.Kind == AreaKind.Burst:
+                    _clock.Freeze(Feel.BlastStop * pace);
+                    _cam.Shake(Feel.BlastTrauma);
+                    _cam.Punch(Feel.BlastPunch);
+                    break;
+                case AreaEffect a when a.Kind == AreaKind.Panel || a.Kind == AreaKind.Sweep:
+                    _cam.Shake(Feel.HazardTrauma);
+                    break;
+                case Charged c:
+                    _clock.Freeze(Feel.SlamStop * pace);
+                    _cam.Shake(Feel.SlamTrauma);
+                    _cam.Kick(Iso.Tile(c.Dir.X, c.Dir.Y) - Iso.Tile(0f, 0f), Feel.SlamKick);
+                    _cam.Punch(Feel.BlastPunch);
+                    break;
+                case HazardFired _:
+                    _hud.Flash(true, false);
+                    _board!.Ambience.SoundAlarm();
+                    break;
+                case WaveSpawned w:
+                    _board!.Ambience.SoundAlarm();
+                    if (w.Wave <= 1) break;
+                    _hud.Flash(true, false);
+                    _hud.Alert("Reinforcements", 1.6f);
+                    break;
             }
-            if (heavy.HasValue) _cam.Shake(heavy.Value);
-            _hud.Flash(alarm, hurt);
+        }
+
+        /// <summary>Something heavy landed: the floor passes it on to the camera. A light footstep does not.</summary>
+        private void OnThud(Vector3 at, float weight)
+        {
+            if (weight < 0.9f) return;
+            _cam.Shake(weight * Feel.ThudTrauma);
+            _cam.Kick(Vector3.down, Mathf.Min(Feel.ThudKickMost, weight * Feel.ThudKick));
         }
 
         // ------------------------------------------------------------------ player actions
@@ -267,7 +337,8 @@ namespace LabEscape.Client
 
         private void Update()
         {
-            var dt = Time.unscaledDeltaTime;
+            // A long hitch is not played back as one huge step, which would throw every spring across the room.
+            var real = FixedStep ?? Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             if (Flow == null)
             {
                 ReadStartKeys();
@@ -276,15 +347,17 @@ namespace LabEscape.Client
             ReadPointer();
             ReadKeys();
             if (Flow == null) return;
+            // The board runs on its own clock: a heavy blow stops it and the 2x speed doubles it. The interface keeps real time.
+            var dt = _clock.Step(real) * Flow.TimeScale;
             Flow.Tick(dt);
             var live = Flow.Live;
             _model!.Refresh(live, Flow.Idle);
             UpdatePreview();
             BuildOverlay();
             _hud.SetFreeAreaOn(_cam);
-            _board!.Tick(dt, _overlay);
-            _tags!.Tick(dt, Flow.Shown, _board, _overlay);
-            UpdateHud(dt);
+            _board!.Tick(dt, real, Flow.FrameTime, _overlay);
+            _tags!.Tick(real, Flow.Shown, _board, _overlay);
+            UpdateHud(real);
         }
 
         private void ReadStartKeys()
@@ -418,7 +491,8 @@ namespace LabEscape.Client
             var idle = flow.Idle;
 
             _hud.Tick(dt, shown);
-            _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy);
+            var me = _board!.Units.TryGetValue(0, out var view) ? view : null;
+            _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy, me?.ShownHp, me != null && me.GhostLeft > 0f ? me.GhostHp : me?.ShownHp);
             _hud.UpdateActions(c, m.Statuses, m.ModeId, !idle, m.GrappleMode);
             var hint = m.Hint(flow);
             _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents);

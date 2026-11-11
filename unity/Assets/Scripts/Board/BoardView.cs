@@ -19,120 +19,15 @@ namespace LabEscape.Client
         public bool ShowIntents = true;
     }
 
-    /// <summary>A unit's figure, and how it gets from one tile to the next.</summary>
-    public sealed class UnitView
-    {
-        private readonly List<Vector3> _path = new List<Vector3>();
-        private float _t;
-        private float _duration;
-        private float _flash;
-        private float _flinch;
-        private float _yaw = 135f;
-        private float _targetYaw = 135f;
-        private readonly float _phase;
-        private readonly float _hover;
-
-        public readonly Model Model;
-        public Pos Tile;
-
-        public UnitView(Unit u, Transform parent, bool ghost = false)
-        {
-            Model = Figures.Unit(u.Def, u.Team, parent);
-            Tile = u.Pos;
-            _phase = u.Id * 0.37f;
-            _hover = u.Flying ? 0.12f : 0f;
-            Model.Root.transform.position = Iso.Tile(u.Pos.X, u.Pos.Y);
-            Model.Root.transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
-            Model.Paint(ghost ? 0.42f : 1f);
-        }
-
-        public bool Moving => _duration > 0f;
-
-        public Vector3 Position => Model.Root.transform.position;
-
-        public void Snap(Pos tile)
-        {
-            Tile = tile;
-            _path.Clear();
-            _duration = 0f;
-            Model.Root.transform.position = Iso.Tile(tile.X, tile.Y);
-        }
-
-        /// <summary>Walks through the tiles of a move in the given time. A second move in one frame continues from the first.</summary>
-        public void Follow(Pos from, IReadOnlyList<Pos> tiles, float seconds)
-        {
-            if (seconds <= 0f || tiles.Count == 0)
-            {
-                if (tiles.Count > 0) Snap(tiles[tiles.Count - 1]);
-                return;
-            }
-            if (_path.Count == 0 || !Moving)
-            {
-                _path.Clear();
-                _path.Add(Iso.Tile(from.X, from.Y));
-                _t = 0f;
-                _duration = 0f;
-            }
-            foreach (var p in tiles) _path.Add(Iso.Tile(p.X, p.Y));
-            _duration += seconds;
-            Tile = tiles[tiles.Count - 1];
-        }
-
-        public void Face(Vector3 direction)
-        {
-            if (direction.sqrMagnitude < 0.0001f) return;
-            _targetYaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-        }
-
-        public void Flinch()
-        {
-            _flash = 1f;
-            _flinch = 1f;
-        }
-
-        public void Tick(float dt, float time)
-        {
-            var root = Model.Root.transform;
-            if (Moving)
-            {
-                _t += dt;
-                var k = Mathf.Clamp01(_t / _duration);
-                var eased = Mathf.SmoothStep(0f, 1f, k) * (_path.Count - 1);
-                var i = Mathf.Min(Mathf.FloorToInt(eased), _path.Count - 2);
-                var pos = Vector3.Lerp(_path[i], _path[i + 1], eased - i);
-                root.position = pos;
-                Face(_path[i + 1] - _path[i]);
-                if (k >= 1f)
-                {
-                    _duration = 0f;
-                    _path.Clear();
-                }
-            }
-            _yaw = Mathf.MoveTowardsAngle(_yaw, _targetYaw, dt * 720f);
-            root.rotation = Quaternion.Euler(0f, _yaw, 0f);
-            var bob = Mathf.Sin(time * 2.6f + _phase) * 0.012f;
-            var kick = _flinch > 0f ? Mathf.Sin(_flinch * Mathf.PI * 3f) * 0.05f * _flinch : 0f;
-            Model.Body.localPosition = new Vector3(0f, bob + _hover, -kick);
-            if (_flash > 0f || _flinch > 0f)
-            {
-                _flash = Mathf.Max(0f, _flash - dt * 6f);
-                _flinch = Mathf.Max(0f, _flinch - dt * 4f);
-                Model.Paint(1f, _flash * 0.8f);
-            }
-        }
-    }
-
-    /// <summary>The 3D board: draws a game state, animates the events that led to it, and answers which tile is under the pointer.</summary>
+    /// <summary>
+    /// The 3D board. It plays a frame's cues as their moments come, so a figure is hit when the shot reaches it and not when the
+    /// engine resolved it; between frames it is brought level with the game state, so nothing staged can leave it wrong. It also
+    /// answers which tile is under the pointer.
+    /// </summary>
     public sealed class BoardView
     {
         private const float FloorY = 0.02f;
         private const float StandingHeight = 0.85f;
-
-        private sealed class Leaving
-        {
-            public Model Model = null!;
-            public float Left = 0.3f;
-        }
 
         private readonly Content _c;
         private readonly RoomDef _room;
@@ -143,14 +38,28 @@ namespace LabEscape.Client
         private readonly OverlayLayer _floor;
         private readonly OverlayLayer _top;
         private readonly Dictionary<int, UnitView> _units = new Dictionary<int, UnitView>();
-        private readonly Dictionary<int, Model> _objects = new Dictionary<int, Model>();
-        private readonly List<Leaving> _leaving = new List<Leaving>();
+        private readonly Dictionary<int, PropView> _objects = new Dictionary<int, PropView>();
+        private readonly List<Remains> _remains = new List<Remains>();
         private readonly List<Model> _ghosts = new List<Model>();
         private readonly List<(int Depth, Rect Box)> _probes = new List<(int, Rect)>();
         private CommandPreview? _ghostsFor;
         private GameState _shown;
+        private Stage _stage = Stage.Empty;
+        private int _next;
 
         public readonly FxSystem Fx;
+        public readonly Ambience Ambience = new Ambience();
+
+        /// <summary>A cue has just played. The fight's director hangs the camera, the clock and the interface on it.</summary>
+        public event System.Action<Cue>? CuePlayed;
+
+        /// <summary>Something landed on the floor here, with this weight.</summary>
+        public event System.Action<Vector3, float>? Thudded;
+
+        /// <summary>The figures on the board now. A unit hit this frame is still here until its death cue plays.</summary>
+        public IReadOnlyDictionary<int, UnitView> Units => _units;
+
+        public IReadOnlyDictionary<int, PropView> Objects => _objects;
 
         public BoardView(Content c, RoomDef room, IsoCamera cam, BoardTags tags, GameState initial)
         {
@@ -163,86 +72,241 @@ namespace LabEscape.Client
             _roomView = new RoomView(room, _root);
             _floor = new OverlayLayer("Floor overlay", Mats.FloorOverlay, _root);
             _top = new OverlayLayer("Top overlay", Mats.TopOverlay, _root);
-            Fx = new FxSystem(_root, tags);
+            Fx = new FxSystem(_root, tags) { UnitAt = UnitPosition };
+            Lighting.Reset();
             _cam.Frame(_roomView.BoundsMin, _roomView.BoundsMax);
-            Show(initial, System.Array.Empty<GameEvent>(), 0f, true);
+            Level(initial, true);
         }
 
         public void Dispose()
         {
             Object.Destroy(_root.gameObject);
             _tags.Clear();
+            Lighting.Reset();
         }
 
         private static bool Visible(Unit u) => !u.Dead && !u.Docked;
 
-        /// <summary>Moves the board to a state. With `snap`, everything jumps there; otherwise units walk the paths in the events.</summary>
-        public void Show(GameState s, IReadOnlyList<GameEvent> events, float seconds, bool snap)
+        /// <summary>Starts a frame: its cues play as the frame's clock reaches them, and the board ends on its state.</summary>
+        public void Play(GameState s, Stage stage)
         {
+            FinishStage();
+            Level(_shown, false);
             _shown = s;
-            var moved = new HashSet<int>();
-            foreach (var e in events)
+            _stage = stage;
+            _next = 0;
+            // What a unit carries (statuses, ammo, armor) reads from the new state at once. Its HP waits for the blow.
+            foreach (var u in s.Units)
             {
-                switch (e)
-                {
-                    case UnitMoved m when _units.TryGetValue(m.Id, out var v) && !snap:
-                    {
-                        var perTile = Mathf.Min(seconds * 0.9f / Mathf.Max(1, m.Path.Count), 0.14f);
-                        v.Follow(m.From, m.Path, perTile * m.Path.Count);
-                        moved.Add(m.Id);
-                        break;
-                    }
-                    case DamageDealt d when d.Amount > 0 && d.Target.Kind == EntityKind.Unit && _units.TryGetValue(d.Target.Id, out var hit):
-                        hit.Flinch();
-                        break;
-                    case ProjectileFired p when p.Source.Kind == SourceKind.Unit && p.Source.TextId == null && _units.TryGetValue(p.Source.NumberId, out var shooter):
-                    {
-                        var end = p.HitPos ?? (p.Path.Count > 0 ? p.Path[p.Path.Count - 1] : p.From);
-                        shooter.Face(Iso.Tile(end.X, end.Y) - Iso.Tile(p.From.X, p.From.Y));
-                        break;
-                    }
-                }
+                if (_units.TryGetValue(u.Id, out var v)) v.Data = u;
             }
+            foreach (var o in s.Objects)
+            {
+                if (_objects.TryGetValue(o.Id, out var p)) p.Data = o;
+            }
+        }
 
-            var seenUnits = new HashSet<int>();
+        /// <summary>The queue has run out: the board ends on this state, and whatever is still falling may finish.</summary>
+        public void Settle(GameState s)
+        {
+            FinishStage();
+            _shown = s;
+            Level(s, false);
+        }
+
+        /// <summary>Jumps to a state with no animation: an undo, or a skip.</summary>
+        public void Snap(GameState s)
+        {
+            _stage = Stage.Empty;
+            _next = 0;
+            _shown = s;
+            Fx.Clear();
+            Level(s, true);
+        }
+
+        /// <summary>Plays any cue of the frame that has not had its moment yet: late, but never lost.</summary>
+        private void FinishStage()
+        {
+            while (_next < _stage.Cues.Count) Dispatch(_stage.Cues[_next++]);
+            _stage = Stage.Empty;
+            _next = 0;
+        }
+
+        private UnitView AddUnit(Unit u)
+        {
+            var v = new UnitView(_c, u, _root);
+            _units[u.Id] = v;
+            return v;
+        }
+
+        /// <summary>
+        /// Brings the board level with a state: every unit and object in it is on the board, on its tile and showing its HP, and
+        /// nothing else is. Cues do this work as a frame plays; this is what guarantees it. With `hard`, motion stops too.
+        /// </summary>
+        private void Level(GameState s, bool hard)
+        {
+            var seen = new HashSet<int>();
             foreach (var u in s.Units.Where(Visible))
             {
-                seenUnits.Add(u.Id);
-                if (!_units.TryGetValue(u.Id, out var view))
+                seen.Add(u.Id);
+                if (!_units.TryGetValue(u.Id, out var v)) v = AddUnit(u);
+                v.Data = u;
+                if (hard)
                 {
-                    _units[u.Id] = new UnitView(u, _root);
+                    v.Snap(u.Pos);
+                    v.ShownHp = v.GhostHp = u.Hp;
+                    v.GhostLeft = 0f;
                 }
-                else if (!moved.Contains(u.Id) && (snap || !view.Moving) && view.Tile != u.Pos)
+                else
                 {
-                    view.Snap(u.Pos);
-                }
-                else if (snap)
-                {
-                    view.Snap(u.Pos);
+                    if (v.ShownHp != u.Hp) v.SetHp(u.Hp);
+                    if (!v.Moving && v.Tile != u.Pos) v.Snap(u.Pos);
                 }
             }
-            foreach (var id in _units.Keys.Where(id => !seenUnits.Contains(id)).ToList())
+            foreach (var id in _units.Keys.Where(id => !seen.Contains(id)).ToList())
             {
-                _leaving.Add(new Leaving { Model = _units[id].Model });
+                _remains.Add(_units[id].Leave());
                 _units.Remove(id);
             }
 
-            var seenObjects = new HashSet<int>();
+            seen.Clear();
             foreach (var o in s.Objects.Where(x => !x.Destroyed))
             {
-                seenObjects.Add(o.Id);
-                if (!_objects.TryGetValue(o.Id, out var model))
+                seen.Add(o.Id);
+                if (!_objects.TryGetValue(o.Id, out var p))
                 {
-                    model = Figures.Object(o, _root);
-                    model.Paint(1f);
-                    _objects[o.Id] = model;
+                    p = new PropView(o, _root);
+                    _objects[o.Id] = p;
                 }
-                model.Root.transform.position = Iso.Tile(o.Pos.X, o.Pos.Y);
+                p.Data = o;
+                p.ShownHp = o.Hp;
+                if (hard) p.Snap();
             }
-            foreach (var id in _objects.Keys.Where(id => !seenObjects.Contains(id)).ToList())
+            foreach (var id in _objects.Keys.Where(id => !seen.Contains(id)).ToList())
             {
-                _leaving.Add(new Leaving { Model = _objects[id] });
+                _remains.Add(_objects[id].Leave(RemovalReason.Decayed));
                 _objects.Remove(id);
+            }
+
+            if (!hard) return;
+            foreach (var r in _remains) r.Destroy();
+            _remains.Clear();
+        }
+
+        private static Vector3 Between(Pos from, Pos to) => Feel.Flat(Iso.Tile(to.X, to.Y) - Iso.Tile(from.X, from.Y));
+
+        private void Dispatch(Cue cue)
+        {
+            switch (cue.Kind)
+            {
+                case CueKind.Windup:
+                    if (_units.TryGetValue(cue.Actor, out var gathering))
+                    {
+                        var charge = cue.Event is Charged || (cue.Event is UnitMoved move && move.Mode == MoveMode.Charge);
+                        gathering.Windup(Between(gathering.Tile, cue.Toward), charge);
+                    }
+                    break;
+                case CueKind.Strike:
+                    if (_units.TryGetValue(cue.Actor, out var striking)) striking.Strike(Between(striking.Tile, cue.Toward), cue.Duration);
+                    break;
+                default:
+                    Present(cue);
+                    break;
+            }
+            Fx.Play(cue, _shown);
+            CuePlayed?.Invoke(cue);
+        }
+
+        /// <summary>Shows one event on the figures.</summary>
+        private void Present(Cue cue)
+        {
+            switch (cue.Event)
+            {
+                case UnitMoved e:
+                    if (_units.TryGetValue(e.Id, out var mover)) mover.Follow(e.From, e.Path, cue.Duration, e.Mode);
+                    break;
+                case UnitSpawned e:
+                {
+                    if (!Visible(e.Unit) || _units.ContainsKey(e.Unit.Id)) break;
+                    var v = AddUnit(e.Unit);
+                    if (e.Cause.StartsWith("wave", System.StringComparison.Ordinal)) v.DropIn(cue.Duration);
+                    else v.PopIn();
+                    if (cue.Actor >= 0 && _units.TryGetValue(cue.Actor, out var caster)) caster.Release(Between(caster.Tile, e.Unit.Pos), 0.4f);
+                    break;
+                }
+                case ProjectileFired e:
+                    if (cue.Actor >= 0 && _units.TryGetValue(cue.Actor, out var shooter)) shooter.Release(Between(e.From, Shots.End(e)), Shots.Style(e) == ShotStyle.Bolt ? 1f : 0.55f);
+                    break;
+                case AreaEffect e:
+                    if (cue.Actor >= 0 && e.Tiles.Count > 0 && _units.TryGetValue(cue.Actor, out var source)) source.Release(Between(source.Tile, cue.Toward), 0.6f);
+                    break;
+                case DamageDealt e:
+                    if (e.Target.Kind == EntityKind.Unit)
+                    {
+                        if (!_units.TryGetValue(e.Target.Id, out var hit)) break;
+                        hit.SetHp(e.HpAfter);
+                        hit.Hit(Feel.From(cue, e.Pos), e.Amount, e.Amount <= 0 && e.Absorbed > 0);
+                    }
+                    else if (_objects.TryGetValue(e.Target.Id, out var struck))
+                    {
+                        struck.ShownHp = e.HpAfter;
+                        struck.Hit();
+                    }
+                    break;
+                case Healed e:
+                    if (_units.TryGetValue(e.Target, out var healed))
+                    {
+                        healed.SetHp(e.HpAfter);
+                        healed.Pulse();
+                    }
+                    if (cue.Actor >= 0 && cue.Actor != e.Target && _units.TryGetValue(cue.Actor, out var healer) && healed != null) healer.Release(Between(healer.Tile, healed.Tile), 0.35f);
+                    break;
+                case UnitDied e:
+                    if (!_units.TryGetValue(e.Id, out var dead)) break;
+                    _units.Remove(e.Id);
+                    _remains.Add(dead.Die(Feel.From(cue, e.Pos), e.Id * 13 + cue.Index));
+                    break;
+                case ObjectPlaced e:
+                {
+                    if (_objects.ContainsKey(e.Object.Id)) break;
+                    var p = new PropView(e.Object, _root);
+                    _objects[e.Object.Id] = p;
+                    if (e.Object.Kind == ObjectKind.Corpse) p.Appear(Feel.BodyRest + 0.3f);
+                    else if (e.Object.Kind == ObjectKind.Shield) p.Rise();
+                    else if (cue.HasOrigin) p.Toss(Iso.Tile(cue.OriginX, cue.OriginY), cue.Duration);
+                    else p.Pop();
+                    if (cue.Actor >= 0 && _units.TryGetValue(cue.Actor, out var thrower)) thrower.Release(Between(thrower.Tile, e.Object.Pos), 0.4f);
+                    break;
+                }
+                case ObjectDestroyed e:
+                    if (!_objects.TryGetValue(e.Id, out var broken)) break;
+                    _objects.Remove(e.Id);
+                    _remains.Add(broken.Break(Feel.From(cue, e.Pos), e.Id * 17 + cue.Index));
+                    break;
+                case ObjectRemoved e:
+                    if (!_objects.TryGetValue(e.Id, out var gone)) break;
+                    _objects.Remove(e.Id);
+                    _remains.Add(gone.Leave(e.Reason));
+                    break;
+                case ObjectTriggered e:
+                    if (_objects.TryGetValue(e.Id, out var mine)) mine.Arm(cue.Duration);
+                    break;
+                case Charged e:
+                    // A charge that had no room to run is a slam on the spot.
+                    if (e.From == e.To && _units.TryGetValue(e.Id, out var charger)) charger.Strike(Between(e.To, cue.Toward), 0.07f);
+                    break;
+                case DroneDocked e:
+                    if (!_units.TryGetValue(e.Id, out var docking)) break;
+                    _units.Remove(e.Id);
+                    _remains.Add(docking.Leave());
+                    break;
+                case DroneRedeployed e:
+                {
+                    var u = _shown.Units.FirstOrDefault(x => x.Id == e.Id);
+                    if (u == null || !Visible(u) || _units.ContainsKey(e.Id)) break;
+                    AddUnit(u).PopIn();
+                    break;
+                }
             }
         }
 
@@ -280,20 +344,47 @@ namespace LabEscape.Client
             return _room.Board.InBounds(tile) && _room.Board.TerrainId(tile) != "void" ? tile : (Pos?)null;
         }
 
-        public void Tick(float dt, BoardOverlay o)
+        private void Landed(Vector3 at, float weight)
         {
+            Fx.Dust(at, weight);
+            Thudded?.Invoke(at, weight);
+        }
+
+        /// <summary>
+        /// One frame of the board. `dt` is the board's clock, which a heavy blow stops and the 2x speed doubles; `real` is real
+        /// time, for the camera and the interface; `frameTime` is how far into its frame the fight is.
+        /// </summary>
+        public void Tick(float dt, float real, float frameTime, BoardOverlay o)
+        {
+            while (_next < _stage.Cues.Count && _stage.Cues[_next].At <= frameTime) Dispatch(_stage.Cues[_next++]);
+
             var time = Time.unscaledTime;
-            _cam.Tick();
-            foreach (var v in _units.Values) v.Tick(dt, time);
-            for (var i = _leaving.Count - 1; i >= 0; i--)
+            _cam.Tick(real);
+            Ambience.Tick(real);
+            foreach (var v in _units.Values)
             {
-                var l = _leaving[i];
-                l.Left -= dt;
-                l.Model.Paint(Mathf.Clamp01(l.Left / 0.3f));
-                l.Model.Root.transform.position += Vector3.down * (dt * 0.5f);
-                if (l.Left > 0f) continue;
-                l.Model.Destroy();
-                _leaving.RemoveAt(i);
+                v.Tick(dt, real, time);
+                if (v.Thud <= 0f) continue;
+                Landed(v.Ground, v.Thud);
+                v.Thud = 0f;
+            }
+            foreach (var p in _objects.Values)
+            {
+                p.Tick(dt);
+                if (p.Thud <= 0f) continue;
+                Landed(p.Position, p.Thud);
+                p.Thud = 0f;
+            }
+            for (var i = _remains.Count - 1; i >= 0; i--)
+            {
+                var r = _remains[i];
+                r.Tick(dt);
+                if (r.Thud > 0f)
+                {
+                    Landed(r.Position, r.Thud);
+                    r.Thud = 0f;
+                }
+                if (r.Done) _remains.RemoveAt(i);
             }
 
             _probes.Clear();
@@ -306,7 +397,7 @@ namespace LabEscape.Client
                 _probes.Add((x.Pos.X + x.Pos.Y, _cam.ScreenBox(Iso.Tile(x.Pos.X, x.Pos.Y), 0.28f, IsFlat(x) ? 0.1f : 0.6f)));
             }
             if (o.Hover.HasValue) _probes.Add((o.Hover.Value.X + o.Hover.Value.Y, _cam.ScreenBox(Iso.Tile(o.Hover.Value.X, o.Hover.Value.Y), 0.32f, 0.1f)));
-            _roomView.TickFade(_cam, _probes, dt);
+            _roomView.TickFade(_cam, _probes, real);
 
             SyncGhosts(o.Preview);
             DrawOverlays(o);
@@ -324,7 +415,7 @@ namespace LabEscape.Client
             {
                 var u = pv.State?.Units.FirstOrDefault(x => x.Id == m.Id) ?? _shown.Units.FirstOrDefault(x => x.Id == m.Id);
                 if (u == null) continue;
-                var view = new UnitView(u, _root, ghost: true);
+                var view = new UnitView(_c, u, _root, ghost: true);
                 view.Snap(m.To);
                 _ghosts.Add(view.Model);
             }
@@ -338,8 +429,20 @@ namespace LabEscape.Client
             }
             foreach (var u in pv.Spawned)
             {
-                _ghosts.Add(new UnitView(u, _root, ghost: true).Model);
+                _ghosts.Add(new UnitView(_c, u, _root, ghost: true).Model);
             }
+        }
+
+        /// <summary>A soft dark patch under a figure. It shrinks and fades as the figure rises, so a falling unit's landing is seen coming.</summary>
+        private void Shadow(UnitView v)
+        {
+            var size = v.Data.Def == "warden" ? 1.2f : Figures.IsSmall(v.Data.Def) ? 0.7f : 1f;
+            var near = 1f - Mathf.Clamp01(v.Height / Feel.DropHeight);
+            var at = v.Ground;
+            at.y = FloorY;
+            Color32 inner = new Color(0f, 0f, 0f, 0.8f * Mathf.Lerp(0.35f, 1f, near));
+            Color32 outer = new Color(0f, 0f, 0f, 0f);
+            _floor.B.Disc(at, 0.58f * size * Mathf.Lerp(0.5f, 1f, near), Vector3.right, Vector3.forward, inner, outer, 20);
         }
 
         private static Color HighlightColour(HighlightKind k)
@@ -470,6 +573,7 @@ namespace LabEscape.Client
         {
             _floor.Begin();
             _top.Begin();
+            foreach (var v in _units.Values) Shadow(v);
             foreach (var (tiles, kind) in o.Highlights)
             {
                 var col = HighlightColour(kind);
