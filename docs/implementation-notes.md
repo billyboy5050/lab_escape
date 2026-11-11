@@ -127,6 +127,7 @@ The owner asked on 2026-11-10 for animation with weight behind it. Until then ev
 
 - Every length is in beats, and one beat is `rules.ui.secondsPerActor`, so content keeps its single knob for pace. The lengths themselves are constants at the top of `Staging.cs`.
 - A blow from the next tile with nothing in flight is staged as a melee strike. A unit's death is staged at the blow that killed it, wherever its event sits in the list. A blast reaches farther tiles a moment later. A wave falls in one unit after another.
+- A shot that a Reflective Shield sends back keeps the source of the shot it returns, but it leaves the shield. It is staged with no actor, so the unit that fired the original neither winds up nor recoils a second time.
 - A status's damage is told apart before any of that. The engine gives a tick the source of whoever applied the status, who may be standing next to the unit by now, with the status's own name as what did it. Without the check, a hatchling beside a guard it had poisoned would be shown biting it again each round.
 - A frame holds the queue for as long as its stage needs. A frame with nothing to show passes at once, where it used to hold for a tenth of a second: 31 to 46 frames of each winning line are like that.
 - Measured over the three winning lines, a fight's animation takes 47.7 s where it took 52.6 s (Tech), 49.5 s where it took 47.5 s (Hybrid) and 58.0 s where it took 52.3 s (Alien), before the stops below. The fight is no slower; the time moved from waiting to blows.

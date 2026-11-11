@@ -363,7 +363,10 @@ namespace LabEscape.Client
 
                     case ProjectileFired e:
                     {
-                        var shooter = UnitOf(e.Source);
+                        // A shot sent back by a Reflective Shield keeps the source of the shot it returns, but it leaves the
+                        // shield, not the unit that fired it. That unit neither gathers nor recoils a second time; the shot
+                        // simply starts from the shield when the first one has arrived there.
+                        var shooter = e.Reflected == true ? -1 : UnitOf(e.Source);
                         var end = Shots.End(e);
                         Gather(i, shooter, end, Windup);
                         var style = Shots.Style(e);

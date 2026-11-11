@@ -161,6 +161,32 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void AReflectedShotLeavesTheShieldAndTheShooterDoesNotFireTwice()
+        {
+            var s = Fight();
+            var guard = s.Units.First(u => u.Team == Team.Enemy);
+            var shield = new Pos(guard.Pos.X + 2, guard.Pos.Y);
+            // The engine lists the shot that meets the shield, then the one the shield sends back along the same line, which
+            // keeps the first shot's source but starts at the shield.
+            var out1 = new ProjectileFired { Source = By(guard, "shot"), From = guard.Pos, Path = new List<Pos> { new Pos(guard.Pos.X + 1, guard.Pos.Y), shield }, Hit = EntityRef.Object(5), HitPos = shield, Reflected = false };
+            var back = new ProjectileFired { Source = By(guard, "shot"), From = shield, Path = new List<Pos> { new Pos(guard.Pos.X + 1, guard.Pos.Y), guard.Pos }, Hit = EntityRef.Unit(guard.Id), HitPos = guard.Pos, Reflected = true };
+            var hurt = Hurt(guard, guard, 2);
+            var stage = Staging.Plan(C, s, new GameEvent[] { out1, back, hurt });
+
+            Assert.That(stage.Cues.Count(c => c.Kind == CueKind.Windup), Is.EqualTo(1), "the guard gathers once, for the shot it fires");
+            var first = CueOf(stage, out1);
+            var returned = CueOf(stage, back);
+            Assert.That(first.Actor, Is.EqualTo(guard.Id));
+            Assert.That(returned.Actor, Is.EqualTo(-1), "nothing recoils when the shot comes back");
+            Assert.That(returned.At, Is.GreaterThanOrEqualTo(first.At + first.Duration - Slack), "it leaves the shield after the first has reached it");
+            Assert.That(returned.Duration, Is.GreaterThan(0f));
+            var landed = CueOf(stage, hurt);
+            Assert.That(landed.At, Is.EqualTo(returned.At + returned.Duration).Within(Slack));
+            Assert.That(landed.HasOrigin, Is.True);
+            Assert.That(new Pos((int)landed.OriginX, (int)landed.OriginY), Is.EqualTo(shield), "the blow comes from the shield");
+        }
+
+        [Test]
         public void AShotAcrossTheRoomFliesLongerThanOneNextDoor()
         {
             var s = Fight();
