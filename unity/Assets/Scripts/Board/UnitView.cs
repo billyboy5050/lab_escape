@@ -99,6 +99,9 @@ namespace LabEscape.Client
             _ground = Iso.Tile(tile.X, tile.Y);
             _height = _hop = 0f;
             _lungeT = -1f;
+            _flash = 0f;
+            Jolt = 0f;
+            Thud = 0f;
             _shove.Rest();
             _lean.Rest();
             _squash.Rest();

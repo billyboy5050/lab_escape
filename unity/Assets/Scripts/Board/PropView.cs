@@ -41,6 +41,20 @@ namespace LabEscape.Client
         /// <summary>False while a corpse waits for its body to fall, so its tag waits too.</summary>
         public bool Arrived => _appearIn <= 0f && _toss < 0f;
 
+        /// <summary>Puts the prop on its tile as it will be once it has arrived: whatever was bringing it there is over.</summary>
+        public void Snap()
+        {
+            _toss = -1f;
+            _appearIn = 0f;
+            _fade = 1f;
+            _arm = -1f;
+            _flash = 0f;
+            Thud = 0f;
+            _squash.Rest();
+            _grow.Rest(1f);
+            Compose();
+        }
+
         /// <summary>Thrown from a hand: it arcs to its tile and lands.</summary>
         public void Toss(Vector3 from, float seconds)
         {

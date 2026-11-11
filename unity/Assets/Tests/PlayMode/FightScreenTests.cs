@@ -51,6 +51,17 @@ namespace LabEscape.Client.Tests
             foreach (var o in objects) Assert.That(board.Objects[o.Id].ShownHp, Is.EqualTo(o.Hp), when + $": object {o.Id} shows its HP");
         }
 
+        /// <summary>After a jump (a skip or an undo) nothing is still on its way: every prop is on its tile and can be seen.</summary>
+        private static void AssertPropsHaveArrived(FightDirector d, string when)
+        {
+            foreach (var o in d.Flow!.Live.Objects.Where(x => !x.Destroyed))
+            {
+                var p = d.Board!.Objects[o.Id];
+                Assert.That(p.Arrived, Is.True, when + $": {o.Kind} {o.Id} has arrived");
+                Assert.That((p.Position - Iso.Tile(o.Pos.X, o.Pos.Y)).magnitude, Is.LessThan(0.001f), when + $": {o.Kind} {o.Id} is on its tile");
+            }
+        }
+
         [UnityTest]
         [Timeout(600000)]
         public IEnumerator AWinningLinePlaysToVictory()
@@ -162,6 +173,43 @@ namespace LabEscape.Client.Tests
             yield return null;
             Assert.That(d.Flow!.Busy, Is.False);
             AssertBoardIsLevel(d, "after the skip");
+            AssertPropsHaveArrived(d, "after the skip");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator ASkipLeavesNoPropStillOnItsWay()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            var record = WinningLine(d, "tech");
+            d.StartFight(record.Loadout, record.Settings, "tech");
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            yield return WaitUntilIdle(d);
+
+            // The eighth command ends a turn in which a guard dies. Its corpse waits, unseen, for the body to fall.
+            for (var i = 0; i < 7; i++) Assert.That(d.Commit(record.Commands[i])!.Ok, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Normal);
+            Assert.That(d.Commit(record.Commands[7])!.Ok, Is.True);
+            while (d.Flow!.Busy && !d.Board!.Objects.Values.Any(p => p.Data.Kind == ObjectKind.Corpse && !p.Arrived)) yield return null;
+            Assert.That(d.Flow!.Busy, Is.True, "a corpse is waiting for its body while the turn is still playing");
+            d.Flow.Skip();
+            yield return null;
+            AssertBoardIsLevel(d, "after skipping a death");
+            AssertPropsHaveArrived(d, "after skipping a death");
+
+            // The fourteenth throws a mine, which is in the air for a moment.
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            for (var i = 8; i < 13; i++) Assert.That(d.Commit(record.Commands[i])!.Ok, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Normal);
+            Assert.That(d.Commit(record.Commands[13])!.Ok, Is.True);
+            while (d.Flow!.Busy && !d.Board!.Objects.Values.Any(p => p.Data.Kind == ObjectKind.Mine && !p.Arrived)) yield return null;
+            Assert.That(d.Flow!.Busy, Is.True, "the mine is in the air while its frame is still playing");
+            d.Flow.Skip();
+            yield return null;
+            AssertBoardIsLevel(d, "after skipping a throw");
+            AssertPropsHaveArrived(d, "after skipping a throw");
         }
 
         [UnityTest]

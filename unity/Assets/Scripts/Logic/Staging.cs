@@ -141,7 +141,7 @@ namespace LabEscape.Client
         public const float DeployStagger = 0.25f;
         public const float ArcTime = 0.15f;
         public const float ArcStep = 0.15f;
-        /// <summary>Between one status tick and the next, so poison counts down a line of units.</summary>
+        /// <summary>From one status tick to the next, where a blow would wait HitGap.</summary>
         public const float TickStep = 0.22f;
         /// <summary>A hazard between waking and firing.</summary>
         public const float HazardBark = 0.4f;
@@ -155,6 +155,19 @@ namespace LabEscape.Client
         public const float Ripple = 0.07f;
         /// <summary>After the blow that ends the fight, before the result is shown.</summary>
         public const float FinalHold = 1.6f;
+
+        /// <summary>
+        /// True for the damage a status does as it counts down. The engine gives it the source of whoever applied the status,
+        /// with the status's own name as what did it.
+        /// </summary>
+        public static bool IsStatusTick(DamageDealt e)
+        {
+            foreach (StatusId id in Enum.GetValues(typeof(StatusId)))
+            {
+                if (e.Source.Via == Names.Of(id)) return true;
+            }
+            return false;
+        }
 
         /// <summary>A unit's step, in beats: heavier units take longer over each one.</summary>
         public static float StepFor(float heft) => Step * (0.75f + 0.25f * heft);
@@ -205,7 +218,6 @@ namespace LabEscape.Client
             private int _lastArc = -2;
             private int _lastPrime = -2;
             private int _lastPlaced = -2;
-            private int _lastTick = -2;
             private float _waveAt = -1f;
 
             public Planner(Content c, GameState before, IReadOnlyList<GameEvent> events)
@@ -614,7 +626,19 @@ namespace LabEscape.Client
                 float ox, oy;
                 var by = UnitOf(e.Source);
                 var self = e.Target.Kind == EntityKind.Unit && e.Target.Id == by;
-                if (_carrier != Carrier.None)
+                var tick = IsStatusTick(e);
+                if (tick)
+                {
+                    // A status counting down. Its source is whoever applied it, perhaps rounds ago and perhaps standing next
+                    // to it now, so it must be told apart before anything below takes it for a blow. It belongs to nothing in
+                    // flight either: a burst set off by the unit before it in the line did not reach this one.
+                    Start();
+                    _carrier = Carrier.None;
+                    at = _t;
+                    hasOrigin = false;
+                    ox = oy = 0f;
+                }
+                else if (_carrier != Carrier.None)
                 {
                     at = Landing(e.Pos, out hasOrigin, out ox, out oy);
                 }
@@ -635,21 +659,20 @@ namespace LabEscape.Client
                 }
                 else
                 {
-                    // Nothing carried it: a status counting down. A run of them ticks along instead of landing as one.
-                    if (_lastTick == i - 1) _t += B(TickStep);
-                    else Start();
-                    _lastTick = i;
+                    // Nothing carried it and nobody is beside it: it simply happens.
+                    Start();
                     at = _t;
                     hasOrigin = false;
                     ox = oy = 0f;
                 }
                 var cue = Show(i, at);
-                cue.Actor = by;
+                cue.Actor = tick ? -1 : by;
                 cue.HasOrigin = hasOrigin && !(Math.Abs(ox - e.Pos.X) < 0.01f && Math.Abs(oy - e.Pos.Y) < 0.01f);
                 cue.OriginX = ox;
                 cue.OriginY = oy;
                 if (e.Killed) _kills[e.Target] = cue;
-                Settle(at + B(e.Killed ? KillGap : HitGap));
+                // Ticks follow each other faster than blows do, so poison counts down a line of units.
+                Settle(at + B(e.Killed ? KillGap : tick ? TickStep : HitGap));
             }
 
             private static float Clamp(float v, float lo, float hi) => v < lo ? lo : v > hi ? hi : v;

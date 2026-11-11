@@ -190,19 +190,65 @@ namespace LabEscape.Client.Tests
             Assert.That(CueOf(stage, bite).At, Is.EqualTo(strike.At + strike.Duration).Within(Slack), "the blow lands at the end of the lunge");
         }
 
+        private static DamageDealt Tick(Unit victim, SourceRef appliedBy, string status, bool killed = false) => new DamageDealt
+        {
+            Target = EntityRef.Unit(victim.Id), TargetDef = victim.Def, TargetSide = victim.Team, Pos = victim.Pos, Source = appliedBy.WithVia(status), Amount = 1, HpLost = 1, HpAfter = killed ? 0 : victim.Hp - 1, Killed = killed,
+        };
+
         [Test]
         public void StatusDamageHasNoStrikeAndTicksDownALine()
         {
             var s = Fight();
             var guards = s.Units.Where(u => u.Team == Team.Enemy).Take(2).ToList();
-            var poison = new SourceRef(SourceSide.Player, SourceCategory.Player, SourceKind.Unit, 0, "player", "poison");
-            DamageDealt Tick(Unit u) => new DamageDealt { Target = EntityRef.Unit(u.Id), TargetDef = u.Def, TargetSide = u.Team, Pos = u.Pos, Source = poison, Amount = 1, HpLost = 1, HpAfter = u.Hp - 1 };
-            var first = Tick(guards[0]);
-            var second = Tick(guards[1]);
-            var stage = Staging.Plan(C, s, new GameEvent[] { first, second });
-            Assert.That(stage.Cues.Any(c => c.Kind != CueKind.Event), Is.False, "the player is nowhere near: nobody lunges");
-            Assert.That(CueOf(stage, second).At, Is.GreaterThan(CueOf(stage, first).At));
+            var player = s.Units.First(u => u.Id == 0);
+            var first = Tick(guards[0], By(player, "spore_pod"), "poison");
+            var second = Tick(guards[1], By(player, "spore_pod"), "poison");
+            // The engine puts the countdown's own events between one unit's tick and the next.
+            var stage = Staging.Plan(C, s, new GameEvent[] { first, new StatusTick { Target = guards[0].Id, Status = StatusId.Poison, Remaining = 1 }, second });
+            Assert.That(stage.Cues.Any(c => c.Kind != CueKind.Event), Is.False, "nobody lunges");
+            Assert.That(CueOf(stage, second).At, Is.EqualTo(CueOf(stage, first).At + Staging.TickStep * Beat).Within(Slack), "ticks follow each other faster than blows");
             Assert.That(CueOf(stage, first).HasOrigin, Is.False);
+        }
+
+        [Test]
+        public void AStatusTickBesideWhoeverAppliedItIsNotAStrike()
+        {
+            // A tick carries the source of whoever applied the status. A hatchling that poisoned a guard and still stands
+            // next to it has not bitten it again, and the player beside a parasitised guard has not hit it.
+            var s = Fight().Clone();
+            var biter = new Unit { Id = 90, Def = "hatchling", Team = Team.Player, Kind = UnitKind.Minion, Pos = new Pos(4, 4), Hp = 2, MaxHp = 2 };
+            var prey = new Unit { Id = 91, Def = "guard", Team = Team.Enemy, Kind = UnitKind.Enemy, Pos = new Pos(5, 4), Hp = 6, MaxHp = 6 };
+            s.Units.Add(biter);
+            s.Units.Add(prey);
+            foreach (var status in new[] { StatusId.Poison, StatusId.Parasite })
+            {
+                var tick = Tick(prey, By(biter, "bite"), Names.Of(status));
+                Assert.That(Staging.IsStatusTick(tick), Is.True);
+                var stage = Staging.Plan(C, s, new GameEvent[] { tick });
+                Assert.That(stage.Cues.Any(c => c.Kind != CueKind.Event), Is.False, $"{status}: no wind-up and no strike");
+                Assert.That(CueOf(stage, tick).HasOrigin, Is.False, $"{status}: nothing knocks the unit anywhere");
+                Assert.That(CueOf(stage, tick).Actor, Is.EqualTo(-1));
+            }
+            // The same hatchling's bite is still a strike.
+            var bite = Hurt(biter, prey, 1, via: "bite");
+            Assert.That(Staging.IsStatusTick(bite), Is.False);
+            Assert.That(Staging.Plan(C, s, new GameEvent[] { bite }).Cues.Any(c => c.Kind == CueKind.Strike), Is.True);
+        }
+
+        [Test]
+        public void AStatusTickIsNotCarriedByWhatHappenedToTheUnitBeforeIt()
+        {
+            // One unit's tick kills it and its death sets off a burst; the next unit's tick is no part of that burst.
+            var s = Fight();
+            var guards = s.Units.Where(u => u.Team == Team.Enemy).Take(2).ToList();
+            var player = s.Units.First(u => u.Id == 0);
+            var fatal = Tick(guards[0], By(player, "spore_pod"), "poison", killed: true);
+            var died = new UnitDied { Id = guards[0].Id, Def = guards[0].Def, Team = Team.Enemy, Kind = UnitKind.Enemy, Pos = guards[0].Pos };
+            var burst = new AreaEffect { Kind = AreaKind.Burst, Tiles = new List<Pos> { guards[0].Pos }, Source = new SourceRef(SourceSide.Player, SourceCategory.Player, SourceKind.Object, 3, "corpse", "burst") };
+            var next = Tick(guards[1], By(player, "spore_pod"), "poison");
+            var stage = Staging.Plan(C, s, new GameEvent[] { fatal, died, burst, next });
+            Assert.That(CueOf(stage, next).HasOrigin, Is.False, "the burst did not reach it, so it is not thrown from it");
+            Assert.That(CueOf(stage, next).At, Is.GreaterThanOrEqualTo(CueOf(stage, burst).At + Staging.AreaGap * Beat - Slack), "and it ticks after the burst has been seen");
         }
 
         [Test]

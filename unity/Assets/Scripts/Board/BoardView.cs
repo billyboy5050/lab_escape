@@ -180,6 +180,7 @@ namespace LabEscape.Client
                 }
                 p.Data = o;
                 p.ShownHp = o.Hp;
+                if (hard) p.Snap();
             }
             foreach (var id in _objects.Keys.Where(id => !seen.Contains(id)).ToList())
             {
