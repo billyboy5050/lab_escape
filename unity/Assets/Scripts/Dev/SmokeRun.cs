@@ -161,6 +161,8 @@ namespace LabEscape.Client
                 }
             }
             while (flow.Busy || !_d.EndScreenShown) yield return null;
+            // The end card is set down over a few frames; the shot waits for it to land.
+            yield return new WaitForSecondsRealtime(0.5f);
             yield return Shot("zz-end");
             var outcome = flow.Live.Outcome;
             File.WriteAllText(Path.Combine(_out, "result.txt"), $"{outcome?.Result} round {outcome?.Round}: {outcome?.Cause}\ncommands {_record.Commands.Count}\nhash {_d.Content!.Hash}\n");
