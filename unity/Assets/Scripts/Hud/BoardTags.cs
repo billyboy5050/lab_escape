@@ -393,14 +393,14 @@ namespace LabEscape.Client
             if (d == null) return;
             if (d.Spawns)
             {
-                foreach (var m in board.Spawns) AddDebug(Ui.Text($"W{m.Wave}", "debug-mark spawn mono"), Iso.Floor(m.Tile.X + 0.2f, m.Tile.Y + 0.8f, 0.02f));
+                foreach (var m in board.Spawns) AddDebug(Ui.Text($"W{m.Wave}", "debug-mark debug-spawn mono"), Iso.Floor(m.Tile.X + 0.2f, m.Tile.Y + 0.8f, 0.02f));
             }
             if (d.Hazards)
             {
                 foreach (var h in board.Hazards)
                 {
                     var mark = DebugReport.HazardMark(h);
-                    foreach (var t in h.Tiles) AddDebug(Ui.Text(mark, h.State == HazardState.Primed ? "debug-mark hazard primed mono" : "debug-mark hazard mono"), Iso.Floor(t.X + 0.3f, t.Y + 0.3f, 0.02f));
+                    foreach (var t in h.Tiles) AddDebug(Ui.Text(mark, h.State == HazardState.Primed ? "debug-mark debug-hazard primed mono" : "debug-mark debug-hazard mono"), Iso.Floor(t.X + 0.3f, t.Y + 0.3f, 0.02f));
                 }
             }
             if (scored == null) return;
@@ -408,7 +408,7 @@ namespace LabEscape.Client
             {
                 foreach (var x in unit.Options)
                 {
-                    AddDebug(Ui.Text(x.Score.ToString(System.Globalization.CultureInfo.InvariantCulture), x.Score > 0 ? "debug-mark score mono" : "debug-mark score low mono"), Iso.Tile(x.Tile.X + x.Dir.X * 0.3f, x.Tile.Y + x.Dir.Y * 0.3f, 0.05f));
+                    AddDebug(Ui.Text(x.Score.ToString(System.Globalization.CultureInfo.InvariantCulture), x.Score > 0 ? "debug-mark debug-score mono" : "debug-mark debug-score low mono"), Iso.Tile(x.Tile.X + x.Dir.X * 0.3f, x.Tile.Y + x.Dir.Y * 0.3f, 0.05f));
                 }
             }
         }

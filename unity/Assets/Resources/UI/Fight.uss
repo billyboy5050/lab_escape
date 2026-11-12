@@ -372,11 +372,11 @@
 /* The debug overlay's marks on the board: unit IDs in a unit's row, and labels on tiles, each centred on its point. */
 .tag-chip.debug-id { color: #b58cff; border-color: #b58cff; }
 .debug-mark { position: absolute; left: -40px; width: 80px; top: -8px; height: 16px; padding: 0; -unity-text-align: middle-center; font-size: 11px; -unity-font-style: bold; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
-.debug-mark.spawn { color: #ff6b1f; }
-.debug-mark.hazard { color: var(--amber); }
-.debug-mark.hazard.primed { color: var(--danger); }
-.debug-mark.score { color: var(--danger); font-size: 12px; }
-.debug-mark.score.low { color: var(--ink-3); }
+.debug-mark.debug-spawn { color: #ff6b1f; }
+.debug-mark.debug-hazard { color: var(--amber); }
+.debug-mark.debug-hazard.primed { color: var(--danger); }
+.debug-mark.debug-score { color: var(--danger); font-size: 12px; }
+.debug-mark.debug-score.low { color: var(--ink-3); }
 .float-text { position: absolute; -unity-font-style: bold; -unity-text-outline-width: 1.5px; -unity-text-outline-color: #0b0f12; padding: 0; white-space: nowrap; }
 
 /* The web client's faces, from the system (Fonts.cs). An element with the face it asked for has the class `face`: the condensed

@@ -219,7 +219,7 @@ namespace LabEscape.Client
         public void SetDebugOpen(bool open)
         {
             _debugOpen = open;
-            _hud.SetDebugVisible(open);
+            _hud.SetDebugVisible(open, _c != null ? DebugReport.Header(_c) : "");
         }
 
         private void ToggleMark(string which)
@@ -252,7 +252,7 @@ namespace LabEscape.Client
         /// <summary>Holds a saved fight between its commands, or lets it play on. The command playing now finishes either way.</summary>
         public void SetReplayPaused(bool paused)
         {
-            if (_replay == null) return;
+            if (!Replaying) return;
             _replayPaused = paused;
             _replayStep = false;
             _replayWait = ReplayGap;

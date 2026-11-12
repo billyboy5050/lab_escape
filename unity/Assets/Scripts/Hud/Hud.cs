@@ -107,7 +107,7 @@ namespace LabEscape.Client
         private readonly ScrollView _log, _logLines, _debugText;
         private readonly VisualElement _debug, _debugReplay;
         private readonly Label _debugVersion, _debugQueued, _debugReplayAt, _debugReplayPauseText;
-        private readonly Button _debugIds, _debugSpawns, _debugHazards, _debugFlamer, _debugLog, _debugStep, _debugNext, _debugNextPhase, _debugReplayStep;
+        private readonly Button _debugIds, _debugSpawns, _debugHazards, _debugFlamer, _debugLog, _debugStep, _debugNext, _debugNextPhase, _debugReplayPause, _debugReplayStep;
         private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "", _debugSig = "";
         private int _logShown;
         private float _typed;
@@ -244,7 +244,7 @@ namespace LabEscape.Client
             _debugStep = B("debug-step", () => StepModeClicked?.Invoke());
             _debugNext = B("debug-next", () => NextClicked?.Invoke(false));
             _debugNextPhase = B("debug-next-phase", () => NextClicked?.Invoke(true));
-            B("debug-replay-pause", () => ReplayPauseClicked?.Invoke());
+            _debugReplayPause = B("debug-replay-pause", () => ReplayPauseClicked?.Invoke());
             _debugReplayStep = B("debug-replay-step", () => ReplayStepClicked?.Invoke());
         }
 
@@ -357,6 +357,10 @@ namespace LabEscape.Client
             }
             Ui.Show(_recentBox, _recent.childCount > 0);
             ShowStartMessage(null);
+            // The debug overlay has no fight to describe until the next one starts.
+            _debugText.Clear();
+            _debugSig = "";
+            Ui.Show(_debugReplay, false);
             _startTitle.text = title;
             _presets.Clear();
             var i = 1;
@@ -399,10 +403,14 @@ namespace LabEscape.Client
 
         public bool DebugVisible => !_debug.ClassListContains("hidden");
 
-        /// <summary>Shows or hides the debug overlay's column. The board area takes the room it leaves, and the camera follows.</summary>
-        public void SetDebugVisible(bool on)
+        /// <summary>
+        /// Shows or hides the debug overlay's column, headed by the engine version and content hash. The board area takes the
+        /// room it leaves, and the camera follows.
+        /// </summary>
+        public void SetDebugVisible(bool on, string header)
         {
             Ui.Show(_debug, on);
+            _debugVersion.text = header;
             _debugSig = "";
         }
 
@@ -425,6 +433,7 @@ namespace LabEscape.Client
             Ui.Show(_debugReplay, replayAt != null);
             _debugReplayAt.text = replayAt ?? "";
             _debugReplayPauseText.text = replayPaused ? "Play" : "Pause";
+            _debugReplayPause.SetEnabled(canStepReplay);
             _debugReplayStep.SetEnabled(canStepReplay);
 
             var sig = string.Join("\n", lines.Select(l => l.Style + ":" + l.Text));
