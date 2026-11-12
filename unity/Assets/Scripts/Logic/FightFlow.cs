@@ -36,6 +36,21 @@ namespace LabEscape.Client
         /// <summary>Seconds since the frame on screen arrived, on the clock Tick is given.</summary>
         public float FrameTime { get; private set; }
 
+        /// <summary>
+        /// Step mode, from the debug overlay: a frame plays out and then holds at its end while another waits behind it, until
+        /// Advance. With nothing queued behind it, the fight goes on as usual. Turning it off lets a held frame go on.
+        /// </summary>
+        public bool StepMode;
+
+        /// <summary>The log writes the debug overlay's lines too: hazards that hold, the chain rule, the AI's decisions.</summary>
+        public bool DebugLog;
+
+        /// <summary>Frames waiting behind the one on screen.</summary>
+        public int Pending => _queue.Count;
+
+        /// <summary>Step mode is holding the frame on screen at its end: Advance shows the next.</summary>
+        public bool Holding => StepMode && _waiting && _queue.Count > 0 && FrameTime >= Stage.Hold;
+
         /// <summary>A frame has reached the screen: the board moves towards its state, playing its cues as their moments come.</summary>
         public event Action<GameState, Stage>? FrameShown;
 
@@ -87,6 +102,11 @@ namespace LabEscape.Client
             FrameTime += dt;
             while (_waiting && FrameTime >= Stage.Hold)
             {
+                if (StepMode && _queue.Count > 0)
+                {
+                    FrameTime = Stage.Hold;
+                    break;
+                }
                 var over = FrameTime - Stage.Hold;
                 Pump();
                 FrameTime = _waiting ? over : 0f;
@@ -106,7 +126,7 @@ namespace LabEscape.Client
             {
                 var cue = cues[_logged++];
                 if (cue.Kind != CueKind.Event) continue;
-                var line = _fmt.Format(cue.Event, _stageState);
+                var line = _fmt.Format(cue.Event, _stageState, DebugLog);
                 if (line != null) Log.Add(line);
             }
             if (Log.Count > 600) Log.RemoveRange(0, Log.Count - 600);
@@ -117,6 +137,18 @@ namespace LabEscape.Client
             var r = Session.Apply(cmd);
             if (r.Ok) Play(r.Frames);
             return r;
+        }
+
+        /// <summary>
+        /// Step mode's next: shows the next queued frame now, whether or not the one on screen has played out (its cues still
+        /// play, late, as after any frame cut short). With `untilPhase` it goes on through the frames that start no phase, so
+        /// the frame left playing is the last before the next phase starts. With nothing queued, the fight goes on.
+        /// </summary>
+        public void Advance(bool untilPhase = false)
+        {
+            if (!_waiting) return;
+            Pump();
+            while (untilPhase && _waiting && _queue.Count > 0 && !_queue.Peek().Events.Any(e => e is PhaseStarted)) Pump();
         }
 
         public bool Undo()
