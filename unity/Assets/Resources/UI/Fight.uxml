@@ -3,8 +3,8 @@
     <ui:VisualElement name="root" class="root fill" picking-mode="Ignore">
         <ui:VisualElement name="vignette" class="vignette" picking-mode="Ignore" />
         <ui:VisualElement name="tags" class="fill" picking-mode="Ignore" />
-        <ui:VisualElement name="flash-alarm" class="fill flash alarm" picking-mode="Ignore" />
-        <ui:VisualElement name="flash-hurt" class="fill flash hurt" picking-mode="Ignore" />
+        <ui:VisualElement name="flash-alarm" class="board-overlay flash alarm" picking-mode="Ignore" />
+        <ui:VisualElement name="flash-hurt" class="board-overlay flash hurt" picking-mode="Ignore" />
 
         <ui:VisualElement class="fill layout" picking-mode="Ignore">
             <ui:VisualElement class="column-main" picking-mode="Ignore">

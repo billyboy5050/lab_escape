@@ -99,6 +99,7 @@ namespace LabEscape.Client
         private readonly VisualElement _boardArea;
         private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
         private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard;
+        private readonly VisualElement[] _overBoard;
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
         private readonly Button _undo, _endTurn, _skip, _intents, _speed0, _speed1, _speed2;
@@ -111,6 +112,7 @@ namespace LabEscape.Client
         private float _now;
         private static Texture2D? _vignetteTexture;
         private static Texture2D? _panelTexture;
+        private static Texture2D? _glowTexture;
 
         public readonly VisualElement TagLayer;
 
@@ -178,6 +180,9 @@ namespace LabEscape.Client
             _openerIn = new Entrance(_opener, 1.35f);
             _endIn = new Entrance(_endCard, 1.3f);
             _vignette.style.backgroundImage = new StyleBackground(Vignette());
+            _alarm.style.backgroundImage = new StyleBackground(EdgeGlow());
+            _hurt.style.backgroundImage = new StyleBackground(EdgeGlow());
+            _overBoard = new[] { _vignette, _alarm, _hurt };
             Fonts.ApplyAll(_root);
             // Every panel and card gets the web client's frame: its shade from top to bottom, and a tick at two corners.
             _root.Query(className: "panel").ForEach(Frame);
@@ -216,6 +221,31 @@ namespace LabEscape.Client
             t.SetPixels32(px);
             t.Apply();
             _panelTexture = t;
+            return t;
+        }
+
+        /// <summary>
+        /// White light at the edges, gone by the middle: an inset glow, tinted by Fight.uss. Its 64 pixels on each side are slices,
+        /// so the glow keeps its width on a board of any shape.
+        /// </summary>
+        private static Texture2D EdgeGlow()
+        {
+            if (_glowTexture != null) return _glowTexture;
+            const int n = 130, slice = 64;
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
+            var px = new Color32[n * n];
+            for (var y = 0; y < n; y++)
+            {
+                for (var x = 0; x < n; x++)
+                {
+                    float gx = Mathf.Pow(1f - Mathf.Clamp01(Mathf.Min(x, n - 1 - x) / (float)slice), 2.2f);
+                    float gy = Mathf.Pow(1f - Mathf.Clamp01(Mathf.Min(y, n - 1 - y) / (float)slice), 2.2f);
+                    px[y * n + x] = new Color(1f, 1f, 1f, 0.62f * (1f - (1f - gx) * (1f - gy)));
+                }
+            }
+            t.SetPixels32(px);
+            t.Apply();
+            _glowTexture = t;
             return t;
         }
 
@@ -582,14 +612,17 @@ namespace LabEscape.Client
                 _hpCells.style.translate = new Translate(Mathf.Sin(_now * 67f) * 7f * j, Mathf.Cos(_now * 49f) * 4f * j);
                 _hpText.style.scale = new Scale(new Vector3(1f + 0.5f * j, 1f + 0.5f * j, 1f));
             }
-            // The vignette sits over the board and nothing else.
+            // The vignette and the flashes sit over the board and nothing else.
             var b = _boardArea.worldBound;
             if (b.width > 1f)
             {
-                _vignette.style.left = b.x;
-                _vignette.style.top = b.y;
-                _vignette.style.width = b.width;
-                _vignette.style.height = b.height;
+                foreach (var e in _overBoard)
+                {
+                    e.style.left = b.x;
+                    e.style.top = b.y;
+                    e.style.width = b.width;
+                    e.style.height = b.height;
+                }
             }
             if (_toastLeft > 0f)
             {
