@@ -33,6 +33,7 @@ namespace LabEscape.Client
 
         private Content? _c;
         private Hud _hud = null!;
+        private SoundPlayer _sound = null!;
         private IsoCamera _cam = null!;
         private BoardTags? _tags;
         private BoardView? _board;
@@ -87,6 +88,7 @@ namespace LabEscape.Client
             doc.panelSettings = Resources.Load<PanelSettings>("UI/Panel");
             doc.visualTreeAsset = Resources.Load<VisualTreeAsset>("UI/Fight");
             _hud = new Hud(doc);
+            _sound = new SoundPlayer(transform);
             WireHud();
             try
             {
@@ -100,6 +102,15 @@ namespace LabEscape.Client
             ShowStartScreen();
             SmokeRun.AttachIfAsked(this);
         }
+
+        /// <summary>The sounds this frame's cues and clicks asked for play together, once everything has had its Update.</summary>
+        private void LateUpdate() => _sound?.Flush(Time.unscaledTime);
+
+        public void ToggleSound() => _sound.SetMuted(!_sound.Muted);
+
+        public bool Muted => _sound.Muted;
+
+        public SoundPlayer Sound => _sound;
 
         private void OnDestroy()
         {
@@ -116,6 +127,8 @@ namespace LabEscape.Client
             _hud.SkipClicked += () => Flow?.Skip();
             _hud.SpeedClicked += s => Flow?.SetSpeed(s);
             _hud.IntentsClicked += () => _showIntents = !_showIntents;
+            _hud.SoundClicked += ToggleSound;
+            _hud.ButtonClicked += () => _sound.Ask(Sfx.Ui);
             _hud.OpenLogClicked += () => SetLog(true);
             _hud.CloseLogClicked += () => SetLog(false);
             _hud.PresetClicked += StartPreset;
@@ -222,6 +235,8 @@ namespace LabEscape.Client
         /// </summary>
         private void OnCue(Cue cue)
         {
+            var sfx = SoundCues.For(cue);
+            if (sfx.HasValue) _sound.Ask(sfx.Value);
             if (cue.Kind != CueKind.Event || Flow == null) return;
             // At 2x the stops are half as long, like everything else.
             var pace = 1f / Flow.TimeScale;
@@ -279,6 +294,7 @@ namespace LabEscape.Client
         private void OnThud(Vector3 at, float weight)
         {
             if (weight < 0.9f) return;
+            _sound.Ask(Sfx.Land);
             _cam.Shake(weight * Feel.ThudTrauma);
             _cam.Kick(Vector3.down, Mathf.Min(Feel.ThudKickMost, weight * Feel.ThudKick));
         }
@@ -295,6 +311,7 @@ namespace LabEscape.Client
                 _hud.Toast($"{a.Name}: {a.Reason}");
                 return;
             }
+            _sound.Ask(Sfx.Select);
             if (id == "sprint")
             {
                 Commit(new SprintCommand());
@@ -321,7 +338,7 @@ namespace LabEscape.Client
 
         public void EndTurn()
         {
-            if (Flow != null && Flow.Idle) Commit(new EndTurnCommand());
+            if (Flow != null && Flow.Idle && Commit(new EndTurnCommand())?.Ok == true) _sound.Ask(Sfx.EndTurn);
         }
 
         public void SetPointer(Pos? tile) => _hover = tile;
@@ -369,6 +386,7 @@ namespace LabEscape.Client
         private void ReadStartKeys()
         {
             if (_c == null || !_hud.StartVisible) return;
+            if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
             for (var i = 0; i < _c.Presets.Count && i < ActionKeys.Length; i++)
             {
                 if (Input.GetKeyDown(ActionKeys[i]))
@@ -432,6 +450,7 @@ namespace LabEscape.Client
                 else _model.Clear();
                 return;
             }
+            if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
             if (Input.GetKeyDown(KeyCode.L))
             {
                 SetLog(!_hud.LogOpen);
@@ -503,14 +522,18 @@ namespace LabEscape.Client
             _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy, me?.ShownHp, me != null && me.GhostLeft > 0f ? me.GhostHp : me?.ShownHp);
             _hud.UpdateActions(c, m.Statuses, m.ModeId, !idle, m.GrappleMode);
             var hint = m.Hint(flow);
-            _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents);
+            _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents, _sound.Muted);
             _hud.UpdateMinions(c, shown);
             _hud.UpdateLog(flow.Log);
             _hud.UpdateBanner(flow.Banner, live.Outcome != null && !flow.Busy);
             var lines = new List<InfoLine>();
             var title = BuildInfo(lines);
             _hud.UpdateInfo(title, lines);
-            if (live.Outcome != null && !flow.Busy && !_hud.EndVisible) _hud.ShowEnd(live.Outcome, flow.Session.Summary(), live);
+            if (live.Outcome != null && !flow.Busy && !_hud.EndVisible)
+            {
+                _hud.ShowEnd(live.Outcome, flow.Session.Summary(), live);
+                _sound.Ask(live.Outcome.Result == FightResult.Win ? Sfx.Win : Sfx.Lose);
+            }
         }
 
         /// <summary>

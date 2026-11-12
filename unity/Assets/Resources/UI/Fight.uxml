@@ -58,6 +58,7 @@
                             <ui:Button name="speed-0" class="seg-btn" text="Skip" focusable="false" />
                         </ui:VisualElement>
                         <ui:Button name="intents" class="btn" focusable="false"><ui:Label class="btn-text" text="Intents" /><ui:Label class="kbd mono" text="I" /></ui:Button>
+                        <ui:Button name="sound" class="btn" focusable="false"><ui:Label class="btn-text" text="Sound" /><ui:Label class="kbd mono" text="M" /></ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

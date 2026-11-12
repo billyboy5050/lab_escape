@@ -102,7 +102,7 @@ namespace LabEscape.Client
         private readonly VisualElement[] _overBoard;
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
-        private readonly Button _undo, _endTurn, _skip, _intents, _speed0, _speed1, _speed2;
+        private readonly Button _undo, _endTurn, _skip, _intents, _sound, _speed0, _speed1, _speed2;
         private readonly ScrollView _log, _logLines;
         private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "";
         private int _logShown;
@@ -120,7 +120,9 @@ namespace LabEscape.Client
         /// <summary>The pointer has come onto an action button (its id) or left one (null).</summary>
         public event Action<string?>? ActionHovered;
         public event Action<string>? GrappleModeClicked;
-        public event Action? UndoClicked, EndTurnClicked, SkipClicked, IntentsClicked, OpenLogClicked, CloseLogClicked, AgainClicked, ChangeClicked;
+        public event Action? UndoClicked, EndTurnClicked, SkipClicked, IntentsClicked, SoundClicked, OpenLogClicked, CloseLogClicked, AgainClicked, ChangeClicked;
+        /// <summary>Any button but an action, a preset or End turn, which have sounds of their own: it clicks.</summary>
+        public event Action? ButtonClicked;
         public event Action<FightSpeed>? SpeedClicked;
         public event Action<PresetDef>? PresetClicked;
 
@@ -130,11 +132,12 @@ namespace LabEscape.Client
             T Q<T>(string name) where T : VisualElement => _root.Q<T>(name) ?? throw new InvalidOperationException($"Fight.uxml has no {name}");
             VisualElement E(string name) => Q<VisualElement>(name);
             Label L(string name) => Q<Label>(name);
-            Button B(string name, Action act)
+            Button B(string name, Action act, bool click = true)
             {
                 var b = Q<Button>(name);
                 b.focusable = false;
                 b.clicked += act;
+                if (click) b.clicked += () => ButtonClicked?.Invoke();
                 return b;
             }
 
@@ -193,9 +196,10 @@ namespace LabEscape.Client
             _root.Query(className: "card").ForEach(Frame);
 
             _undo = B("undo", () => UndoClicked?.Invoke());
-            _endTurn = B("end-turn", () => EndTurnClicked?.Invoke());
+            _endTurn = B("end-turn", () => EndTurnClicked?.Invoke(), false);
             _skip = B("skip", () => SkipClicked?.Invoke());
             _intents = B("intents", () => IntentsClicked?.Invoke());
+            _sound = B("sound", () => SoundClicked?.Invoke());
             _speed1 = B("speed-1", () => SpeedClicked?.Invoke(FightSpeed.Normal));
             _speed2 = B("speed-2", () => SpeedClicked?.Invoke(FightSpeed.Fast));
             _speed0 = B("speed-0", () => SpeedClicked?.Invoke(FightSpeed.Skip));
@@ -304,7 +308,11 @@ namespace LabEscape.Client
             foreach (var p in presets)
             {
                 var chosen = p;
-                var b = new Button(() => PresetClicked?.Invoke(chosen)) { focusable = false, text = "" };
+                var b = new Button(() =>
+                {
+                    ButtonClicked?.Invoke();
+                    PresetClicked?.Invoke(chosen);
+                }) { focusable = false, text = "" };
                 b.AddToClassList("preset-btn");
                 b.Add(Ui.Text($"{i}  {p.Name.ToUpperInvariant()}", "preset-name display"));
                 b.Add(Ui.Text(string.Join(", ", p.Abilities.Select(a => c.Abilities[a].Name)), "preset-kit"));
@@ -491,14 +499,19 @@ namespace LabEscape.Client
 
         private Button SegButton(string text, bool on, string mode)
         {
-            var b = new Button(() => GrappleModeClicked?.Invoke(mode)) { focusable = false, text = text };
+            var b = new Button(() =>
+            {
+                ButtonClicked?.Invoke();
+                GrappleModeClicked?.Invoke(mode);
+            }) { focusable = false, text = text };
             b.AddToClassList("seg-btn");
             b.EnableInClassList("on", on);
             return b;
         }
 
-        public void UpdateControls(bool idle, bool canUndo, bool busy, string hint, FightSpeed speed, bool showIntents)
+        public void UpdateControls(bool idle, bool canUndo, bool busy, string hint, FightSpeed speed, bool showIntents, bool muted)
         {
+            _sound.EnableInClassList("off", muted);
             _undo.SetEnabled(idle && canUndo);
             _endTurn.SetEnabled(idle);
             Ui.Show(_skip, busy);
