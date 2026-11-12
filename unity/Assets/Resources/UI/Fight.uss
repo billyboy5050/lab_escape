@@ -283,6 +283,15 @@
 .preset-name { font-size: 18px; -unity-font-style: bold; padding: 0; }
 .preset-kit { color: var(--ink-2); font-size: 12px; white-space: normal; padding: 0; }
 .modal-lines { flex-grow: 1; margin-top: 8px; }
+/* Saved fights on the start screen, and where the end card says a fight was saved. */
+.recent { margin-top: 10px; padding-top: 10px; border-top-width: 1px; border-color: var(--line); }
+.recent-title { color: var(--accent); font-size: 13px; letter-spacing: 1px; padding: 0; margin-bottom: 6px; }
+.recent-title.face { font-size: 16px; }
+.recent-btn { background-color: var(--panel-3); border-width: 1px; border-color: var(--line-2); border-radius: 3px; padding: 5px 10px; margin: 0 0 4px 0; -unity-text-align: middle-left; font-size: 12px; color: var(--ink-2); }
+.recent-btn:hover { border-color: var(--accent); color: var(--ink); }
+.end-saved { margin-top: 12px; font-size: 11px; white-space: normal; padding: 0; }
+.downloads { margin-top: 12px; align-items: center; }
+.downloads .btn.small { margin-left: 6px; }
 .modal-line { color: var(--amber); padding: 6px 0; border-top-width: 1px; border-color: var(--line); white-space: normal; }
 
 /* Tags anchored to the board. Each anchor is a zero-sized point; its row hangs off that point. */

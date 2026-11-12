@@ -97,6 +97,10 @@
                 <ui:Label class="muted" text="Choose a loadout. Press its number, or click it." />
                 <ui:VisualElement name="presets" class="presets" />
                 <ui:Label name="start-error" class="warn hidden" />
+                <ui:VisualElement name="recent-box" class="recent hidden">
+                    <ui:Label class="recent-title display" text="WATCH A SAVED FIGHT" />
+                    <ui:VisualElement name="recent" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -109,6 +113,13 @@
                 <ui:VisualElement class="row">
                     <ui:Button name="again" class="btn primary" focusable="false"><ui:Label class="btn-text" text="Fight again" /><ui:Label class="kbd mono" text="R" /></ui:Button>
                     <ui:Button name="change" class="btn" text="Change loadout" focusable="false" />
+                </ui:VisualElement>
+                <ui:Label name="end-saved" class="faint end-saved hidden" />
+                <ui:VisualElement name="end-downloads" class="row downloads hidden">
+                    <ui:Label class="faint" text="Save this fight's files:" />
+                    <ui:Button name="download-replay" class="btn small" text="Replay" focusable="false" />
+                    <ui:Button name="download-summary" class="btn small" text="Summary" focusable="false" />
+                    <ui:Button name="download-events" class="btn small" text="Event stream" focusable="false" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

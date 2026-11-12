@@ -13,6 +13,25 @@ namespace LabEscape.Client.Tests
     /// <summary>The real fight screen: board, HUD and director together. Any error logged while these run fails them.</summary>
     public class FightScreenTests
     {
+        private string _telemetry = "";
+
+        /// <summary>Every test's fights save their telemetry to a folder of its own, never to the repository's telemetry/.</summary>
+        [SetUp]
+        public void SendTelemetryAside()
+        {
+            _telemetry = Path.Combine(Path.GetTempPath(), "lab-escape-telemetry-" + System.Guid.NewGuid().ToString("N"));
+            TelemetrySink.Isolate(_telemetry);
+        }
+
+        [TearDown]
+        public void ClearTelemetry()
+        {
+            TelemetrySink.Reset();
+            if (Directory.Exists(_telemetry)) Directory.Delete(_telemetry, true);
+        }
+
+        private string[] SavedFolders() => Directory.Exists(_telemetry) ? Directory.GetDirectories(_telemetry) : new string[0];
+
         private static IEnumerator WaitForDirector()
         {
             while (FightDirector.Instance == null || FightDirector.Instance.Content == null) yield return null;
@@ -70,6 +89,7 @@ namespace LabEscape.Client.Tests
             var d = FightDirector.Instance!;
             d.ScriptedPointer = true;
             var record = WinningLine(d, "hybrid");
+            var countsBefore = PlayerPrefs.GetString(Telemetry.AttemptsKey, "<none>");
             d.StartFight(record.Loadout, record.Settings, "hybrid");
             d.Flow!.SetSpeed(FightSpeed.Fast);
             var n = 0;
@@ -101,6 +121,68 @@ namespace LabEscape.Client.Tests
                 summary.Kills.Values.Sum().ToString(),
                 summary.PlayerDamageTaken.Total.ToString(),
             }));
+
+            Assert.That(PlayerPrefs.GetString(Telemetry.AttemptsKey, "<none>"), Is.EqualTo(countsBefore), "a scripted fight uses up no playtest attempt");
+
+            // The fight's telemetry is saved: the web client's three files, and a replay of what was played.
+            var saved = SavedFolders();
+            Assert.That(saved.Length, Is.EqualTo(1), "one folder for the fight");
+            Assert.That(Directory.GetFiles(saved[0]).Select(Path.GetFileName).OrderBy(n => n), Is.EqualTo(new[] { "events.jsonl", "replay.json", "summary.json" }));
+            Assert.That(Path.GetFileName(saved[0]), Does.EndWith("-hybrid-win"));
+            var replay = Telemetry.LoadReplay(d.Content!, File.ReadAllText(Path.Combine(saved[0], "replay.json")));
+            Assert.That(replay.Commands.Select(c => c.ToJson()), Is.EqualTo(record.Commands.Select(c => c.ToJson())));
+
+            // Back on the start screen, the fight is offered to watch again.
+            var change = root.Q<Button>("change");
+            using (var e = NavigationSubmitEvent.GetPooled())
+            {
+                e.target = change;
+                change.SendEvent(e);
+            }
+            yield return null;
+            Assert.That(d.Hud.StartVisible, Is.True);
+            var listed = root.Q("recent").Query<Button>().ToList().Select(b => b.text).ToList();
+            Assert.That(listed, Has.Count.EqualTo(1));
+            Assert.That(listed[0], Does.EndWith("hybrid win"));
+        }
+
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator ASavedFightPlaysBackToItsEndAndSavesNothing()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            d.PlayReplayFile(GameContent.RepoPath("reports", "winning-line-tech.json"));
+            Assert.That(d.Replaying, Is.True);
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            // The player's input does nothing while it plays.
+            d.EndTurn();
+            while (d.Flow!.Live.Outcome == null || d.Flow.Busy) yield return null;
+            yield return null;
+            Assert.That(d.Flow!.Live.Outcome?.Result, Is.EqualTo(FightResult.Win));
+            Assert.That(d.Replaying, Is.False);
+            Assert.That(d.EndScreenShown, Is.True);
+            Assert.That(SavedFolders(), Is.Empty, "a replay is not saved again");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AReplayThatDoesNotFitIsRefusedOnTheStartScreen()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            Directory.CreateDirectory(_telemetry);
+            var file = Path.Combine(_telemetry, "broken.json");
+            File.WriteAllText(file, "{ \"format\": \"lab-escape/replay@1\" }");
+            d.PlayReplayFile(file);
+            yield return null;
+            var root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
+            Assert.That(d.Hud.StartVisible, Is.True);
+            Assert.That(d.Flow, Is.Null);
+            Assert.That(root.Q<Label>("start-error").text, Does.StartWith("Could not play back broken.json: "));
+            Assert.That(FightDirector.ReplayName("/x/2026-11-12T15-30-04-512Z-tech-win/replay.json"), Is.EqualTo("2026-11-12T15-30-04-512Z-tech-win"));
+            Assert.That(FightDirector.ReplayName("fights/one.json"), Is.EqualTo("one.json"));
         }
 
         [UnityTest]

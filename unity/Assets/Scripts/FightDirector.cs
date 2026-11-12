@@ -1,8 +1,12 @@
 #nullable enable
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using LabEscape.Core;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 namespace LabEscape.Client
@@ -51,6 +55,21 @@ namespace LabEscape.Client
         private Loadout? _loadout;
         private readonly BoardClock _clock = new BoardClock();
         private bool _finalFrame;
+        private string? _tester;
+        /// <summary>The saved fight being played back, and the next of its commands to play; null in a fight of the player's own.</summary>
+        private FightRecord? _replay;
+        private int _replayNext;
+        private float _replayWait;
+        /// <summary>When the fight ended, for the names of the web build's downloads.</summary>
+        private double _endedAt;
+        /// <summary>Counts fights started, so a ?replay= that arrives after the player has started one is dropped.</summary>
+        private int _starts;
+
+        /// <summary>A replay plays its next command this long after the board is still, as the web client's does.</summary>
+        private const float ReplayGap = 0.12f;
+
+        /// <summary>How many saved fights the start screen offers to play back.</summary>
+        private const int SavedFightsShown = 6;
 
         public FightFlow? Flow { get; private set; }
 
@@ -72,7 +91,16 @@ namespace LabEscape.Client
 
         public bool Idle => Flow != null && Flow.Idle;
 
+        /// <summary>The player may act: the fight is idle and no saved fight is playing back. Highlights, previews and intents show only then.</summary>
+        private bool CanAct => Flow != null && Flow.Idle && !Replaying;
+
         public bool EndScreenShown => _hud.EndVisible;
+
+        /// <summary>True while a saved fight is playing back: the player watches, and only skip and speed act.</summary>
+        public bool Replaying => _replay != null && _replayNext < _replay.Commands.Count;
+
+        /// <summary>Who is playing, for the telemetry folder and the replay's meta; null for nobody.</summary>
+        public string? Tester => _tester;
 
         private void Awake()
         {
@@ -99,7 +127,14 @@ namespace LabEscape.Client
                 _hud.ShowContentError(e.Message);
                 return;
             }
+            SmokeRun.IsolateTelemetryIfAsked();
+            _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
             ShowStartScreen();
+            // A saved fight to play back at once: a file on the command line, or ?replay= in the web build.
+            var file = Telemetry.Arg(Environment.GetCommandLineArgs(), "-labReplay");
+            if (file != null) PlayReplayFile(file);
+            var url = Telemetry.QueryParam(Application.absoluteURL, "replay");
+            if (!string.IsNullOrEmpty(url)) StartCoroutine(FetchReplay(url!));
             SmokeRun.AttachIfAsked(this);
         }
 
@@ -133,6 +168,11 @@ namespace LabEscape.Client
             _hud.OpenLogClicked += () => SetLog(true);
             _hud.CloseLogClicked += () => SetLog(false);
             _hud.PresetClicked += StartPreset;
+            _hud.SavedFightClicked += folder => PlayReplayFile(Path.Combine(folder, "replay.json"));
+            _hud.DownloadClicked += f =>
+            {
+                if (Flow != null) TelemetrySink.Download(Flow.Session, f, _endedAt);
+            };
             _hud.AgainClicked += Again;
             _hud.ChangeClicked += ShowStartScreen;
         }
@@ -140,7 +180,92 @@ namespace LabEscape.Client
         private void ShowStartScreen()
         {
             TearDownFight();
-            _hud.ShowStart(_c!.DefaultRoom.Name, _c.Presets, _c);
+            _hud.ShowStart(_c!.DefaultRoom.Name, _c.Presets, _c, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
+        }
+
+        /// <summary>Plays back a saved fight from a replay file. One that cannot be read or does not fit this game is refused, with why.</summary>
+        public void PlayReplayFile(string path)
+        {
+            string text;
+            try
+            {
+                text = File.ReadAllText(path);
+            }
+            catch (Exception e)
+            {
+                RefuseReplay(path, e.Message);
+                return;
+            }
+            PlayReplayText(text, path);
+        }
+
+        /// <summary>Plays back a saved fight from its JSON, which is untrusted: Telemetry.LoadReplay checks it before anything plays.</summary>
+        public void PlayReplayText(string text, string from)
+        {
+            if (_c == null) return;
+            FightRecord rec;
+            try
+            {
+                rec = Telemetry.LoadReplay(_c, text);
+            }
+            catch (Exception e)
+            {
+                RefuseReplay(from, e.Message);
+                return;
+            }
+            // "Fight again" after a replay starts its loadout as a fight of the player's own.
+            _preset = _c.Presets.FirstOrDefault(p => p.Id == rec.Meta?.Preset);
+            try
+            {
+                StartFight(rec.Loadout, rec.Settings, rec.Meta?.Preset, rec);
+            }
+            catch (Exception e)
+            {
+                // A fight that cannot start leaves no fight behind and the start screen up, saying why.
+                RefuseReplay(from, e.Message);
+            }
+        }
+
+        private void RefuseReplay(string from, string why)
+        {
+            ShowStartScreen();
+            _hud.ShowStartMessage($"Could not play back {ReplayName(from)}: {why}");
+        }
+
+        /// <summary>A saved fight by its folder's name, any other replay file by its own name.</summary>
+        public static string ReplayName(string from)
+        {
+            var name = Path.GetFileName(from);
+            if (name == "replay.json")
+            {
+                var folder = Path.GetFileName(Path.GetDirectoryName(from) ?? "");
+                if (!string.IsNullOrEmpty(folder)) name = folder;
+            }
+            return string.IsNullOrEmpty(name) ? from : name;
+        }
+
+        /// <summary>The web build's ?replay=: a replay file fetched from beside the page.</summary>
+        private IEnumerator FetchReplay(string path)
+        {
+            var starts = _starts;
+            Uri uri;
+            try
+            {
+                uri = new Uri(new Uri(Application.absoluteURL), path);
+            }
+            catch (Exception e)
+            {
+                RefuseReplay(path, e.Message);
+                yield break;
+            }
+            using (var req = UnityWebRequest.Get(uri))
+            {
+                yield return req.SendWebRequest();
+                // The player started a fight while it loaded: that fight stands, and the replay is dropped.
+                if (_starts != starts) yield break;
+                if (req.result != UnityWebRequest.Result.Success) RefuseReplay(path, req.error);
+                else PlayReplayText(req.downloadHandler.text, path);
+            }
         }
 
         private void StartPreset(PresetDef p)
@@ -154,8 +279,11 @@ namespace LabEscape.Client
             if (_loadout != null) StartFight(_loadout, _settings, _preset?.Id);
         }
 
-        /// <summary>Starts a fight in the room its settings name.</summary>
-        public void StartFight(Loadout loadout, FightSettings settings, string? presetId)
+        /// <summary>
+        /// Starts a fight in the room its settings name. With `replay`, the fight is that saved fight played back: its commands
+        /// play by themselves, its meta is the recording's, and nothing is saved at its end.
+        /// </summary>
+        public void StartFight(Loadout loadout, FightSettings settings, string? presetId, FightRecord? replay = null)
         {
             TearDownFight();
             _loadout = loadout;
@@ -163,9 +291,19 @@ namespace LabEscape.Client
             var c = _c!;
             _hud.HideStart();
             _hud.ResetFight();
-            var meta = new RecordMeta { Label = "unity" };
-            if (presetId != null) meta.Preset = presetId;
-            Flow = new FightFlow(c, loadout, settings, meta);
+            RecordMeta meta;
+            if (replay?.Meta != null) meta = RecordMeta.FromToken(replay.Meta.ToToken());
+            else
+            {
+                meta = new RecordMeta { Label = "unity", View = "iso" };
+                if (presetId != null) meta.Preset = presetId;
+                if (_tester != null) meta.Tester = _tester;
+            }
+            _starts++;
+            _replay = replay;
+            _replayNext = 0;
+            _replayWait = ReplayGap;
+            Flow = new FightFlow(c, loadout, settings, meta, timed: replay == null);
             _model = new ActionModel(c);
             _tags = new BoardTags(_hud.TagLayer, c, _cam);
             var room = c.RoomFor(settings.Room);
@@ -208,6 +346,7 @@ namespace LabEscape.Client
             _model = null;
             _hover = null;
             _hoverAction = null;
+            _replay = null;
             _preview = null;
             _previewKey = "";
             _cam.Still();
@@ -304,7 +443,7 @@ namespace LabEscape.Client
 
         public void SelectAction(string id)
         {
-            if (Flow == null || _model == null || !Flow.Idle) return;
+            if (Flow == null || _model == null || !Flow.Idle || Replaying) return;
             var a = _model.Statuses.FirstOrDefault(x => x.Id == id);
             if (a == null) return;
             if (!a.Usable)
@@ -323,7 +462,7 @@ namespace LabEscape.Client
 
         public void ClickTile(Pos tile)
         {
-            if (Flow == null || _model == null || !Flow.Idle) return;
+            if (Flow == null || _model == null || !Flow.Idle || Replaying) return;
             var cmd = _model.Click(tile);
             if (cmd != null) Commit(cmd);
         }
@@ -339,7 +478,7 @@ namespace LabEscape.Client
 
         public void EndTurn()
         {
-            if (Flow != null && Flow.Idle && Commit(new EndTurnCommand())?.Ok == true) _sound.Ask(Sfx.EndTurn);
+            if (Flow != null && Flow.Idle && !Replaying && Commit(new EndTurnCommand())?.Ok == true) _sound.Ask(Sfx.EndTurn);
         }
 
         public void SetPointer(Pos? tile) => _hover = tile;
@@ -349,7 +488,7 @@ namespace LabEscape.Client
 
         private void TryUndo(string message)
         {
-            if (Flow != null && Flow.Idle && !Flow.Undo()) _hud.Toast(message);
+            if (Flow != null && Flow.Idle && !Replaying && !Flow.Undo()) _hud.Toast(message);
         }
 
         private void SetLog(bool open)
@@ -374,14 +513,35 @@ namespace LabEscape.Client
             // The board runs on its own clock: a heavy blow stops it and the 2x speed doubles it. The interface keeps real time.
             var dt = _clock.Step(real) * Flow.TimeScale;
             Flow.Tick(dt);
+            TickReplay(real);
             var live = Flow.Live;
-            _model!.Refresh(live, Flow.Idle);
+            _model!.Refresh(live, CanAct);
             UpdatePreview();
             BuildOverlay();
             _hud.SetFreeAreaOn(_cam);
             _board!.Tick(dt, real, Flow.FrameTime, _overlay);
             _tags!.Tick(real, Flow.Shown, _board, _overlay);
             UpdateHud(real);
+        }
+
+        /// <summary>Plays a saved fight's next command once the board is still and the player's turn has come.</summary>
+        private void TickReplay(float dt)
+        {
+            var rec = _replay;
+            var flow = Flow;
+            if (rec == null || flow == null || !Replaying || !flow.Idle) return;
+            _replayWait -= dt;
+            if (_replayWait > 0f) return;
+            _replayWait = ReplayGap;
+            var r = flow.Apply(rec.Commands[_replayNext]);
+            if (!r.Ok)
+            {
+                _hud.Toast($"Replay stopped: command {_replayNext + 1} of {rec.Commands.Count} was refused ({r.Error ?? "not allowed"})");
+                _replayNext = rec.Commands.Count;
+                return;
+            }
+            _replayNext++;
+            _model?.Clear();
         }
 
         private void ReadStartKeys()
@@ -474,7 +634,7 @@ namespace LabEscape.Client
 
         private void UpdatePreview()
         {
-            var cmd = _hover.HasValue && Flow!.Idle ? _model!.CandidateFor(_hover.Value) : null;
+            var cmd = _hover.HasValue && CanAct ? _model!.CandidateFor(_hover.Value) : null;
             var key = cmd?.ToJson() ?? "";
             if (key == _previewKey && ReferenceEquals(_previewBase, Flow!.Live)) return;
             _previewKey = key;
@@ -489,7 +649,7 @@ namespace LabEscape.Client
         private void BuildOverlay()
         {
             var m = _model!;
-            var idle = Flow!.Idle;
+            var idle = CanAct;
             var st = m.Selected;
             _overlay.Highlights.Clear();
             if (idle && st == null) _overlay.Highlights.Add((m.Moves.Select(x => x.Tile).ToList(), HighlightKind.Move));
@@ -516,13 +676,13 @@ namespace LabEscape.Client
             var m = _model!;
             var shown = flow.Shown;
             var live = flow.Live;
-            var idle = flow.Idle;
+            var idle = CanAct;
 
             _hud.Tick(dt, shown);
             var me = _board!.Units.TryGetValue(0, out var view) ? view : null;
             _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy, me?.ShownHp, me != null && me.GhostLeft > 0f ? me.GhostHp : me?.ShownHp);
             _hud.UpdateActions(c, m.Statuses, m.ModeId, !idle, m.GrappleMode);
-            var hint = m.Hint(flow);
+            var hint = Replaying ? $"Playing back a saved fight: command {_replayNext + 1} of {_replay!.Commands.Count}. Space skips, F changes the speed." : m.Hint(flow);
             _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents, _sound.Muted);
             _hud.UpdateMinions(c, shown);
             _hud.UpdateLog(flow.Log);
@@ -532,8 +692,29 @@ namespace LabEscape.Client
             _hud.UpdateInfo(title, lines);
             if (live.Outcome != null && !flow.Busy && !_hud.EndVisible)
             {
-                _hud.ShowEnd(live.Outcome, flow.Session.Summary(), live);
+                var (saved, note) = SaveTelemetry(flow.Session);
+                _hud.ShowEnd(live.Outcome, flow.Session.Summary(), live, saved, _replay == null && !TelemetrySink.HasDisk, note);
                 _sound.Ask(live.Outcome.Result == FightResult.Win ? Sfx.Win : Sfx.Lose);
+            }
+        }
+
+        /// <summary>
+        /// Saves a fight of the player's own when it ends: its attempt is numbered first, so the folder and the replay carry it.
+        /// A replay is not saved again. Returns the folder, or a note on why there is none.
+        /// </summary>
+        private (string? Saved, string? Note) SaveTelemetry(FightSession session)
+        {
+            _endedAt = TelemetrySink.NowMs();
+            if (_replay != null) return (null, "A saved fight played back: nothing new was saved.");
+            if (session.Record.Meta != null) Telemetry.AssignAttempt(session.Record.Meta, TelemetrySink.Prefs);
+            try
+            {
+                return (TelemetrySink.Save(session, _endedAt), null);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Telemetry] not saved: {e.Message}");
+                return (null, $"Not saved: {e.Message}");
             }
         }
 
@@ -547,7 +728,7 @@ namespace LabEscape.Client
             var flow = Flow!;
             var shown = flow.Shown;
             if (_hoverAction != null && DescribeAction(lines, _hoverAction)) return "Action";
-            var preview = flow.Idle ? _preview : null;
+            var preview = CanAct ? _preview : null;
             if (preview != null)
             {
                 DescribePreview(lines, preview, shown);
@@ -580,7 +761,7 @@ namespace LabEscape.Client
             {
                 lines.Add(new InfoLine($"{Words.UnitName(c, unit.Def, unit.Id)}  {Tiles.Name(unit.Pos)}", "head"));
                 lines.Add(new InfoLine(Words.DescribeUnit(unit, shown.Round), "muted"));
-                var intent = flow.Idle ? _model!.Intents?.Intents.FirstOrDefault(i => i.Id == unit.Id) : null;
+                var intent = CanAct ? _model!.Intents?.Intents.FirstOrDefault(i => i.Id == unit.Id) : null;
                 if (intent != null) lines.Add(new InfoLine($"Intent: {intent.Label}"));
             }
             foreach (var o in objects) lines.Add(new InfoLine(Words.DescribeObject(c, o), "muted"));

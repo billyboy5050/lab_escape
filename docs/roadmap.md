@@ -8,7 +8,7 @@ Last reviewed: 2026-11-12.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13. On 2026-11-10 that fight's animation was reworked for weight, at the owner's request: see [how a frame is animated](implementation-notes.md#how-a-frame-is-animated). On 2026-11-12 its presentation was brought toward the web client's, and the web client's sound was ported to it early: see [the fight's presentation](implementation-notes.md#the-fights-presentation). The same day the owner played it and passed the M12 checkpoint: the Unity fight feels at least as good as the web version, and is "a much more enjoyable experience".
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13. On 2026-11-10 that fight's animation was reworked for weight, at the owner's request: see [how a frame is animated](implementation-notes.md#how-a-frame-is-animated). On 2026-11-12 its presentation was brought toward the web client's, and the web client's sound was ported to it early: see [the fight's presentation](implementation-notes.md#the-fights-presentation). The same day the owner played it and passed the M12 checkpoint: the Unity fight feels at least as good as the web version, and is "a much more enjoyable experience". M13 started the same day: the project moved to Unity 6.3 LTS, and the Unity client now saves each fight's telemetry and plays saved fights back.
 
 | Milestone | Status |
 | --- | --- |
@@ -35,13 +35,12 @@ The developer round (spec round 1) and what it found are in [implementation-note
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
 1. **M13: Unity parity, retire the web client.** One branch for each part, in this order. The phase plan puts M13's effort into what Stage B builds on, telemetry, the debug overlay, hot reload and the three builds, and the screens only go as far as M15 needs, because M15 rebuilds that flow around a run ([phase plan](phase-2.md#milestones)).
-   1. **Telemetry and replays.** Save each fight's replay, summary and event stream from the Unity client (`core/Core/Telemetry` has them), as downloads in the web build, and load a replay from the interface.
-   2. **Debug overlay and step mode,** as the web client's backtick overlay.
-   3. **Content hot reload.** Reload `content/` while the game runs, reject invalid content and keep the old values (CLAUDE.md, invariant 3).
-   4. **Screens, as far as they work:** title, briefing and result screens, and the loadout screen as the Sandbox-mode picker.
-   5. **Shortcuts and settings:** the web client's remaining keys, modified keys left to the system, and the reduced-motion setting (Smaller items).
-   6. **The three builds:** the Windows build run on a Windows PC, and the web build's symbols, faces, size and preview speed (Smaller items).
-   7. **Retire the web client.** The owner is asked first ([phase plan](phase-2.md#what-the-owner-has-authorised)); then the TypeScript client goes, with the hooks, CI and rules-sheet changes under Smaller items. Unity's tests stay off CI, by the owner's decision, so once the web client is gone they are the client's only tests and run on a developer's machine before every merge.
+   1. **Debug overlay and step mode,** as the web client's backtick overlay, with pause and step for a replay.
+   2. **Content hot reload.** Reload `content/` while the game runs, reject invalid content and keep the old values (CLAUDE.md, invariant 3).
+   3. **Screens, as far as they work:** title, briefing and result screens, and the loadout screen as the Sandbox-mode picker.
+   4. **Shortcuts and settings:** the web client's remaining keys, modified keys left to the system, and the reduced-motion setting (Smaller items).
+   5. **The three builds:** the Windows build run on a Windows PC, and the web build's symbols, faces, size and preview speed (Smaller items).
+   6. **Retire the web client.** The owner is asked first ([phase plan](phase-2.md#what-the-owner-has-authorised)); then the TypeScript client goes, with the hooks, CI and rules-sheet changes under Smaller items. Unity's tests stay off CI, by the owner's decision, so once the web client is gone they are the client's only tests and run on a developer's machine before every merge.
 
 Stages B to D follow: game systems, then one wing shown to testers, then the other two wings and the light meta.
 
