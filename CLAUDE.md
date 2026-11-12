@@ -143,7 +143,7 @@ Breaking one of these breaks replays, previews or the balance data, often silent
 4. **Replays are tied to the engine version and the content hash.** Any content change alters the hash, so the golden replays and `reports/winning-line-*.json` stop loading until they are regenerated. A rule change that alters what an existing command log produces must bump `ENGINE_VERSION` in `src/state/state.ts`, so old replays (including playtest telemetry) are refused instead of silently replaying differently.
 5. **A failing golden test means behaviour changed.** If the change is intended, re-record with `npm run golden:record` and give the reason in the commit message. If it is not intended, it is a bug. Never re-record just to make the test pass.
 6. **Previews match results.** A test checks this over 100 random states. Because previews call the engine, they follow rule changes on their own; never special-case a rule inside a preview.
-7. **Untrusted input stays checked:** saved preferences in local storage and in the Unity client's `PlayerPrefs`, replay files (including `?replay=` URLs) and the dev server's telemetry paths (`src/dev/telemetryPath.ts`). Keep the shape checks when you touch them.
+7. **Untrusted input stays checked:** saved preferences in local storage and in the Unity client's `PlayerPrefs`, replay files (including `?replay=` URLs, and the Unity client's `-labReplay` and saved fights, which all pass `Telemetry.LoadReplay`) and the dev server's telemetry paths (`src/dev/telemetryPath.ts`). Keep the shape checks when you touch them.
 
 ## Changing a rule
 

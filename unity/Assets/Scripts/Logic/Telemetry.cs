@@ -38,12 +38,20 @@ namespace LabEscape.Client
 
         public static string FolderName(double unixMs, FightSession s) => Labels.TelemetryFolderName(unixMs, s.Record.Meta, OutcomeWord(s.State.Outcome));
 
+        /// <summary>Given as the tester, forgets the remembered one: for after a playtest.</summary>
+        public const string NoTester = "-";
+
         /// <summary>
         /// Who is playing: the tester given this run (`-labTester`, or `?tester=` in the web build), which is remembered, or else
-        /// the one remembered from last time. Cleaned as the web client cleans it; null for nobody.
+        /// the one remembered from last time. Cleaned as the web client cleans it; null for nobody. "-" forgets the tester.
         /// </summary>
         public static string? ChooseTester(string? given, IPrefs prefs)
         {
+            if (given == NoTester)
+            {
+                prefs.Set(TesterKey, "");
+                return null;
+            }
             var cleaned = Labels.CleanTester(given);
             if (cleaned != null)
             {

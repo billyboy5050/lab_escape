@@ -68,6 +68,8 @@ namespace LabEscape.Client.Tests
             Assert.That(Telemetry.ChooseTester(null, prefs), Is.EqualTo("P_3_x"), "remembered");
             prefs.Values[Telemetry.TesterKey] = "../../evil";
             Assert.That(Telemetry.ChooseTester(null, prefs), Is.EqualTo("______evil"), "a saved value is cleaned too");
+            Assert.That(Telemetry.ChooseTester(Telemetry.NoTester, prefs), Is.Null, "\"-\" forgets the tester");
+            Assert.That(Telemetry.ChooseTester(null, prefs), Is.Null);
         }
 
         [Test]

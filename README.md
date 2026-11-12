@@ -152,6 +152,8 @@ With the dev server running, every finished fight is saved to `telemetry/<time>-
 
 After a playtest round, `npm run sim -- telemetry` reads every fight under `telemetry/` and prints the spec's playtest metrics: first attempts lost, rounds in first-time losses, informed win rate by attempt, length of winning fights, median turn time with a full swarm, friendly-fire share, deaths by source and hazard fires per fight. It replays each `replay.json`, so a fight from another engine or content version, an unfinished fight, one played with debug commands, one with wave 3 held back and one with no tester ID are skipped and listed with the reason. The informed round continues each tester's attempt numbers, so give `--informed-from` the number of their first informed attempt; only the next three attempts from there count.
 
+**In the Unity client** each fight of the player's own is saved in the same form, so the same report reads it. The editor saves to the repository's `telemetry/`; a Mac or Windows build to `telemetry/` in the app's data folder (`~/Library/Application Support/Lab Escape/Lab Escape/telemetry/` on a Mac); the web build, which has no disk, offers the three files as downloads on the end card. Give a tester ID with `-labTester P3` on the command line or `?tester=P3` in the web build's URL; the game remembers it until given `-labTester -` (or `?tester=-`). The start screen lists the latest saved fights to watch again, and a replay also plays from `-labReplay <file>`, or from `?replay=<path>` beside the web build's page. A replay plays by itself (**Space** skips, **F** changes the speed), and nothing is saved at its end. One recorded on another engine version or content is refused on the start screen with the reason.
+
 For playtests, give each person a tester ID: open the game at `?tester=P3` or type it into the Tester ID field on the loadout screen. The browser remembers it. The replay's `meta` then carries `tester` and `attempt` (1 for their first finished fight, counted per tester in that browser, so abandoned fights do not use a number), and both go into the folder name. Clear the field outside a playtest. Every replay's `meta` also records the board `view` the fight was played in: `top`, `iso`, or `both` if it was switched during the fight. The browser remembers the view, so check the control shows Top before each tester starts, or open the game at `?view=top`. `telemetry/` is ignored by git; `src/telemetry/` is source.
 
 First-time players get the one-page rules sheet and no coaching (spec, playtest round 2). Open `docs/rules-sheet.html` in a browser, or http://localhost:5173/docs/rules-sheet.html while the dev server runs, and print it; it fits one A4 or Letter page. It states the rules and explains the screen, and leaves out what the game hides on purpose: when waves arrive, which tiles the lab's defences cover, what makes the lab fire them, and the intercom's code words. Its numbers are tagged with where they come from in `content/`, and `npm test` fails if one no longer matches.
@@ -223,6 +225,8 @@ The keys are the web game's. The number keys, `-` and `=` pick an action, **E** 
 
 A fight opens with the lights striking, the room's name and the first wave falling in. **Space** skips that like any other animation.
 
+Every finished fight is saved for the playtest report, and the start screen offers recent ones to watch again: see [Telemetry and replays](#telemetry-and-replays).
+
 The board's edges are lettered A to H and numbered 1 to 8, as the log names tiles. Point at a unit, a tile or an action button and the Scanner describes it; for an action that is its rule and, if it cannot be used now, why.
 
 Close the editor before running these, because batch mode cannot share a project with an open editor. `U` is the editor's binary:
@@ -243,7 +247,7 @@ $U -batchmode -projectPath unity -runTests -testPlatform PlayMode -testResults /
 $U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Builds.Mac
 ```
 
-The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`.
+The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`. The fight's telemetry goes to `telemetry/` in that folder, never among a playtest's fights. A build started while the Mac's display is asleep waits for it before it draws anything, so a smoke run started then never finishes; add `-batchmode` to check its telemetry without screenshots.
 
 A still cannot show whether a motion has weight. To look at an animation, add `-labFilm 0,2,8` to that command: it films what follows those commands of the replay (0 is the fight's opening) and skips the rest. The game then advances a sixtieth of a second for each frame it draws, and every frame is saved at half size under `film/` in the output folder, with a `cues.txt` that says which cue and which sound played on which frame, and how loud the output was. Add `-labNoSystemFonts` to see the game as the web build draws it, without the system faces it takes the web client's type from.
 
