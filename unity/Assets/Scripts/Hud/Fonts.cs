@@ -39,7 +39,10 @@ namespace LabEscape.Client
         private static FontDefinition? _display;
         private static FontDefinition? _mono;
 
-        /// <summary>For a check of the fallback: when set before the first use, no system font is looked up.</summary>
+        /// <summary>
+        /// For a check of the fallback that the web build gets: when set before the first use, or when the game is started with
+        /// -labNoSystemFonts, no system font is looked up.
+        /// </summary>
         public static bool NoSystemFonts;
 
         public static string DisplayName { get; private set; } = "default";
@@ -65,6 +68,16 @@ namespace LabEscape.Client
             }
         }
 
+        /// <summary>
+        /// Text in capitals where the condensed face was found, as the web client sets it; as it is where it was not,
+        /// because the default face is too wide for a long name in capitals to fit a button.
+        /// </summary>
+        public static string Caps(string text)
+        {
+            Load();
+            return _display.HasValue ? text.ToUpperInvariant() : text;
+        }
+
         /// <summary>Applies the faces to every element under `root` that asks for one: the elements written in Fight.uxml.</summary>
         public static void ApplyAll(VisualElement root)
         {
@@ -76,7 +89,7 @@ namespace LabEscape.Client
         {
             if (_loaded) return;
             _loaded = true;
-            if (NoSystemFonts) return;
+            if (NoSystemFonts || Array.IndexOf(Environment.GetCommandLineArgs(), "-labNoSystemFonts") >= 0) return;
             var display = First(DisplayFaces);
             var mono = First(MonoFaces);
             if (display.Asset != null)

@@ -484,7 +484,7 @@ namespace LabEscape.Client
                 b.RegisterCallback<PointerEnterEvent>(_ => ActionHovered?.Invoke(id));
                 b.RegisterCallback<PointerLeaveEvent>(_ => ActionHovered?.Invoke(null));
                 var top = Ui.El("ab-top");
-                top.Add(Ui.Text(st.Name.ToUpperInvariant(), "ab-name display"));
+                top.Add(Ui.Text(Fonts.Caps(st.Name), "ab-name display"));
                 top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key mono"));
                 b.Add(top);
                 b.Add(Ui.Text(!st.Usable && st.Reason != null && shared == null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
