@@ -127,6 +127,19 @@ namespace LabEscape.Client.Tests
             Assert.That(Path.GetFileName(saved[0]), Does.EndWith("-hybrid-win"));
             var replay = Telemetry.LoadReplay(d.Content!, File.ReadAllText(Path.Combine(saved[0], "replay.json")));
             Assert.That(replay.Commands.Select(c => c.ToJson()), Is.EqualTo(record.Commands.Select(c => c.ToJson())));
+
+            // Back on the start screen, the fight is offered to watch again.
+            var change = root.Q<Button>("change");
+            using (var e = NavigationSubmitEvent.GetPooled())
+            {
+                e.target = change;
+                change.SendEvent(e);
+            }
+            yield return null;
+            Assert.That(d.Hud.StartVisible, Is.True);
+            var listed = root.Q("recent").Query<Button>().ToList().Select(b => b.text).ToList();
+            Assert.That(listed, Has.Count.EqualTo(1));
+            Assert.That(listed[0], Does.EndWith("hybrid win"));
         }
 
         [UnityTest]
