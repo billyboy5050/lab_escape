@@ -34,7 +34,7 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M13: Unity parity, retire the web client.** It needs the Unity version settled and Windows Build Support installed first (see [decisions waiting on the owner](#decisions-waiting-on-the-owner)).
+1. **M13: Unity parity, retire the web client.**
 
 Stages B to D follow: game systems, then one wing shown to testers, then the other two wings and the light meta.
 
@@ -55,7 +55,6 @@ Round 1's evidence for each is in the [developer round](implementation-notes.md#
 
 Agents should not settle these on their own. Ask, and record the answer in the spec or the notes.
 
-- **Unity version.** The installed editor, 6000.6.8f1, is an update release, while the plan asks for the current LTS, which is 6.3. Nothing built so far depends on the difference, and moving up to a later LTS is simpler than moving back. Needed before M13, which also needs the Windows Build Support module added.
 - **How to source 3D art,** and where it will be stored: bought packs, commission or generated. Needed before M14, so the art can be made while Stage B is built in greybox; the first tester round (M22) waits on about half of it. This repository is public, and paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository.
 - **Creep.** Whether Alien gets it, so that all three branches have six abilities. Needed by M17.
 - **Unity tests in CI.** CI runs nothing in `unity/`: its EditMode and PlayMode tests and its builds run only on a developer's machine, and once M13 retires the web client that is the whole game client. Running them on GitHub needs a Unity licence stored as a repository secret. Needed by M13. Whatever the answer, client logic with no Unity code (`unity/Assets/Scripts/Logic`) could also be compiled and tested by `dotnet test`, as `core/` is, which needs no licence.

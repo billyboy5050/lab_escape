@@ -21,7 +21,7 @@ Outside testers found the game fun but want to see more before saying they would
 | Rooms | Beyond 8×8: larger rooms, hallways and bigger hazards |
 | When events happen | Between battles, not between waves |
 | How events decide upgrades | The player's reaction shapes the offer they then choose from |
-| Engine | Unity |
+| Engine | Unity 6.3 LTS: 6000.3.28f1 since 2026-11-12, when the project moved back from the 6000.6 update release it was started on |
 | Rules engine | Ported to plain C#, with no Unity dependency |
 | When to move | Port first, before any new feature |
 | Look | 3D with a fixed isometric camera; the top-down view goes away |
@@ -221,7 +221,6 @@ After one run, testers can explain the loop, name the three branches and say wha
 
 ## What the owner needs to do
 
-- **Before M13:** add Windows Build Support to the Unity install, and settle which Unity version to stay on (see the [roadmap](roadmap.md#decisions-waiting-on-the-owner)).
 - **Before M14:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored. Art is first used at M20, but commissioning or choosing it takes time that agents cannot shorten, so deciding before Stage B starts lets it be made while Stage B is built in greybox.
 
 ## What the owner has authorised

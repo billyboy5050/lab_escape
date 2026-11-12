@@ -217,7 +217,7 @@ The same names are used on both sides, with C# capitalisation: `step` is `Engine
 
 `unity/` is the game moving to Unity ([phase plan](docs/phase-2.md#the-move-to-unity)). It plays one full fight in greybox on a fixed isometric camera, with previews, intents and a HUD, on the C# rules core. The web game above stays the playable version until M13.
 
-Needs Unity 6000.6.8f1 with Mac build support. In Unity Hub choose Add, pick the `unity` folder and open it, then press Play: every scene starts the game. Pick a loadout, and the fight begins.
+Needs Unity 6000.3.28f1 (6.3 LTS), with Windows Build Support (Mono) for the Windows build and Web Build Support for the web build. In Unity Hub, Installs, Install Editor, 6.3 LTS, and tick both modules; a Mac editor builds for the Mac with no module. In Unity Hub choose Add, pick the `unity` folder and open it, then press Play: every scene starts the game. Pick a loadout, and the fight begins.
 
 The keys are the web game's. The number keys, `-` and `=` pick an action, **E** or Enter ends the turn, **Z** undoes a move, **Esc** cancels, **Space** skips the animation, **F** changes the speed, **I** shows or hides intents, **L** opens the intercom log, **M** mutes and unmutes (the game remembers), and **Tab** switches the grapple's mode. The mouse wheel zooms, and when zoomed in the right or middle button, **W A S D** or the arrow keys pan.
 
@@ -228,7 +228,7 @@ The board's edges are lettered A to H and numbered 1 to 8, as the log names tile
 Close the editor before running these, because batch mode cannot share a project with an open editor. `U` is the editor's binary:
 
 ```bash
-U=/Applications/Unity/Hub/Editor/6000.6.8f1/Unity.app/Contents/MacOS/Unity
+U=/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity
 ```
 
 ```bash
@@ -246,6 +246,16 @@ $U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Bu
 The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`.
 
 A still cannot show whether a motion has weight. To look at an animation, add `-labFilm 0,2,8` to that command: it films what follows those commands of the replay (0 is the fight's opening) and skips the rest. The game then advances a sixtieth of a second for each frame it draws, and every frame is saved at half size under `film/` in the output folder, with a `cues.txt` that says which cue and which sound played on which frame, and how loud the output was. Add `-labNoSystemFonts` to see the game as the web build draws it, without the system faces it takes the web client's type from.
+
+The Windows build needs the editor's Windows Build Support (Mono) module, and a Mac can make it:
+
+```bash
+$U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Builds.Windows
+```
+
+It lands in `unity/Builds/Windows/`. Copy the whole folder to a Windows PC and run `LabEscape.exe`.
+
+A Windows or web build can leave the project set to that platform. Run the editor once with `-batchmode -quit -projectPath unity -buildTarget StandaloneOSX` to set it back to the Mac before the next test run or Mac build.
 
 The web build needs the editor's Web Build Support module:
 

@@ -38,6 +38,10 @@ namespace LabEscape.Client.Editor
         [MenuItem("Lab Escape/Build Mac")]
         public static void Mac() => Build(BuildTarget.StandaloneOSX, "Builds/Mac/LabEscape.app");
 
+        /// <summary>A 64-bit Windows player. Needs the editor's Windows Build Support (Mono) module, which a Mac can build with.</summary>
+        [MenuItem("Lab Escape/Build Windows")]
+        public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/LabEscape.exe");
+
         [MenuItem("Lab Escape/Build Web")]
         public static void Web() => Build(BuildTarget.WebGL, "Builds/Web");
 
