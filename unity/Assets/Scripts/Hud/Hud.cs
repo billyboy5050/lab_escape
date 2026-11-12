@@ -110,6 +110,7 @@ namespace LabEscape.Client
         private float _hpJolt;
         private float _now;
         private static Texture2D? _vignetteTexture;
+        private static Texture2D? _panelTexture;
 
         public readonly VisualElement TagLayer;
 
@@ -178,6 +179,9 @@ namespace LabEscape.Client
             _endIn = new Entrance(_endCard, 1.3f);
             _vignette.style.backgroundImage = new StyleBackground(Vignette());
             Fonts.ApplyAll(_root);
+            // Every panel and card gets the web client's frame: its shade from top to bottom, and a tick at two corners.
+            _root.Query(className: "panel").ForEach(Frame);
+            _root.Query(className: "card").ForEach(Frame);
 
             _undo = B("undo", () => UndoClicked?.Invoke());
             _endTurn = B("end-turn", () => EndTurnClicked?.Invoke());
@@ -190,6 +194,29 @@ namespace LabEscape.Client
             B("close-log", () => CloseLogClicked?.Invoke());
             B("again", () => AgainClicked?.Invoke());
             B("change", () => ChangeClicked?.Invoke());
+        }
+
+        private static void Frame(VisualElement panel)
+        {
+            panel.style.backgroundImage = new StyleBackground(PanelShade());
+            panel.Add(Ui.El("tick tl"));
+            panel.Add(Ui.El("tick br"));
+        }
+
+        /// <summary>The web client's panel gradient, from its second panel colour at the top to its panel colour at the bottom.</summary>
+        private static Texture2D PanelShade()
+        {
+            if (_panelTexture != null) return _panelTexture;
+            const int n = 32;
+            var t = new Texture2D(1, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
+            Color top = Palette.Hex(0x131b20, 0.95f), bottom = Palette.Hex(0x0e1418, 0.95f);
+            var px = new Color32[n];
+            // Texture rows run from the bottom up.
+            for (var y = 0; y < n; y++) px[y] = Color.Lerp(bottom, top, y / (n - 1f));
+            t.SetPixels32(px);
+            t.Apply();
+            _panelTexture = t;
+            return t;
         }
 
         /// <summary>A soft darkening towards the corners of the board, made in code so the project keeps no image files.</summary>

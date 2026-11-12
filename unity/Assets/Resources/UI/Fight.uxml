@@ -47,17 +47,17 @@
                 <ui:VisualElement class="panel action-panel">
                     <ui:VisualElement name="action-row" class="action-row" />
                     <ui:VisualElement class="controls">
-                        <ui:Button name="undo" class="btn" text="Undo move [Z]" focusable="false" />
-                        <ui:Button name="end-turn" class="btn primary" text="End turn [E]" focusable="false" />
-                        <ui:Button name="skip" class="btn hidden" text="Skip [Space]" focusable="false" />
+                        <ui:Button name="undo" class="btn" focusable="false"><ui:Label class="btn-text" text="Undo move" /><ui:Label class="kbd mono" text="Z" /></ui:Button>
+                        <ui:Button name="end-turn" class="btn primary" focusable="false"><ui:Label class="btn-text" text="End turn" /><ui:Label class="kbd mono" text="E" /></ui:Button>
+                        <ui:Button name="skip" class="btn hidden" focusable="false"><ui:Label class="btn-text" text="Skip" /><ui:Label class="kbd mono" text="Space" /></ui:Button>
                         <ui:Label name="hint" class="hint" />
-                        <ui:Label class="control-label display" text="SPEED [F]" />
+                        <ui:Label class="control-label display" text="SPEED" /><ui:Label class="kbd mono key-before" text="F" />
                         <ui:VisualElement class="seg">
                             <ui:Button name="speed-1" class="seg-btn" text="1x" focusable="false" />
                             <ui:Button name="speed-2" class="seg-btn" text="2x" focusable="false" />
                             <ui:Button name="speed-0" class="seg-btn" text="Skip" focusable="false" />
                         </ui:VisualElement>
-                        <ui:Button name="intents" class="btn" text="Intents [I]" focusable="false" />
+                        <ui:Button name="intents" class="btn" focusable="false"><ui:Label class="btn-text" text="Intents" /><ui:Label class="kbd mono" text="I" /></ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -65,24 +65,24 @@
             <ui:VisualElement class="column-side">
                 <ui:VisualElement class="panel">
                     <ui:VisualElement class="panel-head">
-                        <ui:Label class="panel-title display" text="INTERCOM" />
-                        <ui:Button name="open-log" class="btn small" text="Log [L]" focusable="false" />
+                        <ui:VisualElement class="title-left"><ui:VisualElement class="led amber" /><ui:Label class="panel-title display" text="INTERCOM" /></ui:VisualElement>
+                        <ui:Button name="open-log" class="btn small" focusable="false"><ui:Label class="btn-text" text="Log" /><ui:Label class="kbd mono" text="L" /></ui:Button>
                     </ui:VisualElement>
                     <ui:Label name="intercom" class="intercom-text mono" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel">
-                    <ui:Label name="info-title" class="panel-title display" text="SCANNER" />
+                    <ui:VisualElement class="title-left"><ui:VisualElement class="led" /><ui:Label name="info-title" class="panel-title display" text="SCANNER" /></ui:VisualElement>
                     <ui:VisualElement name="info-body" class="info-body" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel">
                     <ui:VisualElement class="panel-head">
-                        <ui:Label class="panel-title display" text="MINIONS" />
+                        <ui:VisualElement class="title-left"><ui:VisualElement class="led" /><ui:Label class="panel-title display" text="MINIONS" /></ui:VisualElement>
                         <ui:Label name="minion-count" class="faint mono" />
                     </ui:VisualElement>
                     <ui:VisualElement name="minions" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel log-panel">
-                    <ui:Label class="panel-title display" text="COMBAT LOG" />
+                    <ui:VisualElement class="title-left"><ui:VisualElement class="led" /><ui:Label class="panel-title display" text="COMBAT LOG" /></ui:VisualElement>
                     <ui:ScrollView name="log" class="log" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -104,7 +104,7 @@
                 <ui:Label name="end-title" class="card-title display" />
                 <ui:Label name="end-cause" class="muted" />
                 <ui:VisualElement class="row">
-                    <ui:Button name="again" class="btn primary" text="Fight again [R]" focusable="false" />
+                    <ui:Button name="again" class="btn primary" focusable="false"><ui:Label class="btn-text" text="Fight again" /><ui:Label class="kbd mono" text="R" /></ui:Button>
                     <ui:Button name="change" class="btn" text="Change loadout" focusable="false" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -114,7 +114,7 @@
             <ui:VisualElement class="card wide">
                 <ui:VisualElement class="panel-head">
                     <ui:Label class="card-title small display" text="TRANSMISSION LOG" />
-                    <ui:Button name="close-log" class="btn small" text="Close [Esc]" focusable="false" />
+                    <ui:Button name="close-log" class="btn small" focusable="false"><ui:Label class="btn-text" text="Close" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
                 </ui:VisualElement>
                 <ui:ScrollView name="log-lines" class="modal-lines" />
             </ui:VisualElement>
