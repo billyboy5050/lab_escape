@@ -4,11 +4,11 @@ Where the project stands, what comes next, and what is waiting on a decision. Wo
 
 Keep this file current. A pull request that finishes an item deletes it here, and one that turns up new work adds it; git history keeps the record of what was done. Order within "Up next" is priority order.
 
-Last reviewed: 2026-11-10.
+Last reviewed: 2026-11-12.
 
 ## Where things stand
 
-The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13. On 2026-11-10 that fight's animation was reworked for weight, at the owner's request: see [how a frame is animated](implementation-notes.md#how-a-frame-is-animated). On 2026-11-12 its presentation was brought toward the web client's, and the web client's sound was ported to it early: see [the fight's presentation](implementation-notes.md#the-fights-presentation).
+The MVP in the [spec](spec.md) is finished. On 2026-11-08 the owner closed playtesting as successful and started the full-game phase, planned in [phase-2.md](phase-2.md). The code in this repository stays the TypeScript prototype until that phase's Stage A has moved it to Unity. The rules core, telemetry and simulator already exist in C# in `core/` (M9 and M10): they match the TypeScript, CI holds them to it, and the game does not use them yet. Since M11 the engine in both languages can fight in a room of any size, described as data; the game still has only the Armory. M12 added `unity/`, where a full Armory fight plays in greybox; the web game stays the playable version until M13. On 2026-11-10 that fight's animation was reworked for weight, at the owner's request: see [how a frame is animated](implementation-notes.md#how-a-frame-is-animated). On 2026-11-12 its presentation was brought toward the web client's, and the web client's sound was ported to it early: see [the fight's presentation](implementation-notes.md#the-fights-presentation). The same day the owner played it and passed the M12 checkpoint: the Unity fight feels at least as good as the web version, and is "a much more enjoyable experience".
 
 | Milestone | Status |
 | --- | --- |
@@ -34,8 +34,7 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M12 owner checkpoint.** A full Armory fight plays in `unity/` (see the README's [Unity client](../README.md#unity-client) section). The owner plays it and judges whether it feels at least as good as the web version. M13 waits on the answer; this is the point the [plan's risks](phase-2.md#risks) name for stopping if the 3D version does not feel right.
-2. **M13: Unity parity, retire the web client.**
+1. **M13: Unity parity, retire the web client.** It needs the Unity version settled and Windows Build Support installed first (see [decisions waiting on the owner](#decisions-waiting-on-the-owner)).
 
 Stages B to D follow: game systems, then one wing shown to testers, then the other two wings and the light meta.
 

@@ -27,6 +27,7 @@ Outside testers found the game fun but want to see more before saying they would
 | Look | 3D with a fixed isometric camera; the top-down view goes away |
 | Platforms | Mac and Windows, plus a web build for testers |
 | When testers first play a run | After the Weapons wing, before the other two wings are built (decided 2026-11-09) |
+| M12 checkpoint: does the Unity fight feel at least as good as the web version? | Yes: the owner played it on 2026-11-12 and found it "a much more enjoyable experience" |
 
 ## The move to Unity
 
@@ -208,7 +209,7 @@ After one run, testers can explain the loop, name the three branches and say wha
 
 ## Risks
 
-- Stage A is five milestones with nothing new for players. The M12 checkpoint is where to stop if the 3D version does not feel right.
+- Stage A is five milestones with nothing new for players. The M12 checkpoint was where to stop if the 3D version did not feel right; it passed on 2026-11-12.
 - 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can produce only greybox. The first tester round needs about half the models (the player, its minions and the Weapons wing's enemies) and one room kit, so M21 cannot finish until that art exists.
 - No outsider plays a run before M22. Until then the run, the kit rework and Occult rest on the owner's reading of what testers said, with no recorded play behind it.
 - **This repository is public.** Paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository before M20.
