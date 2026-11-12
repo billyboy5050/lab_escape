@@ -1,7 +1,7 @@
 # Move the Unity project to 6.3 LTS
 
 - Branch: `chore/unity-6.3-lts`
-- Pull request: <link, once opened>
+- Pull request: https://github.com/billyboy5050/lab_escape/pull/25
 - Roadmap item: "Unity version" under Decisions waiting on the owner, and the Windows Build Support module M13 needs
 - Started: 2026-11-12
 - Last updated: 2026-11-12, by Claude (Opus 5.5)
@@ -12,15 +12,19 @@ The owner decided on 2026-11-12 to stay on Unity 6.3 LTS, as the phase plan asks
 
 ## Status
 
-In progress: installing 6000.3.28f1 with Unity Hub.
+Moved and verified on 6.3. Waiting on the owner's play-through of the 6.3 Mac build, and on Codex's review.
 
 ## Done so far
 
-- 
+- 6000.3.28f1 installed with Windows Build Support (Mono) and Web Build Support; 6000.6.8f1 is still installed.
+- `ProjectVersion.txt`, the manifest (three 6.6-only modules dropped) and the lock file are 6.3's. `Builds.Windows` added.
+- On 6.3: EditMode 64/64 and PlayMode 14/14; the Mac, Windows and web builds succeed; the Mac build plays the Tech winning line to victory with the system fonts and the sound; the web build runs in a browser through a first enemy wave with no console errors.
+- Docs: README, roadmap, phase plan, implementation notes and a CLAUDE.md gotcha (delete `unity/Library` and `unity/Builds` after a version change).
 
 ## Next steps
 
-1. When the install finishes, open the project in 6000.3.28f1 in batch mode, and fix what the package manager or the compiler refuses (the manifest lists built-in modules that 6.6 has and 6.3 may not).
+1. The owner plays a fight in the 6.3 Mac build (`unity/Builds/Mac/LabEscape.app`), and, if a Windows PC is at hand, starts `LabEscape.exe` from `unity/Builds/Windows/` on it.
+2. Answer Codex's findings, delete this note in the last commit, mark the pull request ready.
 
 ## Decisions
 
@@ -33,4 +37,5 @@ In progress: installing 6000.3.28f1 with Unity Hub.
 ## Notes for whoever picks this up
 
 - Close the Unity editor before batch-mode runs (README, Unity client).
-- The 6.6 editor stays installed until this merges, so `main` can still be opened.
+- The 6.6 editor stays installed until this merges, so `main` can still be opened. Switching between them needs `unity/Library` deleted each time.
+- The Windows build has been made but not run: no Windows PC here.
