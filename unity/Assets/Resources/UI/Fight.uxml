@@ -102,7 +102,9 @@
         <ui:VisualElement name="end" class="fill overlay hidden" picking-mode="Ignore">
             <ui:VisualElement name="end-card" class="card">
                 <ui:Label name="end-title" class="card-title display" />
+                <ui:VisualElement name="end-rule" class="end-rule" />
                 <ui:Label name="end-cause" class="muted" />
+                <ui:VisualElement name="end-figures" class="figures" />
                 <ui:VisualElement class="row">
                     <ui:Button name="again" class="btn primary" focusable="false"><ui:Label class="btn-text" text="Fight again" /><ui:Label class="kbd mono" text="R" /></ui:Button>
                     <ui:Button name="change" class="btn" text="Change loadout" focusable="false" />

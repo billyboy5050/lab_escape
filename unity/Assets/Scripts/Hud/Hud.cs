@@ -98,7 +98,7 @@ namespace LabEscape.Client
         private readonly VisualElement _root;
         private readonly VisualElement _boardArea;
         private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
-        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard;
+        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures;
         private readonly VisualElement[] _overBoard;
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
@@ -154,6 +154,8 @@ namespace LabEscape.Client
             _vignette = E("vignette");
             _opener = E("opener");
             _endCard = E("end-card");
+            _endRule = E("end-rule");
+            _endFigures = E("end-figures");
             _openerTitle = L("opener-title");
             _openerSub = L("opener-sub");
             _hpText = L("hp-text");
@@ -337,15 +339,34 @@ namespace LabEscape.Client
             _hpJolt = 0f;
         }
 
-        public void ShowEnd(Outcome o)
+        /// <summary>The end of the fight: who won, why, and the fight in four figures from its summary.</summary>
+        public void ShowEnd(Outcome o, FightSummary sum, GameState s)
         {
             var win = o.Result == FightResult.Win;
             _endTitle.text = win ? "VICTORY" : "DEFEAT";
             _endTitle.EnableInClassList("win", win);
             _endTitle.EnableInClassList("lose", !win);
+            _endRule.EnableInClassList("lose", !win);
             _endCause.text = o.Cause;
+
+            var player = s.Units.FirstOrDefault(u => u.Id == 0);
+            var taken = sum.PlayerDamageTaken.Total;
+            _endFigures.Clear();
+            _endFigures.Add(Figure(sum.Rounds.ToString(), sum.Rounds == 1 ? "ROUND" : "ROUNDS"));
+            _endFigures.Add(Figure($"{Math.Max(0, player?.Hp ?? 0)}/{player?.MaxHp ?? 0}", "HP LEFT"));
+            _endFigures.Add(Figure(sum.Kills.Values.Sum().ToString(), "KILLS"));
+            _endFigures.Add(Figure(taken.ToString(), "DAMAGE TAKEN", sum.FriendlyFireToPlayer > 0 ? $"{sum.FriendlyFireToPlayer} of it your own fire" : null));
             Ui.Show(_end, true);
             _endIn.Show();
+        }
+
+        private static VisualElement Figure(string value, string label, string? note = null)
+        {
+            var f = Ui.El("figure");
+            f.Add(Ui.Text(value, "figure-value mono"));
+            f.Add(Ui.Text(label, "figure-label display"));
+            if (note != null) f.Add(Ui.Text(note, "figure-note"));
+            return f;
         }
 
         /// <summary>The fight's title, set down over the board as the lights come on. It leaves by itself.</summary>

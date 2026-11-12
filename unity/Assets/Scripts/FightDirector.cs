@@ -502,7 +502,7 @@ namespace LabEscape.Client
             var lines = new List<InfoLine>();
             var title = BuildInfo(lines, hint);
             _hud.UpdateInfo(title, lines);
-            if (live.Outcome != null && !flow.Busy && !_hud.EndVisible) _hud.ShowEnd(live.Outcome);
+            if (live.Outcome != null && !flow.Busy && !_hud.EndVisible) _hud.ShowEnd(live.Outcome, flow.Session.Summary(), live);
         }
 
         /// <summary>The scanner panel: the previewed action, or what is under the pointer, or the hint.</summary>

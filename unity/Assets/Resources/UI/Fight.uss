@@ -260,6 +260,15 @@
 .card-title.win { color: var(--good); }
 .card-title.lose { color: var(--danger); }
 .card .muted { margin-bottom: 14px; }
+/* The end card: a rule under the title in its colour, then the fight in four figures. */
+.end-rule { height: 3px; width: 100%; margin: 2px 0 10px 0; background-color: var(--good); }
+.end-rule.lose { background-color: var(--danger); }
+.figures { flex-direction: row; margin: 0 0 18px 0; }
+.figure { flex-grow: 1; flex-basis: 0; padding: 0 10px; border-left-width: 2px; border-color: var(--line-2); }
+.figure-value { font-size: 30px; -unity-font-style: bold; color: var(--ink); padding: 0; }
+.figure-label { font-size: 12px; color: var(--ink-3); padding: 0; letter-spacing: 1px; }
+.figure-note { font-size: 11px; color: var(--danger); padding: 0; white-space: normal; }
+.figure-label.face { font-size: 14px; }
 .presets { margin-top: 2px; }
 .preset-btn {
     background-color: var(--panel-3);
