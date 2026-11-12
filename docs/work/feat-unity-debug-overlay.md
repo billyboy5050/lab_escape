@@ -12,11 +12,15 @@ Port the web client's backtick debug panel to the Unity client: engine version a
 
 ## Status
 
-In progress: building the overlay.
+In progress: overlay built, EditMode green, PlayMode being made green; docs drafted. Then the Mac build smoke run, Codex review, and the owner's play.
 
 ## Done so far
 
 - Branch cut from `main` at 8bdc409; `npm test` green.
+- `Logic/DebugReport.cs`, step mode in `FightFlow`, debug log lines in `EventFormatter`, step hint in `ActionModel`, with `Tests/EditMode/DebugOverlayTests.cs` (11 tests, all pass).
+- The screen: debug column in `Fight.uxml`/`Fight.uss`, `Hud` API, `BoardView.Hazards`/`WavesShown`/`Spawns` moved on by cues and `Level`, spawn squares on the floor, `BoardTags` ID chips and labels, `FightDirector` keys (backtick, P, N, Shift+N) and `-labDebug`.
+- `Tests/PlayMode/DebugOverlayScreenTests.cs` (3 tests). First run: 18 of 19 PlayMode tests passed; the hazard-cue test sampled too coarsely and was rewritten to record the mark at FrameShown and CuePlayed.
+- README (Unity client), implementation notes (the debug overlay paragraph) and roadmap (part removed, debug edits added as M13 part 2, the primed glow as a smaller item) drafted.
 
 ## Plan
 
@@ -29,7 +33,10 @@ In progress: building the overlay.
 
 ## Next steps
 
-1. Write `Logic/DebugReport.cs` and the step mode in `FightFlow`, with EditMode tests.
+1. Rerun EditMode and PlayMode (README's Unity client commands, editor closed) until both are green.
+2. Mac build, then a smoke run with `-labDebug` on `reports/winning-line-tech.json`; look at the screenshots.
+3. Commit, push, comment `@codex review`, answer findings.
+4. Ask the owner to play it (backtick, step mode, a saved fight paused and stepped) before `gh pr ready`.
 
 ## Decisions
 

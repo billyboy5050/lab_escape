@@ -221,11 +221,13 @@ The same names are used on both sides, with C# capitalisation: `step` is `Engine
 
 Needs Unity 6000.3.28f1 (6.3 LTS), with Windows Build Support (Mono) for the Windows build and Web Build Support for the web build. In Unity Hub, Installs, Install Editor, 6.3 LTS, and tick both modules; a Mac editor builds for the Mac with no module. In Unity Hub choose Add, pick the `unity` folder and open it, then press Play: every scene starts the game. Pick a loadout, and the fight begins.
 
-The keys are the web game's. The number keys, `-` and `=` pick an action, **E** or Enter ends the turn, **Z** undoes a move, **Esc** cancels, **Space** skips the animation, **F** changes the speed, **I** shows or hides intents, **L** opens the intercom log, **M** mutes and unmutes (the game remembers), and **Tab** switches the grapple's mode. The mouse wheel zooms, and when zoomed in the right or middle button, **W A S D** or the arrow keys pan.
+The keys are the web game's. The number keys, `-` and `=` pick an action, **E** or Enter ends the turn, **Z** undoes a move, **Esc** cancels, **Space** skips the animation, **F** changes the speed, **I** shows or hides intents, **L** opens the intercom log, **M** mutes and unmutes (the game remembers), **Tab** switches the grapple's mode, and **`** opens the debug overlay. The mouse wheel zooms, and when zoomed in the right or middle button, **W A S D** or the arrow keys pan.
 
 A fight opens with the lights striking, the room's name and the first wave falling in. **Space** skips that like any other animation.
 
-Every finished fight is saved for the playtest report, and the start screen offers recent ones to watch again: see [Telemetry and replays](#telemetry-and-replays).
+Every finished fight is saved for the playtest report, and the start screen offers recent ones to watch again: see [Telemetry and replays](#telemetry-and-replays). While one plays back, **P** pauses it between commands and plays it on, and **N** plays its next command while it is paused.
+
+The debug overlay (**`**) is a column on the left of the board. It gives the engine version and content hash, the hidden wave timer (the round, the waves spawned, when the next arrives and every wave's units and tiles), each hazard's state and its last decision with the step of the value rule that took it, the Flamer's scored options while you can act, and how many triggers the chain rule has stopped. On the board it puts each unit's ID in its tag, a dashed square and the wave's number on each spawn tile of a wave still to come, each hazard's state on its tiles, and the Flamer's score for each place and facing it weighed; its buttons turn each of these off, and Log adds the web client's debug lines to the combat log. Pause after each action turns on step mode: every action's animation stops at its end until **N** shows the next, or **Shift+N** runs on to the last before the next phase. With a saved fight playing back, its pause and step are there too. Closing the overlay turns all of it off, step mode included. It does not yet set HP or AP, spawn a unit, force a wave or restart the fight, as the web client's does (see the [roadmap](docs/roadmap.md)).
 
 The board's edges are lettered A to H and numbered 1 to 8, as the log names tiles. Point at a unit, a tile or an action button and the Scanner describes it; for an action that is its rule and, if it cannot be used now, why.
 
@@ -247,7 +249,7 @@ $U -batchmode -projectPath unity -runTests -testPlatform PlayMode -testResults /
 $U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Builds.Mac
 ```
 
-The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`. The fight's telemetry goes to `telemetry/` in that folder, never among a playtest's fights, and it uses up no tester's attempt number. A build started while the Mac's display is asleep waits for it before it draws anything, so a smoke run started then never finishes; add `-batchmode` to check its telemetry without screenshots.
+The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`; add `-labDebug` to take them with the debug overlay open. The fight's telemetry goes to `telemetry/` in that folder, never among a playtest's fights, and it uses up no tester's attempt number. A build started while the Mac's display is asleep waits for it before it draws anything, so a smoke run started then never finishes; add `-batchmode` to check its telemetry without screenshots.
 
 A still cannot show whether a motion has weight. To look at an animation, add `-labFilm 0,2,8` to that command: it films what follows those commands of the replay (0 is the fight's opening) and skips the rest. The game then advances a sixtieth of a second for each frame it draws, and every frame is saved at half size under `film/` in the output folder, with a `cues.txt` that says which cue and which sound played on which frame, and how loud the output was. Add `-labNoSystemFonts` to see the game as the web build draws it, without the system faces it takes the web client's type from.
 
@@ -271,7 +273,7 @@ It lands in `unity/Builds/Web/`. Its files are gzip-compressed, so it has to com
 
 | Folder | What it holds |
 | --- | --- |
-| `unity/Assets/Scripts/Logic` | No Unity code: the animation queue (`FightFlow`), the staging that lays a frame's events out in time (`Staging`), the board's clock (`BoardClock`), targeting (`ActionModel`), log text (`EventFormatter`), and which cue makes which sound (`SoundCues`) and the synth that makes it (`Synth`) |
+| `unity/Assets/Scripts/Logic` | No Unity code: the animation queue and its step mode (`FightFlow`), the staging that lays a frame's events out in time (`Staging`), the board's clock (`BoardClock`), targeting (`ActionModel`), log text (`EventFormatter`), the debug overlay's text (`DebugReport`), and which cue makes which sound (`SoundCues`) and the synth that makes it (`Synth`) |
 | `unity/Assets/Scripts/Board` | The camera, room, unit models, overlays, effects and sound player, all built from code. `Feel.cs` holds every number that gives a blow its weight |
 | `unity/Assets/Scripts/Hud` | Fills in the interface, the tags and coordinates anchored to the board, and the web client's faces from the system (`Fonts`) |
 | `unity/Assets/Scripts/FightDirector.cs` | Reads input and ties the rest together |
