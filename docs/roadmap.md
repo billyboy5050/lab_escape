@@ -34,7 +34,14 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M13: Unity parity, retire the web client.**
+1. **M13: Unity parity, retire the web client.** One branch for each part, in this order. The phase plan puts M13's effort into what Stage B builds on, telemetry, the debug overlay, hot reload and the three builds, and the screens only go as far as M15 needs, because M15 rebuilds that flow around a run ([phase plan](phase-2.md#milestones)).
+   1. **Telemetry and replays.** Save each fight's replay, summary and event stream from the Unity client (`core/Core/Telemetry` has them), as downloads in the web build, and load a replay from the interface.
+   2. **Debug overlay and step mode,** as the web client's backtick overlay.
+   3. **Content hot reload.** Reload `content/` while the game runs, reject invalid content and keep the old values (CLAUDE.md, invariant 3).
+   4. **Screens, as far as they work:** title, briefing and result screens, and the loadout screen as the Sandbox-mode picker.
+   5. **Shortcuts and settings:** the web client's remaining keys, modified keys left to the system, and the reduced-motion setting (Smaller items).
+   6. **The three builds:** the Windows build run on a Windows PC, and the web build's symbols, faces, size and preview speed (Smaller items).
+   7. **Retire the web client.** The owner is asked first ([phase plan](phase-2.md#what-the-owner-has-authorised)); then the TypeScript client goes, with the hooks, CI and rules-sheet changes under Smaller items. "Unity tests in CI" (Decisions waiting on the owner) should be settled by then.
 
 Stages B to D follow: game systems, then one wing shown to testers, then the other two wings and the light meta.
 
