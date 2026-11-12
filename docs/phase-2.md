@@ -167,7 +167,7 @@ Each is one branch and pull request. Sizes are relative effort.
 | M10 | C# simulator and CI | Same seeds reproduce the committed reports; C# tests run inside the existing `check` job | M |
 | M11 | Rooms as data, any size | Armory plays identically from the new room model; rooms of other sizes load and play headless | M |
 | M12 | Unity fight in greybox | A full Armory fight plays on the isometric camera with previews, intents and HUD. **Owner checkpoint:** it feels at least as good as the web version | L |
-| M13 | Unity parity, retire the web client | Debug overlay, telemetry, sound, shortcuts, content hot reload; working greybox versions of the title, briefing, loadout and result screens; Mac, Windows and web builds run; preview speed acceptable on web | L |
+| M13 | Unity parity, retire the web client | Debug overlay, telemetry, shortcuts, content hot reload (sound was ported early, on 2026-11-12); working greybox versions of the title, briefing, loadout and result screens; Mac, Windows and web builds run; preview speed acceptable on web | L |
 | | **Stage B: game systems** | | |
 | M14 | Room shapes: halls, hallways, big hazards | One room of each shape plays and stays readable; `zone` and `beam` have tests | L |
 | M15 | Run skeleton with events | A 3-room run plays, events grant its upgrades, it resumes after a restart; same seed and choices give the same run | L |

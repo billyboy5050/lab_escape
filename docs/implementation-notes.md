@@ -109,13 +109,14 @@ Where it differs from the web client on purpose:
 - **A fight has an entrance.** The lights strike, the room's name is set down, the camera pulls back from the player and the first wave falls in. Space skips it.
 - **The log follows the screen.** A line is written when its event is seen, so the log never reports a hit before the shot is fired. Watched or skipped, a fight leaves the same log.
 - **One dark theme,** in the web client's dark colours.
+- **Each sound plays on its cue.** The web client plays a frame's sounds as the frame starts; here a shot is heard as it leaves and its hit as it lands. See [the fight's presentation](#the-fights-presentation).
 - **The buttons take no keyboard focus,** so Space and Enter always mean skip and end turn. The web client's focus rules in `src/client/actionKeys.ts` have nothing to act on here.
 
-Not ported yet, and left for M13 by the milestone table: sound, the title, briefing and result screens, the debug overlay and step mode, saving telemetry, replay loading from the interface and content hot reload. The start screen is a plain preset picker and the loadout screen does not exist yet.
+Not ported yet, and left for M13 by the milestone table: the title, briefing and result screens, the debug overlay and step mode, saving telemetry, replay loading from the interface and content hot reload. The start screen is a plain preset picker and the loadout screen does not exist yet.
 
 The editor reads `content/` directly. A player cannot, so `ContentBuildStep` copies the files into `Assets/Resources/Content` before each build; that copy is ignored by git.
 
-**The first web build (2026-11-09).** The phase plan names download size and preview speed on the web as risks to check at M13, so the greybox fight was built for the web early. It built in 98 s and is an 11.7 MB download: 8.9 MB of engine and game code and 2.8 MB of data, both gzip-compressed. In a Chromium browser on a 10-core Mac the fight played from the preset picker through an enemy phase, with the mouse and the keys. While an action was selected and its targets hovered, frames stayed at about 8 ms, and none of 370 took longer than 13 ms, so previews are not slow at the Armory's size. One fault showed: the arrow in `Sidearm → E2` and the dash in `1–9` were blank, because the web player has no system font to fall back on (see the [roadmap](roadmap.md#smaller-items)). The size is before any art or sound, and the project still lists every built-in module, physics included.
+**The first web build (2026-11-09).** The phase plan names download size and preview speed on the web as risks to check at M13, so the greybox fight was built for the web early. It built in 98 s and is an 11.7 MB download: 8.9 MB of engine and game code and 2.8 MB of data, both gzip-compressed. In a Chromium browser on a 10-core Mac the fight played from the preset picker through an enemy phase, with the mouse and the keys. While an action was selected and its targets hovered, frames stayed at about 8 ms, and none of 370 took longer than 13 ms, so previews are not slow at the Armory's size. One fault showed: the arrow in `Sidearm → E2` and the dash in `1–9` were blank, because the web player has no system font to fall back on (see the [roadmap](roadmap.md#smaller-items)). For the same reason the web build keeps Unity's default face where the Mac and Windows builds take the web client's (see [the fight's presentation](#the-fights-presentation)). The size is before any art or sound, and the project still lists every built-in module, physics included.
 
 The room is built from `RoomDef`, so other rooms should draw without changes, but only the Armory has been looked at. The two far walls follow the room's bounding rectangle, so a non-rectangular room will need its own edges at M14.
 
@@ -146,8 +147,20 @@ Every number that sets how this feels is in `Feel.cs`. None of them is a rule, a
 
 Not done here:
 
-- **Sound.** It is the other half of weight, and M13 ports it. See the [roadmap](roadmap.md#smaller-items).
 - **A reduced-motion setting.** The web client has one. See the [roadmap](roadmap.md#smaller-items).
+
+### The fight's presentation
+
+On 2026-11-12, ahead of the M12 checkpoint, the owner asked for the quick fixes that would do most for the Unity fight's presentation, and chose to bring sound forward from M13. Most of them bring the web client's look of 2026-10-20 across. The project still keeps no image, font or sound files: all of it is made in code.
+
+- **Type.** `Fonts.cs` takes the web client's two faces from the system, as the web client does (`--display` and `--mono` in `src/client/styles.css`): DIN Condensed and Menlo on a Mac; on Windows the lists lead to Bahnschrift and Consolas, which no Windows build has checked yet. An element asks for one with the class `display` or `mono`, and gets the class `face` when it is found, so `Fight.uss` sizes it for that face. The web build has no system fonts and keeps Unity's default face and sizes; so does any build started with `-labNoSystemFonts`.
+- **Panels** have the web client's frame, made in code: an accent tick at two corners, a shade from top to bottom and an LED before the title. Key hints are keycaps.
+- **Coordinates.** Columns from A along the near-left edge and rows from 1 along the near-right edge, as `Tiles.Name` writes them and the web board shows them. The Scanner names a tile with no unit on it.
+- **The room** stands on a dark floor ruled in tiles that fades into the dark, lit by the web client's teal glow from behind, with the slab's shadow on it and hazard stripes on its two near lips (`RoomView`). The floor is shaded at the foot of the far walls and around every block, standing faces darken toward the floor, and the room's light pools in the middle of the floor (`Solid.shader`, set by `Lighting.SetRoom`). Effect lights are added on top, so a blast still lights the room.
+- **Flashes.** The alarm and a blow to the player light the board's edges from inside, as the web client's inset glows do, instead of a flat tint and a hard red border.
+- **The end card** gives the fight in four figures from its summary (`FightSession.Summary()`): rounds, HP left, kills and damage taken, with how much of it was your own fire.
+- **Rules on hover.** Tooltips show only in the editor, so pointing at an action button puts its rule in the Scanner instead, with any reason it cannot be used. An action that cannot be used stays clickable, so a click says why. A reason every action shares, such as "Not your turn", dims the bar instead of being written on each button.
+- **Sound.** `Synth` renders the web client's recipes, a swept tone and filtered noise, to samples at start-up, and `SoundPlayer` makes them clips. `SoundCues` says which cue makes which sound: as in the web client, except that each plays on its cue, a heavy landing or footfall thuds, a corpse is silent (its death is heard), and the end of the fight is heard when its card is shown, so a skipped fight still ends with it. A primed hazard is silent, as the spec asks. Sounds asked for in one frame play together at its end, at most four within 0.06 s, the most important first, and a sound already playing is not started again. A skip or an undo plays nothing. M mutes, and the choice is kept in `PlayerPrefs`. The filmed smoke run notes each sound and the output's level in `cues.txt`, which is how the timing was checked: a shot is heard on the frame it leaves and its hit on the frame it lands.
 
 ## What the simulator says (greedy bot, 1,000 seeds per preset)
 
