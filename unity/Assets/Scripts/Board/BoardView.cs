@@ -75,6 +75,7 @@ namespace LabEscape.Client
             _top = new OverlayLayer("Top overlay", Mats.TopOverlay, _root);
             Fx = new FxSystem(_root, tags) { UnitAt = UnitPosition };
             Lighting.Reset();
+            Lighting.SetRoom(_roomView.Centre, _roomView.Reach);
             _cam.Frame(_roomView.BoundsMin, _roomView.BoundsMax);
             Level(initial, true);
         }

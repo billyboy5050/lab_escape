@@ -15,6 +15,7 @@ namespace LabEscape.Client
         private static readonly int PosId = Shader.PropertyToID("_LabLightPos");
         private static readonly int ColId = Shader.PropertyToID("_LabLightCol");
         private static readonly int AmbientId = Shader.PropertyToID("_LabAmbient");
+        private static readonly int RoomId = Shader.PropertyToID("_LabRoom");
         private static readonly Vector4[] Pos = new Vector4[MaxPoints];
         private static readonly Vector4[] Col = new Vector4[MaxPoints];
 
@@ -23,7 +24,14 @@ namespace LabEscape.Client
         {
             SetAmbient(Color.white);
             SetPoints(null);
+            SetRoom(Vector3.zero, 0f);
         }
+
+        /// <summary>
+        /// Where the room's light pools: brightest in the middle of the floor, falling off toward the walls as under one lamp.
+        /// A reach of 0 turns it off.
+        /// </summary>
+        public static void SetRoom(Vector3 centre, float reach) => Shader.SetGlobalVector(RoomId, new Vector4(centre.x, centre.z, reach, 0f));
 
         public static void SetAmbient(Color c) => Shader.SetGlobalColor(AmbientId, c);
 

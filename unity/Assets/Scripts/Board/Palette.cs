@@ -86,6 +86,7 @@ namespace LabEscape.Client
         private static Material? _solid;
         private static Material? _fade;
         private static Material? _floor;
+        private static Material? _ground;
         private static Material? _top;
         private static Material? _fx;
 
@@ -100,6 +101,9 @@ namespace LabEscape.Client
 
         /// <summary>The same look, drawn after everything opaque: faded walls and preview ghosts, which units must show through.</summary>
         public static Material SolidFade => _fade ??= new Material(Find("LabEscape/Solid")) { renderQueue = 3000 };
+
+        /// <summary>What the room stands on, and the shade at the foot of its walls: drawn before anything else on the floor.</summary>
+        public static Material Ground => _ground ??= Overlay(2850, UnityEngine.Rendering.CompareFunction.LessEqual, UnityEngine.Rendering.BlendMode.SrcAlpha);
 
         /// <summary>On the floor: hidden by anything standing in front of it. Drawn before faded walls, so they tint it.</summary>
         public static Material FloorOverlay => _floor ??= Overlay(2900, UnityEngine.Rendering.CompareFunction.LessEqual, UnityEngine.Rendering.BlendMode.SrcAlpha);
