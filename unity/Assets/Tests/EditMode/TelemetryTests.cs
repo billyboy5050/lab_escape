@@ -110,6 +110,9 @@ namespace LabEscape.Client.Tests
             var raw = JObject.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-tech.json")));
             raw["contentHash"] = "0000";
             Assert.That(() => Telemetry.LoadReplay(C, raw.ToString()), Throws.TypeOf<ReplayMismatch>().With.Message.Contains("content"));
+            var illegal = JObject.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-tech.json")));
+            ((JArray)illegal["loadout"]!["abilities"]!)[0] = "no_such_ability";
+            Assert.That(() => Telemetry.LoadReplay(C, illegal.ToString()), Throws.TypeOf<ReplayMismatch>().With.Message.Contains("loadout"), "a loadout of the right shape that the game does not allow");
             Assert.That(WinningLine("alien").Commands.Count, Is.GreaterThan(0));
         }
 

@@ -55,7 +55,6 @@ namespace LabEscape.Client
         private Loadout? _loadout;
         private readonly BoardClock _clock = new BoardClock();
         private bool _finalFrame;
-        private readonly IPrefs _prefs = new PlayerPrefsStore();
         private string? _tester;
         /// <summary>The saved fight being played back, and the next of its commands to play; null in a fight of the player's own.</summary>
         private FightRecord? _replay;
@@ -63,6 +62,8 @@ namespace LabEscape.Client
         private float _replayWait;
         /// <summary>When the fight ended, for the names of the web build's downloads.</summary>
         private double _endedAt;
+        /// <summary>Counts fights started, so a ?replay= that arrives after the player has started one is dropped.</summary>
+        private int _starts;
 
         /// <summary>A replay plays its next command this long after the board is still, as the web client's does.</summary>
         private const float ReplayGap = 0.12f;
@@ -126,7 +127,8 @@ namespace LabEscape.Client
                 _hud.ShowContentError(e.Message);
                 return;
             }
-            _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), _prefs);
+            SmokeRun.IsolateTelemetryIfAsked();
+            _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
             ShowStartScreen();
             // A saved fight to play back at once: a file on the command line, or ?replay= in the web build.
             var file = Telemetry.Arg(Environment.GetCommandLineArgs(), "-labReplay");
@@ -213,12 +215,20 @@ namespace LabEscape.Client
             }
             // "Fight again" after a replay starts its loadout as a fight of the player's own.
             _preset = _c.Presets.FirstOrDefault(p => p.Id == rec.Meta?.Preset);
-            StartFight(rec.Loadout, rec.Settings, rec.Meta?.Preset, rec);
+            try
+            {
+                StartFight(rec.Loadout, rec.Settings, rec.Meta?.Preset, rec);
+            }
+            catch (Exception e)
+            {
+                // A fight that cannot start leaves no fight behind and the start screen up, saying why.
+                RefuseReplay(from, e.Message);
+            }
         }
 
         private void RefuseReplay(string from, string why)
         {
-            if (Flow != null) ShowStartScreen();
+            ShowStartScreen();
             _hud.ShowStartMessage($"Could not play back {ReplayName(from)}: {why}");
         }
 
@@ -237,6 +247,7 @@ namespace LabEscape.Client
         /// <summary>The web build's ?replay=: a replay file fetched from beside the page.</summary>
         private IEnumerator FetchReplay(string path)
         {
+            var starts = _starts;
             Uri uri;
             try
             {
@@ -250,6 +261,8 @@ namespace LabEscape.Client
             using (var req = UnityWebRequest.Get(uri))
             {
                 yield return req.SendWebRequest();
+                // The player started a fight while it loaded: that fight stands, and the replay is dropped.
+                if (_starts != starts) yield break;
                 if (req.result != UnityWebRequest.Result.Success) RefuseReplay(path, req.error);
                 else PlayReplayText(req.downloadHandler.text, path);
             }
@@ -286,6 +299,7 @@ namespace LabEscape.Client
                 if (presetId != null) meta.Preset = presetId;
                 if (_tester != null) meta.Tester = _tester;
             }
+            _starts++;
             _replay = replay;
             _replayNext = 0;
             _replayWait = ReplayGap;
@@ -692,7 +706,7 @@ namespace LabEscape.Client
         {
             _endedAt = TelemetrySink.NowMs();
             if (_replay != null) return (null, "A saved fight played back: nothing new was saved.");
-            if (session.Record.Meta != null) Telemetry.AssignAttempt(session.Record.Meta, _prefs);
+            if (session.Record.Meta != null) Telemetry.AssignAttempt(session.Record.Meta, TelemetrySink.Prefs);
             try
             {
                 return (TelemetrySink.Save(session, _endedAt), null);

@@ -20,12 +20,13 @@ namespace LabEscape.Client.Tests
         public void SendTelemetryAside()
         {
             _telemetry = Path.Combine(Path.GetTempPath(), "lab-escape-telemetry-" + System.Guid.NewGuid().ToString("N"));
-            TelemetrySink.RootOverride = _telemetry;
+            TelemetrySink.Isolate(_telemetry);
         }
 
         [TearDown]
         public void ClearTelemetry()
         {
+            TelemetrySink.Reset();
             if (Directory.Exists(_telemetry)) Directory.Delete(_telemetry, true);
         }
 
@@ -88,6 +89,7 @@ namespace LabEscape.Client.Tests
             var d = FightDirector.Instance!;
             d.ScriptedPointer = true;
             var record = WinningLine(d, "hybrid");
+            var countsBefore = PlayerPrefs.GetString(Telemetry.AttemptsKey, "<none>");
             d.StartFight(record.Loadout, record.Settings, "hybrid");
             d.Flow!.SetSpeed(FightSpeed.Fast);
             var n = 0;
@@ -119,6 +121,8 @@ namespace LabEscape.Client.Tests
                 summary.Kills.Values.Sum().ToString(),
                 summary.PlayerDamageTaken.Total.ToString(),
             }));
+
+            Assert.That(PlayerPrefs.GetString(Telemetry.AttemptsKey, "<none>"), Is.EqualTo(countsBefore), "a scripted fight uses up no playtest attempt");
 
             // The fight's telemetry is saved: the web client's three files, and a replay of what was played.
             var saved = SavedFolders();

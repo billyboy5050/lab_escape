@@ -247,7 +247,7 @@ $U -batchmode -projectPath unity -runTests -testPlatform PlayMode -testResults /
 $U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Builds.Mac
 ```
 
-The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`. The fight's telemetry goes to `telemetry/` in that folder, never among a playtest's fights. A build started while the Mac's display is asleep waits for it before it draws anything, so a smoke run started then never finishes; add `-batchmode` to check its telemetry without screenshots.
+The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`. The fight's telemetry goes to `telemetry/` in that folder, never among a playtest's fights, and it uses up no tester's attempt number. A build started while the Mac's display is asleep waits for it before it draws anything, so a smoke run started then never finishes; add `-batchmode` to check its telemetry without screenshots.
 
 A still cannot show whether a motion has weight. To look at an animation, add `-labFilm 0,2,8` to that command: it films what follows those commands of the replay (0 is the fight's opening) and skips the rest. The game then advances a sixtieth of a second for each frame it draws, and every frame is saved at half size under `film/` in the output folder, with a `cues.txt` that says which cue and which sound played on which frame, and how loud the output was. Add `-labNoSystemFonts` to see the game as the web build draws it, without the system faces it takes the web client's type from.
 

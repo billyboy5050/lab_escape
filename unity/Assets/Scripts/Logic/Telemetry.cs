@@ -15,6 +15,14 @@ namespace LabEscape.Client
         void Set(string key, string value);
     }
 
+    /// <summary>A store that forgets everything when the game closes: for scripted fights, which must not count a playtest's attempts.</summary>
+    public sealed class MemoryPrefs : IPrefs
+    {
+        private readonly Dictionary<string, string> _values = new Dictionary<string, string>(StringComparer.Ordinal);
+        public string? Get(string key) => _values.TryGetValue(key, out var v) ? v : null;
+        public void Set(string key, string value) => _values[key] = value;
+    }
+
     /// <summary>
     /// A fight's telemetry, as the web client keeps it (src/client/telemetry.ts): the replay, the summary and the event stream,
     /// in a folder named for the time, the tester and the outcome, so the playtest report (`npm run sim -- telemetry`) reads
@@ -102,8 +110,10 @@ namespace LabEscape.Client
         }
 
         /// <summary>
-        /// A replay from untrusted text: it must parse, and be a whole replay of this engine version and this content, or it is
-        /// refused with the reason, which the start screen shows.
+        /// A replay from untrusted text: it must parse, be a whole replay of this engine version and this content, and have a
+        /// loadout this game allows, or it is refused with the reason, which the start screen shows. The loadout is checked here
+        /// because Records.CheckCompatible checks only its shape, and a fight that cannot start must be refused before the start
+        /// screen is left.
         /// </summary>
         public static FightRecord LoadReplay(Content c, string text)
         {
@@ -116,7 +126,10 @@ namespace LabEscape.Client
             {
                 throw new ReplayMismatch($"The file is not JSON: {e.Message}");
             }
-            return Records.CheckCompatible(c, raw);
+            var record = Records.CheckCompatible(c, raw);
+            var problems = Engine.LoadoutProblems(c, record.Loadout);
+            if (problems.Count > 0) throw new ReplayMismatch("The replay's loadout is not one this game allows: " + string.Join("; ", problems));
+            return record;
         }
 
         /// <summary>A saved fight on disk: its folder, and a label for the start screen.</summary>

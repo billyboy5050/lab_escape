@@ -29,6 +29,18 @@ namespace LabEscape.Client
         private int _frame;
         private StreamWriter? _cues;
 
+        /// <summary>
+        /// Called before the director chooses a tester: a smoke run's telemetry goes beside its screenshots and its tester and
+        /// attempt counts stay in memory, never among a playtest's fights or numbers.
+        /// </summary>
+        public static void IsolateTelemetryIfAsked()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var at = Array.IndexOf(args, "-labSmoke");
+            if (at < 0 || at + 2 >= args.Length) return;
+            TelemetrySink.Isolate(Path.Combine(args[at + 2], "telemetry"));
+        }
+
         public static void AttachIfAsked(FightDirector d)
         {
             var args = Environment.GetCommandLineArgs();
@@ -39,8 +51,6 @@ namespace LabEscape.Client
             run._record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(args[at + 1])));
             run._out = args[at + 2];
             Directory.CreateDirectory(run._out);
-            // The scripted fight's telemetry goes beside its screenshots, never among a playtest's fights.
-            TelemetrySink.RootOverride = Path.Combine(run._out, "telemetry");
             var film = Array.IndexOf(args, "-labFilm");
             if (film < 0 || film + 1 >= args.Length) return;
             run._film = new HashSet<int>();

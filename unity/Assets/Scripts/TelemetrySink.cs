@@ -29,6 +29,26 @@ namespace LabEscape.Client
         /// <summary>Set by the tests and the smoke run, so a scripted fight never lands among a playtest's fights.</summary>
         public static string? RootOverride;
 
+        /// <summary>Where the tester and the attempt counts are kept: PlayerPrefs, or memory for a scripted run.</summary>
+        public static IPrefs Prefs = new PlayerPrefsStore();
+
+        /// <summary>
+        /// Keeps a scripted run's fights apart from a playtest's: their files go under `root`, and their tester and attempt
+        /// counts live in memory, so a smoke run or a test never uses up a tester's attempt numbers.
+        /// </summary>
+        public static void Isolate(string root)
+        {
+            RootOverride = root;
+            Prefs = new MemoryPrefs();
+        }
+
+        /// <summary>Back to the real folder and PlayerPrefs.</summary>
+        public static void Reset()
+        {
+            RootOverride = null;
+            Prefs = new PlayerPrefsStore();
+        }
+
         public static bool HasDisk => RootOverride != null || Application.platform != RuntimePlatform.WebGLPlayer;
 
         /// <summary>The folder that holds one folder per saved fight, or null in the web build.</summary>
