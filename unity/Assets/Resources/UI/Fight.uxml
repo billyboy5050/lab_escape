@@ -10,37 +10,37 @@
             <ui:VisualElement class="column-main" picking-mode="Ignore">
                 <ui:VisualElement name="status" class="panel status">
                     <ui:VisualElement class="cell">
-                        <ui:Label class="cell-label" text="HP" />
+                        <ui:Label class="cell-label display" text="HP" />
                         <ui:VisualElement name="hp-cells" class="cells" />
-                        <ui:Label name="hp-text" class="value" />
+                        <ui:Label name="hp-text" class="value mono" />
                         <ui:VisualElement name="hp-pills" class="pills" />
                     </ui:VisualElement>
                     <ui:VisualElement class="cell">
-                        <ui:Label class="cell-label" text="AP" />
+                        <ui:Label class="cell-label display" text="AP" />
                         <ui:VisualElement name="ap-cells" class="cells" />
                     </ui:VisualElement>
                     <ui:VisualElement class="cell">
-                        <ui:Label class="cell-label" text="Move" />
+                        <ui:Label class="cell-label display" text="MOVE" />
                         <ui:VisualElement name="move-cells" class="cells" />
                     </ui:VisualElement>
                     <ui:VisualElement class="cell">
-                        <ui:Label class="cell-label" text="Round" />
-                        <ui:Label name="round" class="value" />
+                        <ui:Label class="cell-label display" text="ROUND" />
+                        <ui:Label name="round" class="value mono" />
                     </ui:VisualElement>
                     <ui:VisualElement class="cell">
-                        <ui:Label class="cell-label" text="Phase" />
-                        <ui:Label name="phase" class="value small" />
+                        <ui:Label class="cell-label display" text="PHASE" />
+                        <ui:Label name="phase" class="value small display" />
                     </ui:VisualElement>
-                    <ui:Label name="incoming" class="incoming" />
+                    <ui:Label name="incoming" class="incoming display" />
                 </ui:VisualElement>
 
                 <ui:VisualElement name="board-area" class="board-area" picking-mode="Ignore">
-                    <ui:Label name="banner" class="banner hidden" picking-mode="Ignore" />
-                    <ui:Label name="alert" class="banner alert hidden" picking-mode="Ignore" />
+                    <ui:Label name="banner" class="banner display hidden" picking-mode="Ignore" />
+                    <ui:Label name="alert" class="banner alert display hidden" picking-mode="Ignore" />
                     <ui:VisualElement name="opener" class="opener hidden" picking-mode="Ignore">
-                        <ui:Label name="opener-title" class="opener-title" picking-mode="Ignore" />
+                        <ui:Label name="opener-title" class="opener-title display" picking-mode="Ignore" />
                         <ui:VisualElement class="opener-rule" picking-mode="Ignore" />
-                        <ui:Label name="opener-sub" class="opener-sub" picking-mode="Ignore" />
+                        <ui:Label name="opener-sub" class="opener-sub display" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
 
@@ -51,7 +51,7 @@
                         <ui:Button name="end-turn" class="btn primary" text="End turn [E]" focusable="false" />
                         <ui:Button name="skip" class="btn hidden" text="Skip [Space]" focusable="false" />
                         <ui:Label name="hint" class="hint" />
-                        <ui:Label class="control-label" text="Speed [F]" />
+                        <ui:Label class="control-label display" text="SPEED [F]" />
                         <ui:VisualElement class="seg">
                             <ui:Button name="speed-1" class="seg-btn" text="1x" focusable="false" />
                             <ui:Button name="speed-2" class="seg-btn" text="2x" focusable="false" />
@@ -65,24 +65,24 @@
             <ui:VisualElement class="column-side">
                 <ui:VisualElement class="panel">
                     <ui:VisualElement class="panel-head">
-                        <ui:Label class="panel-title" text="Intercom" />
+                        <ui:Label class="panel-title display" text="INTERCOM" />
                         <ui:Button name="open-log" class="btn small" text="Log [L]" focusable="false" />
                     </ui:VisualElement>
-                    <ui:Label name="intercom" class="intercom-text" />
+                    <ui:Label name="intercom" class="intercom-text mono" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel">
-                    <ui:Label name="info-title" class="panel-title" text="Scanner" />
+                    <ui:Label name="info-title" class="panel-title display" text="SCANNER" />
                     <ui:VisualElement name="info-body" class="info-body" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel">
                     <ui:VisualElement class="panel-head">
-                        <ui:Label class="panel-title" text="Minions" />
-                        <ui:Label name="minion-count" class="faint" />
+                        <ui:Label class="panel-title display" text="MINIONS" />
+                        <ui:Label name="minion-count" class="faint mono" />
                     </ui:VisualElement>
                     <ui:VisualElement name="minions" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel log-panel">
-                    <ui:Label class="panel-title" text="Combat log" />
+                    <ui:Label class="panel-title display" text="COMBAT LOG" />
                     <ui:ScrollView name="log" class="log" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -92,7 +92,7 @@
 
         <ui:VisualElement name="start" class="fill overlay">
             <ui:VisualElement class="card">
-                <ui:Label name="start-title" class="card-title" />
+                <ui:Label name="start-title" class="card-title display" />
                 <ui:Label class="muted" text="Choose a loadout. Press its number, or click it." />
                 <ui:VisualElement name="presets" class="presets" />
                 <ui:Label name="start-error" class="warn hidden" />
@@ -101,7 +101,7 @@
 
         <ui:VisualElement name="end" class="fill overlay hidden" picking-mode="Ignore">
             <ui:VisualElement name="end-card" class="card">
-                <ui:Label name="end-title" class="card-title" />
+                <ui:Label name="end-title" class="card-title display" />
                 <ui:Label name="end-cause" class="muted" />
                 <ui:VisualElement class="row">
                     <ui:Button name="again" class="btn primary" text="Fight again [R]" focusable="false" />
@@ -113,7 +113,7 @@
         <ui:VisualElement name="log-modal" class="fill overlay hidden">
             <ui:VisualElement class="card wide">
                 <ui:VisualElement class="panel-head">
-                    <ui:Label class="card-title small" text="Transmission log" />
+                    <ui:Label class="card-title small display" text="TRANSMISSION LOG" />
                     <ui:Button name="close-log" class="btn small" text="Close [Esc]" focusable="false" />
                 </ui:VisualElement>
                 <ui:ScrollView name="log-lines" class="modal-lines" />

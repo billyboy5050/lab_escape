@@ -95,12 +95,14 @@
     justify-content: flex-start;
 }
 .action-btn:hover { background-color: var(--panel-3); }
+/* A button centres its text, and labels inherit that; the action buttons' labels sit top left. */
+.action-btn { -unity-text-align: upper-left; }
 .action-btn.utility { border-left-color: var(--ink-3); border-left-width: 3px; }
 .action-btn.tech { border-left-color: #3d9be0; border-left-width: 3px; }
 .action-btn.alien { border-left-color: #1fc28a; border-left-width: 3px; }
 .action-btn.selected { background-color: #16413c; border-color: var(--move); }
 .action-btn:disabled { opacity: 0.55; }
-.ab-top { flex-direction: row; justify-content: space-between; width: 100%; flex-shrink: 0; }
+.ab-top { flex-direction: row; justify-content: space-between; align-items: flex-start; width: 100%; flex-shrink: 0; }
 .ab-name { font-size: 13px; -unity-font-style: bold; padding: 0; white-space: normal; flex-shrink: 1; }
 .ab-key { font-size: 11px; color: var(--ink-3); padding: 0; margin-left: 4px; }
 .ab-cost { font-size: 10px; color: var(--amber); padding: 0; white-space: normal; flex-shrink: 0; }
@@ -285,3 +287,21 @@
 .incoming-chip.faint { opacity: 0.6; }
 .dies-chip { position: absolute; left: 12px; bottom: 16px; font-size: 18px; -unity-font-style: bold; color: var(--danger); padding: 0; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
 .float-text { position: absolute; -unity-font-style: bold; -unity-text-outline-width: 1.5px; -unity-text-outline-color: #0b0f12; padding: 0; white-space: nowrap; }
+
+/* The web client's faces, from the system (Fonts.cs). An element with the face it asked for has the class `face`: the condensed
+   display face is set larger, and its spacing opened up, as the web client sets it. Without it, the sizes above stand. */
+.panel-title.face { font-size: 17px; letter-spacing: 2px; }
+.cell-label.face { font-size: 15px; letter-spacing: 1px; }
+.value.small.face { font-size: 19px; letter-spacing: 1px; }
+.incoming.face { font-size: 18px; letter-spacing: 1px; }
+.banner.face { font-size: 36px; letter-spacing: 5px; padding: 6px 44px 3px 44px; }
+.opener-title.face { font-size: 78px; letter-spacing: 10px; }
+.opener-sub.face { font-size: 25px; letter-spacing: 7px; }
+.card-title.face { font-size: 50px; letter-spacing: 4px; }
+.card-title.small.face { font-size: 26px; letter-spacing: 2px; }
+.ab-name.face { font-size: 16px; letter-spacing: 0.5px; }
+.preset-name.face { font-size: 25px; letter-spacing: 2px; }
+.control-label.face { font-size: 14px; letter-spacing: 1px; }
+.coord.face { font-size: 19px; }
+.log-line.face { font-size: 11px; }
+.intercom-text.face { font-size: 13px; }

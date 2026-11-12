@@ -28,10 +28,14 @@ namespace LabEscape.Client
 
         private static void AddClasses(VisualElement e, string classes)
         {
+            var face = false;
             foreach (var c in classes.Split(' '))
             {
-                if (c.Length > 0) e.AddToClassList(c);
+                if (c.Length == 0) continue;
+                e.AddToClassList(c);
+                face |= c == "display" || c == "mono";
             }
+            if (face) Fonts.Apply(e);
         }
 
         public static void Show(VisualElement e, bool on) => e.EnableInClassList("hidden", !on);
@@ -48,7 +52,7 @@ namespace LabEscape.Client
             public readonly VisualElement Feet = Ui.El("anchor");
             public readonly VisualElement Head = Ui.El("anchor");
             private readonly VisualElement _bar = Ui.El("hp-bar");
-            private readonly Label _hp = Ui.Text("", "hp-number");
+            private readonly Label _hp = Ui.Text("", "hp-number mono");
             private readonly VisualElement _row = Ui.El("head-row");
             private string _sig = "";
 
@@ -104,8 +108,8 @@ namespace LabEscape.Client
                 _row.Clear();
                 if (u.MaxAmmo.HasValue) _row.Add(Pips(u.MaxAmmo.Value, u.Ammo ?? 0, "ammo"));
                 if (u.MaxCharges.HasValue) _row.Add(Pips(u.MaxCharges.Value, u.Charges ?? 0, "charge"));
-                if (u.DroneState == DroneState.Returning) _row.Add(Ui.Text("RTN", "tag-chip"));
-                if (def.Armor > 0 || armor > 0) _row.Add(Ui.Text($"ARM {armor}", "tag-chip"));
+                if (u.DroneState == DroneState.Returning) _row.Add(Ui.Text("RTN", "tag-chip mono"));
+                if (def.Armor > 0 || armor > 0) _row.Add(Ui.Text($"ARM {armor}", "tag-chip mono"));
                 if (st.Poison != null) _row.Add(Status($"PSN {st.Poison.Remaining}", StatusId.Poison));
                 if (st.Parasite != null) _row.Add(Status($"PAR {st.Parasite.Remaining}", StatusId.Parasite));
                 if (st.Corrode != null) _row.Add(Status($"COR {st.Corrode.Stacks}", StatusId.Corrode));
@@ -122,7 +126,7 @@ namespace LabEscape.Client
 
             private static Label Status(string text, StatusId id)
             {
-                var l = Ui.Text(text, "tag-chip");
+                var l = Ui.Text(text, "tag-chip mono");
                 var col = Palette.StatusColor(id);
                 l.style.color = col;
                 l.style.borderTopColor = l.style.borderBottomColor = l.style.borderLeftColor = l.style.borderRightColor = col;
@@ -151,14 +155,14 @@ namespace LabEscape.Client
                 switch (o.Kind)
                 {
                     case ObjectKind.Egg:
-                        _row.Add(Ui.Text($"T{o.Timer}", "tag-chip"));
-                        _row.Add(Ui.Text($"{hp} HP", "tag-chip"));
+                        _row.Add(Ui.Text($"T{o.Timer}", "tag-chip mono"));
+                        _row.Add(Ui.Text($"{hp} HP", "tag-chip mono"));
                         break;
                     case ObjectKind.Corpse:
-                        _row.Add(Ui.Text($"{o.Decay}", "tag-chip"));
+                        _row.Add(Ui.Text($"{o.Decay}", "tag-chip mono"));
                         break;
                     case ObjectKind.Shield:
-                        _row.Add(Ui.Text($"{hp} HP", "tag-chip"));
+                        _row.Add(Ui.Text($"{hp} HP", "tag-chip mono"));
                         break;
                 }
             }
@@ -240,7 +244,7 @@ namespace LabEscape.Client
         /// </summary>
         public void Float(Vector3 world, string text, Color colour, int size, Vector3 dir, bool thrown)
         {
-            var l = Ui.Text(text, "float-text");
+            var l = Ui.Text(text, "float-text display");
             l.style.color = colour;
             l.style.fontSize = size;
             l.style.opacity = 0f;
@@ -381,7 +385,7 @@ namespace LabEscape.Client
                 var v = pair.Value;
                 var unit = v.Ref.Kind == EntityKind.Unit ? s.Units.FirstOrDefault(u => u.Id == v.Ref.Id) : null;
                 var pos = unit?.Pos ?? v.Pos;
-                var label = Ui.Text($"▼{v.Damage}{(v.Killed ? " KO" : "")}", faint ? "incoming-chip faint" : "incoming-chip");
+                var label = Ui.Text($"▼{v.Damage}{(v.Killed ? " KO" : "")}", faint ? "incoming-chip mono faint" : "incoming-chip mono");
                 AddChip(label, Iso.Tile(pos.X, pos.Y, 0.6f));
             }
             foreach (var it in rep.Intents.Where(i => i.DiesFirst))
@@ -395,11 +399,11 @@ namespace LabEscape.Client
             foreach (var h in pv.Hits)
             {
                 var row = Ui.El("badge-row");
-                if (h.Friendly) row.Add(Ui.Text("!", "badge friendly"));
-                if (h.Damage > 0 || h.Absorbed > 0) row.Add(Ui.Text(h.Damage > 0 ? $"-{h.Damage}" : "0", h.Damage > 0 ? "badge damage" : "badge none"));
-                if (h.Healed > 0) row.Add(Ui.Text($"+{h.Healed}", "badge heal"));
-                foreach (var st in h.Statuses) row.Add(Ui.Text(st == StatusId.Poison ? "+PSN" : st == StatusId.Parasite ? "+PAR" : st == StatusId.Corrode ? "+COR" : st == StatusId.Pinned ? "PIN" : "SLW", "badge status"));
-                if (h.Killed) row.Add(Ui.Text("KO", "badge ko"));
+                if (h.Friendly) row.Add(Ui.Text("!", "badge mono friendly"));
+                if (h.Damage > 0 || h.Absorbed > 0) row.Add(Ui.Text(h.Damage > 0 ? $"-{h.Damage}" : "0", h.Damage > 0 ? "badge mono damage" : "badge mono none"));
+                if (h.Healed > 0) row.Add(Ui.Text($"+{h.Healed}", "badge mono heal"));
+                foreach (var st in h.Statuses) row.Add(Ui.Text(st == StatusId.Poison ? "+PSN" : st == StatusId.Parasite ? "+PAR" : st == StatusId.Corrode ? "+COR" : st == StatusId.Pinned ? "PIN" : "SLW", "badge mono status"));
+                if (h.Killed) row.Add(Ui.Text("KO", "badge mono ko"));
                 if (row.childCount == 0) continue;
                 var pos = h.Ref.Kind == EntityKind.Unit ? pv.State?.Units.FirstOrDefault(u => u.Id == h.Ref.Id)?.Pos ?? h.Pos : h.Pos;
                 AddChip(row, Iso.Tile(pos.X, pos.Y, 1.02f));

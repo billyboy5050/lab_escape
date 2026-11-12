@@ -177,6 +177,7 @@ namespace LabEscape.Client
             _openerIn = new Entrance(_opener, 1.35f);
             _endIn = new Entrance(_endCard, 1.3f);
             _vignette.style.backgroundImage = new StyleBackground(Vignette());
+            Fonts.ApplyAll(_root);
 
             _undo = B("undo", () => UndoClicked?.Invoke());
             _endTurn = B("end-turn", () => EndTurnClicked?.Invoke());
@@ -244,7 +245,7 @@ namespace LabEscape.Client
                 var chosen = p;
                 var b = new Button(() => PresetClicked?.Invoke(chosen)) { focusable = false, text = "" };
                 b.AddToClassList("preset-btn");
-                b.Add(Ui.Text($"{i}  {p.Name}", "preset-name"));
+                b.Add(Ui.Text($"{i}  {p.Name.ToUpperInvariant()}", "preset-name display"));
                 b.Add(Ui.Text(string.Join(", ", p.Abilities.Select(a => c.Abilities[a].Name)), "preset-kit"));
                 _presets.Add(b);
                 i++;
@@ -282,7 +283,7 @@ namespace LabEscape.Client
         public void ShowEnd(Outcome o)
         {
             var win = o.Result == FightResult.Win;
-            _endTitle.text = win ? "Victory" : "Defeat";
+            _endTitle.text = win ? "VICTORY" : "DEFEAT";
             _endTitle.EnableInClassList("win", win);
             _endTitle.EnableInClassList("lose", !win);
             _endCause.text = o.Cause;
@@ -311,7 +312,7 @@ namespace LabEscape.Client
             Ui.Show(_logModal, open);
             if (!open) return;
             _logLines.Clear();
-            foreach (var l in s.Intercom.Log) _logLines.Add(Ui.Text($"R{l.Round:00} · “{l.Text}”", "modal-line"));
+            foreach (var l in s.Intercom.Log) _logLines.Add(Ui.Text($"R{l.Round:00} · “{l.Text}”", "modal-line mono"));
         }
 
         private static void FillCells(VisualElement row, int n, int max, string classes, int ghost = 0)
@@ -346,7 +347,7 @@ namespace LabEscape.Client
             FillCells(_apCells, s.Ap, c.Rules.Turn.Ap, "");
             FillCells(_moveCells, s.Movement, c.Rules.Turn.Movement, "");
             _round.text = s.Round.ToString("00");
-            _phase.text = PhaseName(s.Phase);
+            _phase.text = PhaseName(s.Phase).ToUpperInvariant();
             _incoming.text = !showIncoming ? "" : lethal ? "Ending the turn now is lethal" : incoming > 0 ? $"End turn now: −{incoming} HP" : "No incoming attacks";
             _incoming.EnableInClassList("bad", showIncoming && incoming > 0);
             _incoming.EnableInClassList("lethal", showIncoming && lethal);
@@ -390,8 +391,8 @@ namespace LabEscape.Client
                 b.EnableInClassList("selected", selected == st.Id);
                 b.SetEnabled(!disabled && st.Usable);
                 var top = Ui.El("ab-top");
-                top.Add(Ui.Text(st.Name, "ab-name"));
-                top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key"));
+                top.Add(Ui.Text(st.Name.ToUpperInvariant(), "ab-name display"));
+                top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key mono"));
                 b.Add(top);
                 b.Add(Ui.Text(!st.Usable && st.Reason != null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
                 _actionRow.Add(b);
@@ -428,7 +429,7 @@ namespace LabEscape.Client
             var sig = title + "\n" + string.Join("\n", lines.Select(l => l.Style + ":" + l.Text));
             if (sig == _infoSig) return;
             _infoSig = sig;
-            _infoTitle.text = title;
+            _infoTitle.text = title.ToUpperInvariant();
             _infoBody.Clear();
             foreach (var l in lines) _infoBody.Add(Ui.Text(l.Text, $"info-line {l.Style}"));
         }
@@ -448,7 +449,7 @@ namespace LabEscape.Client
                 var extra = m.Ammo.HasValue ? $"ammo {m.Ammo}" : m.Charges.HasValue ? (m.DroneState == DroneState.Deployed ? $"{m.Charges} chg" : Names.Of(m.DroneState!.Value)) : "";
                 var row = Ui.El("minion-row");
                 row.Add(Ui.Text($"{Words.UnitName(c, m.Def, m.Id)}  {where}", "info-line"));
-                row.Add(Ui.Text($"{m.Hp}/{m.MaxHp}  {extra}", "faint"));
+                row.Add(Ui.Text($"{m.Hp}/{m.MaxHp}  {extra}", "faint mono"));
                 _minions.Add(row);
             }
         }
@@ -458,7 +459,7 @@ namespace LabEscape.Client
             if (lines.Count <= 0 || (_logShown > 0 && lines[lines.Count - 1].Id == _logShown)) return;
             foreach (var l in lines.Where(x => x.Id > _logShown || _logShown == 0))
             {
-                _log.Add(Ui.Text(l.Text, $"log-line {KindClass(l.Kind)}"));
+                _log.Add(Ui.Text(l.Text, $"log-line mono {KindClass(l.Kind)}"));
             }
             _logShown = lines[lines.Count - 1].Id;
             while (_log.contentContainer.childCount > 300) _log.contentContainer.RemoveAt(0);
@@ -494,7 +495,7 @@ namespace LabEscape.Client
             }
             if (text == _bannerText) return;
             _bannerText = text;
-            _banner.text = text;
+            _banner.text = text.ToUpperInvariant();
             _banner.EnableInClassList("minion", text == "Minion phase");
             _banner.EnableInClassList("enemy", text == "Enemy phase");
             _banner.EnableInClassList("environment", text == "Environment");
@@ -503,7 +504,7 @@ namespace LabEscape.Client
 
         public void Alert(string text, float seconds)
         {
-            _alert.text = text;
+            _alert.text = text.ToUpperInvariant();
             _alertIn.Show();
             _alertIn.Hide(seconds);
         }
