@@ -111,7 +111,7 @@
 .action-btn.tech { border-left-color: #3d9be0; border-left-width: 3px; }
 .action-btn.alien { border-left-color: #1fc28a; border-left-width: 3px; }
 .action-btn.selected { background-color: #16413c; border-color: var(--move); }
-.action-btn:disabled { opacity: 0.55; }
+.action-btn:disabled, .action-btn.off { opacity: 0.55; }
 .ab-top { flex-direction: row; justify-content: space-between; align-items: flex-start; width: 100%; flex-shrink: 0; }
 .ab-name { font-size: 13px; -unity-font-style: bold; padding: 0; white-space: normal; flex-grow: 1; flex-shrink: 1; flex-basis: 0; -unity-text-align: upper-left; }
 .ab-key { font-size: 10px; -unity-text-align: middle-center; color: var(--ink-2); min-width: 15px; padding: 0 3px; margin: 1px 0 0 4px; border-width: 1px; border-bottom-width: 2px; border-radius: 3px; border-color: var(--line-2); background-color: var(--chip); }

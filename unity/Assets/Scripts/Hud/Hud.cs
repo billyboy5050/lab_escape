@@ -117,6 +117,8 @@ namespace LabEscape.Client
         public readonly VisualElement TagLayer;
 
         public event Action<string>? ActionClicked;
+        /// <summary>The pointer has come onto an action button (its id) or left one (null).</summary>
+        public event Action<string?>? ActionHovered;
         public event Action<string>? GrappleModeClicked;
         public event Action? UndoClicked, EndTurnClicked, SkipClicked, IntentsClicked, OpenLogClicked, CloseLogClicked, AgainClicked, ChangeClicked;
         public event Action<FightSpeed>? SpeedClicked;
@@ -458,21 +460,26 @@ namespace LabEscape.Client
             if (sig == _actionsSig) return;
             _actionsSig = sig;
             _actionRow.Clear();
+            // A reason every action shares, such as "Not your turn", is not written on each button: the bar dims instead.
+            var shared = statuses.Count > 0 && statuses.All(x => !x.Usable && x.Reason == statuses[0].Reason) ? statuses[0].Reason : null;
             for (var i = 0; i < statuses.Count; i++)
             {
                 var st = statuses[i];
                 var id = st.Id;
                 var kit = c.Abilities.TryGetValue(st.Id, out var def) ? def.Kit : "utility";
-                var b = new Button(() => ActionClicked?.Invoke(id)) { focusable = false, text = "", tooltip = st.Reason ?? st.Name };
+                // An action that cannot be used stays enabled, so hovering it can say why and clicking it says so too.
+                var b = new Button(() => ActionClicked?.Invoke(id)) { focusable = false, text = "" };
                 b.AddToClassList("action-btn");
                 b.AddToClassList(kit);
                 b.EnableInClassList("selected", selected == st.Id);
-                b.SetEnabled(!disabled && st.Usable);
+                b.EnableInClassList("off", disabled || !st.Usable);
+                b.RegisterCallback<PointerEnterEvent>(_ => ActionHovered?.Invoke(id));
+                b.RegisterCallback<PointerLeaveEvent>(_ => ActionHovered?.Invoke(null));
                 var top = Ui.El("ab-top");
                 top.Add(Ui.Text(st.Name.ToUpperInvariant(), "ab-name display"));
                 top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key mono"));
                 b.Add(top);
-                b.Add(Ui.Text(!st.Usable && st.Reason != null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
+                b.Add(Ui.Text(!st.Usable && st.Reason != null && shared == null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
                 _actionRow.Add(b);
                 if (st.Id != "grapple_hook" || selected != st.Id) continue;
                 var seg = Ui.El("seg", true);
