@@ -7,6 +7,42 @@
         <ui:VisualElement name="flash-hurt" class="board-overlay flash hurt" picking-mode="Ignore" />
 
         <ui:VisualElement class="fill layout" picking-mode="Ignore">
+            <ui:VisualElement name="debug" class="column-debug hidden">
+                <ui:VisualElement class="panel debug-panel">
+                    <ui:VisualElement class="panel-head">
+                        <ui:VisualElement class="title-left"><ui:VisualElement class="led amber" /><ui:Label class="panel-title display" text="DEBUG" /></ui:VisualElement>
+                        <ui:Button name="debug-close" class="btn small" focusable="false"><ui:Label class="btn-text" text="Hide" /><ui:Label class="kbd mono" text="`" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:Label name="debug-version" class="debug-version faint mono" />
+                    <ui:Label class="debug-section display" text="ON THE BOARD" />
+                    <ui:VisualElement class="seg debug-toggles">
+                        <ui:Button name="debug-ids" class="seg-btn" text="IDs" focusable="false" />
+                        <ui:Button name="debug-spawns" class="seg-btn" text="Spawns" focusable="false" />
+                        <ui:Button name="debug-hazards" class="seg-btn" text="Hazards" focusable="false" />
+                        <ui:Button name="debug-flamer" class="seg-btn" text="Scores" focusable="false" />
+                        <ui:Button name="debug-log" class="seg-btn" text="Log" focusable="false" />
+                    </ui:VisualElement>
+                    <ui:Label class="debug-section display" text="STEP-THROUGH" />
+                    <ui:VisualElement class="debug-row">
+                        <ui:Button name="debug-step" class="btn small" focusable="false"><ui:Label class="btn-text" text="Pause after each action" /></ui:Button>
+                        <ui:Label name="debug-queued" class="faint mono debug-note" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="debug-row">
+                        <ui:Button name="debug-next" class="btn small" focusable="false"><ui:Label class="btn-text" text="Next action" /><ui:Label class="kbd mono" text="N" /></ui:Button>
+                        <ui:Button name="debug-next-phase" class="btn small" focusable="false"><ui:Label class="btn-text" text="Next phase" /><ui:Label class="kbd mono" text="Shift+N" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="debug-replay" class="hidden">
+                        <ui:Label class="debug-section display" text="SAVED FIGHT" />
+                        <ui:VisualElement class="debug-row">
+                            <ui:Button name="debug-replay-pause" class="btn small" focusable="false"><ui:Label name="debug-replay-pause-text" class="btn-text" text="Pause" /><ui:Label class="kbd mono" text="P" /></ui:Button>
+                            <ui:Button name="debug-replay-step" class="btn small" focusable="false"><ui:Label class="btn-text" text="Step" /><ui:Label class="kbd mono" text="N" /></ui:Button>
+                            <ui:Label name="debug-replay-at" class="faint mono debug-note" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:ScrollView name="debug-text" class="debug-text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
             <ui:VisualElement class="column-main" picking-mode="Ignore">
                 <ui:VisualElement name="status" class="panel status">
                     <ui:VisualElement class="cell">

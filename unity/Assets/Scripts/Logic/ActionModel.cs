@@ -174,6 +174,7 @@ namespace LabEscape.Client
         /// <summary>The line of help for the current selection.</summary>
         public string Hint(FightFlow flow)
         {
+            if (flow.Busy && flow.StepMode) return "Step mode: N shows the next action, Shift+N runs to the next phase, Space skips.";
             if (!flow.Idle) return flow.Busy ? "Resolving… press Space to skip." : flow.Live.Outcome != null ? "The fight is over." : "";
             var st = Selected;
             if (st == null) return "Click a highlighted tile to move (free, undo with Z). Pick an action below or press 1–9. Hover a unit to see its intent. End the turn with E.";

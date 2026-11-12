@@ -5,7 +5,7 @@ using LabEscape.Core;
 
 namespace LabEscape.Client
 {
-    public enum LogKind { Round, Phase, Ev, FriendlyFire, Hazard, Intercom, End }
+    public enum LogKind { Round, Phase, Ev, FriendlyFire, Hazard, Intercom, End, Debug }
 
     public sealed class LogLine
     {
@@ -131,9 +131,10 @@ namespace LabEscape.Client
         /// <summary>A line that comes from the client and not from an event. Every line shares one rising ID, which the log panel relies on.</summary>
         public LogLine Line(string text, LogKind kind) => new LogLine(_nextId++, text, kind);
 
-        public LogLine? Format(GameEvent e, GameState? s)
+        /// <summary>An event's log line, or null for one the log does not mention. `debug` adds the debug overlay's lines.</summary>
+        public LogLine? Format(GameEvent e, GameState? s, bool debug = false)
         {
-            var t = Line(e, s);
+            var t = Line(e, s, debug);
             return t == null ? null : new LogLine(_nextId++, t.Value.Text, t.Value.Kind);
         }
 
@@ -151,7 +152,7 @@ namespace LabEscape.Client
 
         private static string ObjectWord(ObjectKind k) => k == ObjectKind.Shield ? "Shield segment" : k == ObjectKind.Egg ? "Egg" : Names.Of(k);
 
-        private (string Text, LogKind Kind)? Line(GameEvent ev, GameState? s)
+        private (string Text, LogKind Kind)? Line(GameEvent ev, GameState? s, bool debug)
         {
             var c = _c;
             switch (ev)
@@ -246,12 +247,20 @@ namespace LabEscape.Client
                     var cue = hz != null && c.HazardDefs.TryGetValue(hz.Def, out var d) ? d.Cue : null;
                     return (cue ?? $"{Words.HazardName(c, s, e.Hazard)} stirs", LogKind.Hazard);
                 }
+                case HazardHeld e:
+                    return debug ? ($"[debug] {Words.HazardName(c, s, e.Hazard)} holds (step {e.Step}: {e.Reason})", LogKind.Debug) : ((string, LogKind)?)null;
                 case HazardFired e:
                     return ($"{Words.HazardName(c, s, e.Hazard)} fires", LogKind.Hazard);
                 case HazardCancelled e:
-                    return ($"The cue at the {Words.HazardName(c, s, e.Hazard).ToLowerInvariant()} fades", LogKind.Hazard);
+                    return ($"The cue at the {Words.HazardName(c, s, e.Hazard).ToLowerInvariant()} fades{(debug ? $" [{e.Reason}]" : "")}", LogKind.Hazard);
                 case IntercomLine e:
                     return ($"INTERCOM: \"{e.Text}\"", LogKind.Intercom);
+                case ChainSuppressed e:
+                    return debug ? ($"[debug] Chain suppressed: {e.Effect} from {e.Source} ({Names.Of(e.Reason)})", LogKind.Debug) : ((string, LogKind)?)null;
+                case AiDecision e:
+                    return debug ? ($"[debug] {Words.UnitName(c, e.Def, e.Id)}: {e.Summary}", LogKind.Debug) : ((string, LogKind)?)null;
+                case DebugEvent e:
+                    return ($"[debug] {e.Detail}", LogKind.Debug);
                 case FightEnded e:
                     return ($"{(e.Result == FightResult.Win ? "Victory" : "Defeat")}: {e.Cause}", LogKind.End);
                 default:

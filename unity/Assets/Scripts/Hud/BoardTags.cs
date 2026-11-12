@@ -73,13 +73,16 @@ namespace LabEscape.Client
                 Head.RemoveFromHierarchy();
             }
 
-            /// <summary>`hp` is the HP on show; `ghost` is the HP before the last blow while that still shows, else the same.</summary>
-            public void Update(Content c, Unit u, int hp, int ghost)
+            /// <summary>
+            /// `hp` is the HP on show; `ghost` is the HP before the last blow while that still shows, else the same. `showId` puts
+            /// the unit's ID first in its row, for the debug overlay.
+            /// </summary>
+            public void Update(Content c, Unit u, int hp, int ghost, bool showId)
             {
                 var st = u.Statuses;
                 var armor = Mathf.Max(0, u.Armor - (st.Corrode?.Stacks ?? 0));
                 var def = c.Units[u.Def];
-                var sig = $"{hp}/{ghost}/{u.MaxHp}/{armor}/{u.Ammo}/{u.MaxAmmo}/{u.Charges}/{u.MaxCharges}/{u.DroneState}/{st.Poison?.Remaining}/{st.Parasite?.Remaining}/{st.Corrode?.Stacks}/{st.Pinned != null}/{st.Slowed != null}";
+                var sig = $"{hp}/{ghost}/{u.MaxHp}/{armor}/{u.Ammo}/{u.MaxAmmo}/{u.Charges}/{u.MaxCharges}/{u.DroneState}/{st.Poison?.Remaining}/{st.Parasite?.Remaining}/{st.Corrode?.Stacks}/{st.Pinned != null}/{st.Slowed != null}/{showId}";
                 if (sig == _sig) return;
                 _sig = sig;
 
@@ -106,6 +109,7 @@ namespace LabEscape.Client
                 _hp.text = hp.ToString();
 
                 _row.Clear();
+                if (showId) _row.Add(Ui.Text($"#{u.Id}", "tag-chip debug-id mono"));
                 if (u.MaxAmmo.HasValue) _row.Add(Pips(u.MaxAmmo.Value, u.Ammo ?? 0, "ammo"));
                 if (u.MaxCharges.HasValue) _row.Add(Pips(u.MaxCharges.Value, u.Charges ?? 0, "charge"));
                 if (u.DroneState == DroneState.Returning) _row.Add(Ui.Text("RTN", "tag-chip mono"));
@@ -187,6 +191,9 @@ namespace LabEscape.Client
         private readonly List<(VisualElement El, Vector3 World)> _chips = new List<(VisualElement, Vector3)>();
         private readonly List<FloatingText> _floats = new List<FloatingText>();
         private readonly List<(VisualElement El, Vector3 World)> _coords = new List<(VisualElement, Vector3)>();
+        private readonly List<(VisualElement El, Vector3 World)> _debug = new List<(VisualElement, Vector3)>();
+        private string _debugSig = "";
+        private object? _debugScored;
         private object? _chipsFor;
         private bool _chipsShowIntents;
         private float _now;
@@ -209,6 +216,7 @@ namespace LabEscape.Client
             _floats.Clear();
             foreach (var (el, _) in _coords) el.RemoveFromHierarchy();
             _coords.Clear();
+            ClearDebug();
         }
 
         /// <summary>
@@ -277,7 +285,7 @@ namespace LabEscape.Client
                     _units[pair.Key] = tag;
                 }
                 var u = v.Data;
-                tag.Update(_c, u, v.ShownHp, v.GhostLeft > 0f ? v.GhostHp : v.ShownHp);
+                tag.Update(_c, u, v.ShownHp, v.GhostLeft > 0f ? v.GhostHp : v.ShownHp, o.Debug?.Ids == true);
                 // A blow rattles the bar as well as the body.
                 var rattle = v.Jolt > 0f ? new Vector2(Mathf.Sin(_now * 71f), Mathf.Cos(_now * 53f)) * (5f * v.Jolt * v.Jolt) : Vector2.zero;
                 Place(tag.Feet, ToPanel(v.Position) + rattle);
@@ -313,6 +321,8 @@ namespace LabEscape.Client
             foreach (var (el, world) in _coords) Place(el, ToPanel(world));
             RebuildChips(s, o);
             foreach (var (el, world) in _chips) Place(el, ToPanel(world));
+            RebuildDebug(board, o);
+            foreach (var (el, world) in _debug) Place(el, ToPanel(world));
 
             for (var i = _floats.Count - 1; i >= 0; i--)
             {
@@ -356,6 +366,59 @@ namespace LabEscape.Client
                 else if (pv?.Intents != null) AddIntentChips(pv.Intents, pv.State ?? s, true);
             }
             if (pv != null) AddHitBadges(pv);
+        }
+
+        private void ClearDebug()
+        {
+            foreach (var (el, _) in _debug) el.RemoveFromHierarchy();
+            _debug.Clear();
+            _debugSig = "";
+            _debugScored = null;
+        }
+
+        /// <summary>
+        /// The debug overlay's labels on the board: the wave that will arrive on each spawn tile (in its left-hand corner), each
+        /// hazard's state on its tiles (at the back of the tile, clear of a unit's bar), and the scores of the AI's options. Spawn
+        /// tiles and hazards are as the board shows them, so they never run ahead of a frame that is still playing.
+        /// </summary>
+        private void RebuildDebug(BoardView board, BoardOverlay o)
+        {
+            var d = o.Debug;
+            var scored = d != null && d.Flamer ? o.Scored : null;
+            var sig = d == null ? "" : $"{d.Spawns}/{board.WavesShown}/{d.Hazards}/{(d.Hazards ? string.Join(";", board.Hazards.Select(h => h.Id + DebugReport.HazardMark(h))) : "")}";
+            if (sig == _debugSig && ReferenceEquals(scored, _debugScored)) return;
+            ClearDebug();
+            _debugSig = sig;
+            _debugScored = scored;
+            if (d == null) return;
+            if (d.Spawns)
+            {
+                foreach (var m in board.Spawns) AddDebug(Ui.Text($"W{m.Wave}", "debug-mark debug-spawn mono"), Iso.Floor(m.Tile.X + 0.2f, m.Tile.Y + 0.8f, 0.02f));
+            }
+            if (d.Hazards)
+            {
+                foreach (var h in board.Hazards)
+                {
+                    var mark = DebugReport.HazardMark(h);
+                    foreach (var t in h.Tiles) AddDebug(Ui.Text(mark, h.State == HazardState.Primed ? "debug-mark debug-hazard primed mono" : "debug-mark debug-hazard mono"), Iso.Floor(t.X + 0.3f, t.Y + 0.3f, 0.02f));
+                }
+            }
+            if (scored == null) return;
+            foreach (var unit in scored)
+            {
+                foreach (var x in unit.Options)
+                {
+                    AddDebug(Ui.Text(x.Score.ToString(System.Globalization.CultureInfo.InvariantCulture), x.Score > 0 ? "debug-mark debug-score mono" : "debug-mark debug-score low mono"), Iso.Tile(x.Tile.X + x.Dir.X * 0.3f, x.Tile.Y + x.Dir.Y * 0.3f, 0.05f));
+                }
+            }
+        }
+
+        private void AddDebug(VisualElement child, Vector3 world)
+        {
+            var anchor = Ui.El("anchor");
+            anchor.Add(child);
+            _layer.Add(anchor);
+            _debug.Add((anchor, world));
         }
 
         private void AddChip(VisualElement child, Vector3 world)

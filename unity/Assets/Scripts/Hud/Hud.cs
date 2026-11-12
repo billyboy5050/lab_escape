@@ -104,8 +104,11 @@ namespace LabEscape.Client
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
         private readonly Button _undo, _endTurn, _skip, _intents, _sound, _speed0, _speed1, _speed2;
-        private readonly ScrollView _log, _logLines;
-        private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "";
+        private readonly ScrollView _log, _logLines, _debugText;
+        private readonly VisualElement _debug, _debugReplay;
+        private readonly Label _debugVersion, _debugQueued, _debugReplayAt, _debugReplayPauseText;
+        private readonly Button _debugIds, _debugSpawns, _debugHazards, _debugFlamer, _debugLog, _debugStep, _debugNext, _debugNextPhase, _debugReplayPause, _debugReplayStep;
+        private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "", _debugSig = "";
         private int _logShown;
         private float _typed;
         private float _toastLeft;
@@ -130,6 +133,12 @@ namespace LabEscape.Client
         public event Action<string>? SavedFightClicked;
         /// <summary>One of the end card's downloads was chosen: the file's name, such as replay.json.</summary>
         public event Action<string>? DownloadClicked;
+        /// <summary>The debug overlay's buttons: hide it, turn step mode on or off, go to the next action or phase, and pause or step a replay.</summary>
+        public event Action? DebugCloseClicked, StepModeClicked, ReplayPauseClicked, ReplayStepClicked;
+        /// <summary>The debug overlay's Next buttons: true for Next phase.</summary>
+        public event Action<bool>? NextClicked;
+        /// <summary>One of the debug overlay's toggles was flipped: ids, spawns, hazards, flamer or log.</summary>
+        public event Action<string>? DebugToggleClicked;
 
         public Hud(UIDocument doc)
         {
@@ -189,6 +198,13 @@ namespace LabEscape.Client
             _startError = L("start-error");
             _log = Q<ScrollView>("log");
             _logLines = Q<ScrollView>("log-lines");
+            _debug = E("debug");
+            _debugReplay = E("debug-replay");
+            _debugText = Q<ScrollView>("debug-text");
+            _debugVersion = L("debug-version");
+            _debugQueued = L("debug-queued");
+            _debugReplayAt = L("debug-replay-at");
+            _debugReplayPauseText = L("debug-replay-pause-text");
             _log.verticalScrollerVisibility = ScrollerVisibility.Hidden;
             _log.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             _bannerIn = new Entrance(_banner);
@@ -219,6 +235,17 @@ namespace LabEscape.Client
             B("download-summary", () => DownloadClicked?.Invoke("summary.json"));
             B("download-events", () => DownloadClicked?.Invoke("events.jsonl"));
             B("change", () => ChangeClicked?.Invoke());
+            B("debug-close", () => DebugCloseClicked?.Invoke());
+            _debugIds = B("debug-ids", () => DebugToggleClicked?.Invoke("ids"));
+            _debugSpawns = B("debug-spawns", () => DebugToggleClicked?.Invoke("spawns"));
+            _debugHazards = B("debug-hazards", () => DebugToggleClicked?.Invoke("hazards"));
+            _debugFlamer = B("debug-flamer", () => DebugToggleClicked?.Invoke("flamer"));
+            _debugLog = B("debug-log", () => DebugToggleClicked?.Invoke("log"));
+            _debugStep = B("debug-step", () => StepModeClicked?.Invoke());
+            _debugNext = B("debug-next", () => NextClicked?.Invoke(false));
+            _debugNextPhase = B("debug-next-phase", () => NextClicked?.Invoke(true));
+            _debugReplayPause = B("debug-replay-pause", () => ReplayPauseClicked?.Invoke());
+            _debugReplayStep = B("debug-replay-step", () => ReplayStepClicked?.Invoke());
         }
 
         private static void Frame(VisualElement panel)
@@ -330,6 +357,10 @@ namespace LabEscape.Client
             }
             Ui.Show(_recentBox, _recent.childCount > 0);
             ShowStartMessage(null);
+            // The debug overlay has no fight to describe until the next one starts.
+            _debugText.Clear();
+            _debugSig = "";
+            Ui.Show(_debugReplay, false);
             _startTitle.text = title;
             _presets.Clear();
             var i = 1;
@@ -369,6 +400,48 @@ namespace LabEscape.Client
         public void HideStart() => Ui.Show(_start, false);
 
         public bool StartVisible => !_start.ClassListContains("hidden");
+
+        public bool DebugVisible => !_debug.ClassListContains("hidden");
+
+        /// <summary>
+        /// Shows or hides the debug overlay's column, headed by the engine version and content hash. The board area takes the
+        /// room it leaves, and the camera follows.
+        /// </summary>
+        public void SetDebugVisible(bool on, string header)
+        {
+            Ui.Show(_debug, on);
+            _debugVersion.text = header;
+            _debugSig = "";
+        }
+
+        /// <summary>
+        /// Fills in the debug overlay. `lines` are DebugReport.Panel's; `replayAt` is null when no saved fight is playing back.
+        /// </summary>
+        public void UpdateDebug(string version, DebugToggles t, IReadOnlyList<(string Text, string Style)> lines, bool stepMode, bool busy, bool holding, int pending, string? replayAt, bool replayPaused, bool canStepReplay)
+        {
+            if (!DebugVisible) return;
+            _debugVersion.text = version;
+            _debugIds.EnableInClassList("on", t.Ids);
+            _debugSpawns.EnableInClassList("on", t.Spawns);
+            _debugHazards.EnableInClassList("on", t.Hazards);
+            _debugFlamer.EnableInClassList("on", t.Flamer);
+            _debugLog.EnableInClassList("on", t.Log);
+            _debugStep.EnableInClassList("on", stepMode);
+            _debugNext.SetEnabled(stepMode && busy);
+            _debugNextPhase.SetEnabled(stepMode && busy);
+            _debugQueued.text = !stepMode ? "off" : holding ? $"holding · {pending} queued" : busy ? $"{pending} queued" : "on";
+            Ui.Show(_debugReplay, replayAt != null);
+            _debugReplayAt.text = replayAt ?? "";
+            _debugReplayPauseText.text = replayPaused ? "Play" : "Pause";
+            _debugReplayPause.SetEnabled(canStepReplay);
+            _debugReplayStep.SetEnabled(canStepReplay);
+
+            var sig = string.Join("\n", lines.Select(l => l.Style + ":" + l.Text));
+            if (sig == _debugSig) return;
+            _debugSig = sig;
+            _debugText.Clear();
+            foreach (var (text, style) in lines) _debugText.Add(Ui.Text(text, $"debug-line {(style == "section" ? "display" : "mono")} {style}"));
+        }
 
         public void ResetFight()
         {
@@ -615,6 +688,7 @@ namespace LabEscape.Client
                 case LogKind.Hazard: return "hazard";
                 case LogKind.Intercom: return "intercom";
                 case LogKind.End: return "end";
+                case LogKind.Debug: return "debug";
                 default: return "";
             }
         }

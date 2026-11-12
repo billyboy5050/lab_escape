@@ -95,6 +95,9 @@
     min-width: 92px;
     max-width: 150px;
     height: 66px;
+    /* A narrow bar (the debug overlay takes its room from the board area) cuts a long reason short instead of spilling it
+       over the next row; the Scanner gives it in full. */
+    overflow: hidden;
     margin: 0 4px 4px 0;
     padding: 4px 6px;
     background-color: var(--panel-2);
@@ -187,6 +190,27 @@
 .log-line.hazard { color: var(--amber); }
 .log-line.intercom { color: var(--amber); }
 .log-line.end { color: var(--ink); -unity-font-style: bold; }
+.log-line.debug { color: #b58cff; }
+
+/* The debug overlay: a column of its own on the left, so it covers none of the board. */
+.column-debug { width: 330px; flex-shrink: 0; margin-right: 10px; }
+.debug-panel { flex-grow: 1; margin-bottom: 0; }
+.debug-version { font-size: 11px; white-space: normal; padding: 0; margin-bottom: 4px; }
+.debug-section { color: var(--amber); font-size: 12px; letter-spacing: 1px; -unity-font-style: bold; padding: 0; margin: 8px 0 3px 0; }
+.debug-section.face { font-size: 15px; }
+.debug-toggles { margin-right: 0; }
+.debug-toggles .seg-btn { padding: 3px 7px; font-size: 11px; }
+.debug-row { flex-direction: row; align-items: center; margin-bottom: 4px; }
+.debug-row .btn.small { margin-right: 5px; }
+.btn.on { background-color: #16413c; border-color: var(--move); }
+.debug-note { font-size: 11px; padding: 0; }
+.debug-text { flex-grow: 1; flex-shrink: 1; margin-top: 2px; }
+.debug-line { font-size: 12px; white-space: normal; padding: 1px 0; color: var(--ink); }
+.debug-line.section { color: var(--amber); font-size: 12px; letter-spacing: 1px; -unity-font-style: bold; margin-top: 8px; }
+.debug-line.head { -unity-font-style: bold; }
+.debug-line.muted { color: var(--ink-2); }
+.debug-line.faint { color: var(--ink-3); font-size: 11px; }
+.debug-line.section.face { font-size: 15px; }
 
 /* Banners and flashes */
 .banner {
@@ -348,6 +372,14 @@
 }
 .incoming-chip.faint { opacity: 0.6; }
 .dies-chip { position: absolute; left: 12px; bottom: 16px; font-size: 18px; -unity-font-style: bold; color: var(--danger); padding: 0; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
+/* The debug overlay's marks on the board: unit IDs in a unit's row, and labels on tiles, each centred on its point. */
+.tag-chip.debug-id { color: #b58cff; border-color: #b58cff; }
+.debug-mark { position: absolute; left: -40px; width: 80px; top: -8px; height: 16px; padding: 0; -unity-text-align: middle-center; font-size: 11px; -unity-font-style: bold; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
+.debug-mark.debug-spawn { color: #ff6b1f; }
+.debug-mark.debug-hazard { color: var(--amber); }
+.debug-mark.debug-hazard.primed { color: var(--danger); }
+.debug-mark.debug-score { color: var(--danger); font-size: 12px; }
+.debug-mark.debug-score.low { color: var(--ink-3); }
 .float-text { position: absolute; -unity-font-style: bold; -unity-text-outline-width: 1.5px; -unity-text-outline-color: #0b0f12; padding: 0; white-space: nowrap; }
 
 /* The web client's faces, from the system (Fonts.cs). An element with the face it asked for has the class `face`: the condensed
