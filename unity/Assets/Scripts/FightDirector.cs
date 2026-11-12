@@ -114,6 +114,7 @@ namespace LabEscape.Client
 
         private void OnDestroy()
         {
+            _sound?.Dispose();
             if (Instance == this) Instance = null;
         }
 

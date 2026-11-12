@@ -58,9 +58,17 @@ namespace LabEscape.Client
             if (Muted) return;
             foreach (var s in play)
             {
-                _source.PlayOneShot(_clips[s]);
+                if (!_clips.TryGetValue(s, out var clip)) continue;
+                _source.PlayOneShot(clip);
                 Played?.Invoke(s);
             }
+        }
+
+        /// <summary>The clips are made in code and are not freed with the scene: the director frees them when it goes.</summary>
+        public void Dispose()
+        {
+            foreach (var clip in _clips.Values) UnityEngine.Object.Destroy(clip);
+            _clips.Clear();
         }
 
         public void SetMuted(bool muted)
