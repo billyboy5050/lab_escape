@@ -176,7 +176,9 @@ namespace LabEscape.Client.Tests
             var root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
             Assert.That(d.Hud.StartVisible, Is.True);
             Assert.That(d.Flow, Is.Null);
-            Assert.That(root.Q<Label>("start-error").text, Does.StartWith("Could not play back"));
+            Assert.That(root.Q<Label>("start-error").text, Does.StartWith("Could not play back broken.json: "));
+            Assert.That(FightDirector.ReplayName("/x/2026-11-12T15-30-04-512Z-tech-win/replay.json"), Is.EqualTo("2026-11-12T15-30-04-512Z-tech-win"));
+            Assert.That(FightDirector.ReplayName("fights/one.json"), Is.EqualTo("one.json"));
         }
 
         [UnityTest]

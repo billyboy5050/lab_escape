@@ -90,6 +90,9 @@ namespace LabEscape.Client
 
         public bool Idle => Flow != null && Flow.Idle;
 
+        /// <summary>The player may act: the fight is idle and no saved fight is playing back. Highlights, previews and intents show only then.</summary>
+        private bool CanAct => Flow != null && Flow.Idle && !Replaying;
+
         public bool EndScreenShown => _hud.EndVisible;
 
         /// <summary>True while a saved fight is playing back: the player watches, and only skip and speed act.</summary>
@@ -216,7 +219,19 @@ namespace LabEscape.Client
         private void RefuseReplay(string from, string why)
         {
             if (Flow != null) ShowStartScreen();
-            _hud.ShowStartMessage($"Could not play back {Path.GetFileName(Path.GetDirectoryName(from)) ?? from}: {why}");
+            _hud.ShowStartMessage($"Could not play back {ReplayName(from)}: {why}");
+        }
+
+        /// <summary>A saved fight by its folder's name, any other replay file by its own name.</summary>
+        public static string ReplayName(string from)
+        {
+            var name = Path.GetFileName(from);
+            if (name == "replay.json")
+            {
+                var folder = Path.GetFileName(Path.GetDirectoryName(from) ?? "");
+                if (!string.IsNullOrEmpty(folder)) name = folder;
+            }
+            return string.IsNullOrEmpty(name) ? from : name;
         }
 
         /// <summary>The web build's ?replay=: a replay file fetched from beside the page.</summary>
@@ -486,7 +501,7 @@ namespace LabEscape.Client
             Flow.Tick(dt);
             TickReplay(real);
             var live = Flow.Live;
-            _model!.Refresh(live, Flow.Idle);
+            _model!.Refresh(live, CanAct);
             UpdatePreview();
             BuildOverlay();
             _hud.SetFreeAreaOn(_cam);
@@ -605,7 +620,7 @@ namespace LabEscape.Client
 
         private void UpdatePreview()
         {
-            var cmd = _hover.HasValue && Flow!.Idle ? _model!.CandidateFor(_hover.Value) : null;
+            var cmd = _hover.HasValue && CanAct ? _model!.CandidateFor(_hover.Value) : null;
             var key = cmd?.ToJson() ?? "";
             if (key == _previewKey && ReferenceEquals(_previewBase, Flow!.Live)) return;
             _previewKey = key;
@@ -620,7 +635,7 @@ namespace LabEscape.Client
         private void BuildOverlay()
         {
             var m = _model!;
-            var idle = Flow!.Idle;
+            var idle = CanAct;
             var st = m.Selected;
             _overlay.Highlights.Clear();
             if (idle && st == null) _overlay.Highlights.Add((m.Moves.Select(x => x.Tile).ToList(), HighlightKind.Move));
@@ -647,7 +662,7 @@ namespace LabEscape.Client
             var m = _model!;
             var shown = flow.Shown;
             var live = flow.Live;
-            var idle = flow.Idle;
+            var idle = CanAct;
 
             _hud.Tick(dt, shown);
             var me = _board!.Units.TryGetValue(0, out var view) ? view : null;
@@ -699,7 +714,7 @@ namespace LabEscape.Client
             var flow = Flow!;
             var shown = flow.Shown;
             if (_hoverAction != null && DescribeAction(lines, _hoverAction)) return "Action";
-            var preview = flow.Idle ? _preview : null;
+            var preview = CanAct ? _preview : null;
             if (preview != null)
             {
                 DescribePreview(lines, preview, shown);
@@ -732,7 +747,7 @@ namespace LabEscape.Client
             {
                 lines.Add(new InfoLine($"{Words.UnitName(c, unit.Def, unit.Id)}  {Tiles.Name(unit.Pos)}", "head"));
                 lines.Add(new InfoLine(Words.DescribeUnit(unit, shown.Round), "muted"));
-                var intent = flow.Idle ? _model!.Intents?.Intents.FirstOrDefault(i => i.Id == unit.Id) : null;
+                var intent = CanAct ? _model!.Intents?.Intents.FirstOrDefault(i => i.Id == unit.Id) : null;
                 if (intent != null) lines.Add(new InfoLine($"Intent: {intent.Label}"));
             }
             foreach (var o in objects) lines.Add(new InfoLine(Words.DescribeObject(c, o), "muted"));
