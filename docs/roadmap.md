@@ -34,7 +34,14 @@ The developer round (spec round 1) and what it found are in [implementation-note
 
 The scope and acceptance criteria of every milestone are in [phase-2.md](phase-2.md#milestones). No rule or content value changes until M13, so the port can be compared exactly against the TypeScript engine.
 
-1. **M13: Unity parity, retire the web client.** It needs the Unity version settled and Windows Build Support installed first (see [decisions waiting on the owner](#decisions-waiting-on-the-owner)).
+1. **M13: Unity parity, retire the web client.** One branch for each part, in this order. The phase plan puts M13's effort into what Stage B builds on, telemetry, the debug overlay, hot reload and the three builds, and the screens only go as far as M15 needs, because M15 rebuilds that flow around a run ([phase plan](phase-2.md#milestones)).
+   1. **Telemetry and replays.** Save each fight's replay, summary and event stream from the Unity client (`core/Core/Telemetry` has them), as downloads in the web build, and load a replay from the interface.
+   2. **Debug overlay and step mode,** as the web client's backtick overlay.
+   3. **Content hot reload.** Reload `content/` while the game runs, reject invalid content and keep the old values (CLAUDE.md, invariant 3).
+   4. **Screens, as far as they work:** title, briefing and result screens, and the loadout screen as the Sandbox-mode picker.
+   5. **Shortcuts and settings:** the web client's remaining keys, modified keys left to the system, and the reduced-motion setting (Smaller items).
+   6. **The three builds:** the Windows build run on a Windows PC, and the web build's symbols, faces, size and preview speed (Smaller items).
+   7. **Retire the web client.** The owner is asked first ([phase plan](phase-2.md#what-the-owner-has-authorised)); then the TypeScript client goes, with the hooks, CI and rules-sheet changes under Smaller items. Unity's tests stay off CI, by the owner's decision, so once the web client is gone they are the client's only tests and run on a developer's machine before every merge.
 
 Stages B to D follow: game systems, then one wing shown to testers, then the other two wings and the light meta.
 
@@ -55,10 +62,8 @@ Round 1's evidence for each is in the [developer round](implementation-notes.md#
 
 Agents should not settle these on their own. Ask, and record the answer in the spec or the notes.
 
-- **Unity version.** The installed editor, 6000.6.8f1, is an update release, while the plan asks for the current LTS, which is 6.3. Nothing built so far depends on the difference, and moving up to a later LTS is simpler than moving back. Needed before M13, which also needs the Windows Build Support module added.
 - **How to source 3D art,** and where it will be stored: bought packs, commission or generated. Needed before M14, so the art can be made while Stage B is built in greybox; the first tester round (M22) waits on about half of it. This repository is public, and paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository.
 - **Creep.** Whether Alien gets it, so that all three branches have six abilities. Needed by M17.
-- **Unity tests in CI.** CI runs nothing in `unity/`: its EditMode and PlayMode tests and its builds run only on a developer's machine, and once M13 retires the web client that is the whole game client. Running them on GitHub needs a Unity licence stored as a repository secret. Needed by M13. Whatever the answer, client logic with no Unity code (`unity/Assets/Scripts/Logic`) could also be compiled and tested by `dotnet test`, as `core/` is, which needs no licence.
 - **The design document is outside the repository.** The spec and the phase plan cite Design Doc v0.1 for the design intent, the enemy rosters and what is deferred, and it is a private document in the owner's Claude account. Codex, a cloud agent or a new contributor cannot read it. Either export it to `docs/`, or copy the parts M17 to M24 rely on into the plan. Needed by M17.
 - **Merged branches on GitHub.** The repository's "Automatically delete head branches" setting is off, and on 2026-11-09 the remote still held 11 branches that were already merged into `main`. CLAUDE.md asks for a branch to be deleted after its merge, which an agent cannot do when the owner merges later. Turning the setting on, and deleting the 11, are the owner's call.
 - **Stretch items.** Build one only when a playtest finding calls for it (spec, Build order). None had been called for by 2026-10-13.
@@ -77,6 +82,7 @@ Items about the web client stop applying when M13 retires it. Anything that shou
 - **Report targets per room.** The simulator's targets and alarms, such as rounds to win and the Warden reaching the player by round 7, were set for the Armory. They still print for other rooms but mean little there. M16 should replace them.
 
 - **Loadout size in the sweep.** At 8 of 11 any two builds share at least 5 abilities, which weakens the test of whether loadouts play differently. The owner kept 8 for every playtest round (2026-10-13), so 6 of 11 is tried in the simulator instead: run `npm run sim -- sweep --size 6 --seeds 1000 --out <scratch folder>`, compare the win-rate lift and the spread of winning loadouts with the committed 8-ability sweep (`reports/sweep-8-greedy.txt`), and add the findings to the implementation notes.
+- **Unity client logic under `dotnet test`.** The owner decided on 2026-11-12 not to run Unity's tests in CI. `unity/Assets/Scripts/Logic` has no Unity code, though, so CI could compile and test it with `dotnet test`, as it does `core/`, with no licence. Ask the owner before adding it.
 - **Ability rules during a fight.** The action bar's tooltip shows an ability's name, or why it cannot be used, but never its rule text, so in a fight the full rule is only on the loadout screen and the rules sheet carries a short version. Add each ability's `text` to its action button's tooltip.
 - **Simulator worker threads.** In a fresh container (Node 22.22.0, tsx 4.23.15), `npm run sim` with more than one worker fails with "Cannot find module .../src/sim/batch" from `src/sim/worker.ts`, though the parent passes its tsx flags to the workers. `--workers 1` works, and no test runs the real worker pool. The C# simulator does not have this problem, so fix it only if it gets in the way before M13 retires the TypeScript simulator.
 - **Readable hazard fires on the result screen.** The fight summary names a hazard by its map ID and an object by its number (`vent_b5→player`, `gun→object 5`), and the result screen prints them as they are. Name them as the board does ("Gas vent B5", "shield segment", "egg") in `src/telemetry/summary.ts` or where `src/client/screens/ResultScreen.tsx` prints them.

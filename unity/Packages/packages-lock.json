@@ -9,7 +9,7 @@
       }
     },
     "com.unity.ext.nunit": {
-      "version": "2.1.0",
+      "version": "2.0.5",
       "depth": 1,
       "source": "builtin",
       "dependencies": {}
@@ -38,11 +38,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.8.0",
+      "version": "1.6.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
-        "com.unity.ext.nunit": "2.1.0",
+        "com.unity.ext.nunit": "2.0.3",
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0"
       }
@@ -71,9 +71,7 @@
       "version": "1.0.0",
       "depth": 0,
       "source": "builtin",
-      "dependencies": {
-        "com.unity.modules.jsonserialize": "1.0.0"
-      }
+      "dependencies": {}
     },
     "com.unity.modules.animation": {
       "version": "1.0.0",
@@ -150,14 +148,6 @@
       "version": "1.0.0",
       "depth": 0,
       "source": "builtin",
-      "dependencies": {
-        "com.unity.modules.physicscore2d": "1.0.0"
-      }
-    },
-    "com.unity.modules.physicscore2d": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
       "dependencies": {}
     },
     "com.unity.modules.screencapture": {
@@ -191,26 +181,12 @@
         "com.unity.modules.terrain": "1.0.0"
       }
     },
-    "com.unity.modules.tetgen": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {}
-    },
     "com.unity.modules.tilemap": {
       "version": "1.0.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
         "com.unity.modules.physics2d": "1.0.0"
-      }
-    },
-    "com.unity.modules.timelinefoundation": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.modules.jsonserialize": "1.0.0"
       }
     },
     "com.unity.modules.ui": {
@@ -228,8 +204,7 @@
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.hierarchycore": "1.0.0",
-        "com.unity.modules.physics": "1.0.0",
-        "com.unity.modules.animation": "1.0.0"
+        "com.unity.modules.physics": "1.0.0"
       }
     },
     "com.unity.modules.umbra": {

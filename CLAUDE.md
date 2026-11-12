@@ -181,6 +181,7 @@ Do not ask about things this file or the docs already answer, or about routine c
 - Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values.
 - `npm test` runs only the files under `tests/` (`test.include` in `vite.config.ts`). Without that limit Vitest also finds the tests in every agent worktree under `.claude/worktrees/`, which are copies of other branches.
 - Unity imports everything under `core/Core`, so .NET's output goes to `core/.build/` (set in `core/Directory.Build.props`). The `.meta` files Unity writes in that folder are ignored by git; nothing refers to them.
+- When the project changes Unity version, delete `unity/Library` and `unity/Builds` before building. On the move from 6.6 to 6.3, players built over 6.6's caches crashed or hung on start, though the tests passed.
 - `Assets/Scenes/Fight.unity` and `Assets/Resources/UI/Panel.asset` are generated once and committed. The menu item Lab Escape > Recreate Scene And Panel remakes them.
 - A change to the Unity fight's animation cannot be judged from a screenshot. Film it with `-labFilm` (README, Unity client) and read the frames in order.
 - The Unity Mac build takes key presses while its window is in the background, but reads the mouse only when it is in front. An agent driving it without taking over the screen can check the keys and nothing else.
