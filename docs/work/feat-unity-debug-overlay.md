@@ -12,7 +12,7 @@ Port the web client's backtick debug panel to the Unity client: engine version a
 
 ## Status
 
-Built and verified; waiting on the Codex review and the owner's play before `gh pr ready`.
+Built and verified, and Codex found no issues on d58adec; waiting on the owner's play before `gh pr ready`.
 
 ## Done so far
 
@@ -33,7 +33,7 @@ Built and verified; waiting on the Codex review and the owner's play before `gh 
 
 ## Next steps
 
-1. Answer Codex's findings on PR #27 (fix in this branch if a realistic path is real; reply and resolve each), comment `@codex review` after every push.
+1. Codex reviewed d58adec on 2026-11-12: "Didn't find any major issues". Comment `@codex review` again after any later push.
 2. The owner plays it (backtick, step mode with N and Shift+N, a saved fight paused with P and stepped with N). Then delete this note, update the PR description and `gh pr ready`.
 
 ## Decisions
