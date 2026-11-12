@@ -12,15 +12,15 @@ Port the web client's backtick debug panel to the Unity client: engine version a
 
 ## Status
 
-In progress: overlay built, EditMode green, PlayMode being made green; docs drafted. Then the Mac build smoke run, Codex review, and the owner's play.
+Built and verified; waiting on the Codex review and the owner's play before `gh pr ready`.
 
 ## Done so far
 
-- Branch cut from `main` at 8bdc409; `npm test` green.
-- `Logic/DebugReport.cs`, step mode in `FightFlow`, debug log lines in `EventFormatter`, step hint in `ActionModel`, with `Tests/EditMode/DebugOverlayTests.cs` (11 tests, all pass).
-- The screen: debug column in `Fight.uxml`/`Fight.uss`, `Hud` API, `BoardView.Hazards`/`WavesShown`/`Spawns` moved on by cues and `Level`, spawn squares on the floor, `BoardTags` ID chips and labels, `FightDirector` keys (backtick, P, N, Shift+N) and `-labDebug`.
-- `Tests/PlayMode/DebugOverlayScreenTests.cs` (3 tests). First run: 18 of 19 PlayMode tests passed; the hazard-cue test sampled too coarsely and was rewritten to record the mark at FrameShown and CuePlayed.
-- README (Unity client), implementation notes (the debug overlay paragraph) and roadmap (part removed, debug edits added as M13 part 2, the primed glow as a smaller item) drafted.
+- `Logic/DebugReport.cs`, step mode in `FightFlow`, debug log lines in `EventFormatter`, step hint in `ActionModel`; `Tests/EditMode/DebugOverlayTests.cs` (11 tests).
+- The screen: debug column (`Fight.uxml`, `Fight.uss`, `Hud`), `BoardView.Hazards`/`WavesShown`/`Spawns` moved on by cues and `Level`, spawn squares, `BoardTags` ID chips and labels, `FightDirector` keys (backtick, P, N, Shift+N) and `-labDebug`; `Tests/PlayMode/DebugOverlayScreenTests.cs` (3 tests).
+- 2026-11-12 on 6000.3.28f1: EditMode 88/88, PlayMode 19/19. Mac build smoke run with `-labDebug` on the Tech winning line: win in round 13, 50 commands; screenshots looked at. A smoke run at 1280x720 without the overlay also passed.
+- With the overlay open the action bar wraps; a button now clips its text instead of spilling it (min-height was tried and made UI Toolkit lay the rows out far too tall).
+- README, implementation notes and roadmap updated.
 
 ## Plan
 
@@ -33,10 +33,8 @@ In progress: overlay built, EditMode green, PlayMode being made green; docs draf
 
 ## Next steps
 
-1. Rerun EditMode and PlayMode (README's Unity client commands, editor closed) until both are green.
-2. Mac build, then a smoke run with `-labDebug` on `reports/winning-line-tech.json`; look at the screenshots.
-3. Commit, push, comment `@codex review`, answer findings.
-4. Ask the owner to play it (backtick, step mode, a saved fight paused and stepped) before `gh pr ready`.
+1. Answer Codex's findings on PR #27 (fix in this branch if a realistic path is real; reply and resolve each), comment `@codex review` after every push.
+2. The owner plays it (backtick, step mode with N and Shift+N, a saved fight paused with P and stepped with N). Then delete this note, update the PR description and `gh pr ready`.
 
 ## Decisions
 
