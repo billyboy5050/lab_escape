@@ -39,6 +39,8 @@ namespace LabEscape.Client
             run._record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(args[at + 1])));
             run._out = args[at + 2];
             Directory.CreateDirectory(run._out);
+            // The scripted fight's telemetry goes beside its screenshots, never among a playtest's fights.
+            TelemetrySink.RootOverride = Path.Combine(run._out, "telemetry");
             var film = Array.IndexOf(args, "-labFilm");
             if (film < 0 || film + 1 >= args.Length) return;
             run._film = new HashSet<int>();

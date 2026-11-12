@@ -45,10 +45,11 @@ namespace LabEscape.Client
         /// <summary>The state on screen jumped without animation: an undo, or a skip.</summary>
         public event Action<GameState>? Snapped;
 
-        public FightFlow(Content c, Loadout loadout, FightSettings settings, RecordMeta? meta = null)
+        /// <summary>`timed` is false for a recorded fight played back: its turn times are the recording's, not the playback's.</summary>
+        public FightFlow(Content c, Loadout loadout, FightSettings settings, RecordMeta? meta = null, bool timed = true)
         {
             C = c;
-            Session = new FightSession(c, loadout, settings, meta);
+            Session = new FightSession(c, loadout, settings, meta, timed: timed);
             // Until the opening has played, the screen shows the room as the fight finds it: the player and nobody else.
             Shown = Session.StartFrames.Count > 0 ? GameStates.CreateInitial(c, loadout, settings) : Session.State;
             _fmt = new EventFormatter(c, Session.State);

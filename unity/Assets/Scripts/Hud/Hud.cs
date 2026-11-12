@@ -98,7 +98,8 @@ namespace LabEscape.Client
         private readonly VisualElement _root;
         private readonly VisualElement _boardArea;
         private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
-        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures;
+        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures, _recentBox, _recent, _endDownloads;
+        private readonly Label _endSaved;
         private readonly VisualElement[] _overBoard;
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
@@ -125,6 +126,10 @@ namespace LabEscape.Client
         public event Action? ButtonClicked;
         public event Action<FightSpeed>? SpeedClicked;
         public event Action<PresetDef>? PresetClicked;
+        /// <summary>A saved fight on the start screen was chosen: its folder.</summary>
+        public event Action<string>? SavedFightClicked;
+        /// <summary>One of the end card's downloads was chosen: the file's name, such as replay.json.</summary>
+        public event Action<string>? DownloadClicked;
 
         public Hud(UIDocument doc)
         {
@@ -161,6 +166,10 @@ namespace LabEscape.Client
             _endCard = E("end-card");
             _endRule = E("end-rule");
             _endFigures = E("end-figures");
+            _recentBox = E("recent-box");
+            _recent = E("recent");
+            _endDownloads = E("end-downloads");
+            _endSaved = L("end-saved");
             _openerTitle = L("opener-title");
             _openerSub = L("opener-sub");
             _hpText = L("hp-text");
@@ -206,6 +215,9 @@ namespace LabEscape.Client
             B("open-log", () => OpenLogClicked?.Invoke());
             B("close-log", () => CloseLogClicked?.Invoke());
             B("again", () => AgainClicked?.Invoke());
+            B("download-replay", () => DownloadClicked?.Invoke("replay.json"));
+            B("download-summary", () => DownloadClicked?.Invoke("summary.json"));
+            B("download-events", () => DownloadClicked?.Invoke("events.jsonl"));
             B("change", () => ChangeClicked?.Invoke());
         }
 
@@ -300,8 +312,24 @@ namespace LabEscape.Client
         /// <summary>Tells the camera which part of the screen the panels leave for the board.</summary>
         public void SetFreeAreaOn(IsoCamera cam) => cam.SetFreeArea(FreeScreenArea());
 
-        public void ShowStart(string title, IEnumerable<PresetDef> presets, Content c)
+        public void ShowStart(string title, IEnumerable<PresetDef> presets, Content c, IReadOnlyList<Telemetry.SavedFight>? saved = null)
         {
+            _recent.Clear();
+            foreach (var f in saved ?? Array.Empty<Telemetry.SavedFight>())
+            {
+                var folder = f.Folder;
+                var b = new Button(() =>
+                {
+                    ButtonClicked?.Invoke();
+                    SavedFightClicked?.Invoke(folder);
+                }) { focusable = false, text = f.Label };
+                b.AddToClassList("recent-btn");
+                b.AddToClassList("mono");
+                Fonts.Apply(b);
+                _recent.Add(b);
+            }
+            Ui.Show(_recentBox, _recent.childCount > 0);
+            ShowStartMessage(null);
             _startTitle.text = title;
             _presets.Clear();
             var i = 1;
@@ -321,6 +349,13 @@ namespace LabEscape.Client
             }
             Ui.Show(_start, true);
             Ui.Show(_end, false);
+        }
+
+        /// <summary>A line under the loadouts, such as why a replay was refused. Null clears it.</summary>
+        public void ShowStartMessage(string? message)
+        {
+            _startError.text = message ?? "";
+            Ui.Show(_startError, message != null);
         }
 
         public void ShowContentError(string message)
@@ -349,9 +384,15 @@ namespace LabEscape.Client
             _hpJolt = 0f;
         }
 
-        /// <summary>The end of the fight: who won, why, and the fight in four figures from its summary.</summary>
-        public void ShowEnd(Outcome o, FightSummary sum, GameState s)
+        /// <summary>
+        /// The end of the fight: who won, why, the fight in four figures from its summary, and what became of its telemetry:
+        /// the folder it was saved to, the web build's downloads, or nothing for a replay.
+        /// </summary>
+        public void ShowEnd(Outcome o, FightSummary sum, GameState s, string? savedTo = null, bool offerDownloads = false, string? note = null)
         {
+            _endSaved.text = savedTo != null ? $"Saved to {savedTo}" : note ?? "";
+            Ui.Show(_endSaved, _endSaved.text.Length > 0);
+            Ui.Show(_endDownloads, offerDownloads);
             var win = o.Result == FightResult.Win;
             _endTitle.text = win ? "VICTORY" : "DEFEAT";
             _endTitle.EnableInClassList("win", win);
