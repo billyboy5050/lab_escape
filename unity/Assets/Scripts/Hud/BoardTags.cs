@@ -182,6 +182,7 @@ namespace LabEscape.Client
         private readonly Dictionary<int, ObjectTag> _objects = new Dictionary<int, ObjectTag>();
         private readonly List<(VisualElement El, Vector3 World)> _chips = new List<(VisualElement, Vector3)>();
         private readonly List<FloatingText> _floats = new List<FloatingText>();
+        private readonly List<(VisualElement El, Vector3 World)> _coords = new List<(VisualElement, Vector3)>();
         private object? _chipsFor;
         private bool _chipsShowIntents;
         private float _now;
@@ -202,6 +203,29 @@ namespace LabEscape.Client
             ClearChips();
             foreach (var f in _floats) f.Label.RemoveFromHierarchy();
             _floats.Clear();
+            foreach (var (el, _) in _coords) el.RemoveFromHierarchy();
+            _coords.Clear();
+        }
+
+        /// <summary>
+        /// The board's coordinates, as the log and previews name tiles (`Tiles.Name`): columns from A along the near-left edge and
+        /// rows from 1 along the near-right edge, just off the slab.
+        /// </summary>
+        public void Coordinates(Board board)
+        {
+            foreach (var (el, _) in _coords) el.RemoveFromHierarchy();
+            _coords.Clear();
+            for (var x = 0; x < board.Width; x++) AddCoord(((char)('A' + x)).ToString(), Iso.Floor(x + 0.5f, board.Height + RoomView.CoordOut, RoomView.CoordHeight));
+            for (var y = 0; y < board.Height; y++) AddCoord((y + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), Iso.Floor(board.Width + RoomView.CoordOut, y + 0.5f, RoomView.CoordHeight));
+        }
+
+        private void AddCoord(string text, Vector3 world)
+        {
+            var anchor = Ui.El("anchor");
+            anchor.Add(Ui.Text(text, "coord display"));
+            // Behind every other tag, so a unit's bar on the edge row is never covered by a letter.
+            _layer.Insert(0, anchor);
+            _coords.Add((anchor, world));
         }
 
         private void ClearChips()
@@ -282,6 +306,7 @@ namespace LabEscape.Client
                 _objects.Remove(id);
             }
 
+            foreach (var (el, world) in _coords) Place(el, ToPanel(world));
             RebuildChips(s, o);
             foreach (var (el, world) in _chips) Place(el, ToPanel(world));
 

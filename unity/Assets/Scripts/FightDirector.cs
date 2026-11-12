@@ -534,6 +534,12 @@ namespace LabEscape.Client
                 note = hazard.State == HazardState.Primed ? $"{def?.Name ?? hazard.Def}. {def?.Cue}" : $"{def?.Name ?? hazard.Def}.";
             }
             else if (room.Board.TerrainId(hover) == "shutter") note = "Shutter: impassable; blocks projectiles but not sight.";
+            // A tile with no unit on it is named first, as the board's coordinates name it.
+            if (unit == null)
+            {
+                var terrain = room.Terrain.TryGetValue(room.Board.TerrainId(hover), out var t) ? t.Name : "";
+                lines.Add(new InfoLine(hazard != null || terrain.Length == 0 ? Tiles.Name(hover) : $"{Tiles.Name(hover)}  {terrain}", "head"));
+            }
             if (unit != null)
             {
                 lines.Add(new InfoLine($"{Words.UnitName(c, unit.Def, unit.Id)}  {Tiles.Name(unit.Pos)}", "head"));
@@ -543,11 +549,6 @@ namespace LabEscape.Client
             }
             foreach (var o in objects) lines.Add(new InfoLine(Words.DescribeObject(c, o), "muted"));
             if (note != null) lines.Add(new InfoLine(note, "muted"));
-            if (lines.Count == 0)
-            {
-                lines.Add(new InfoLine(hint, "muted"));
-                return "Scanner";
-            }
             return unit != null ? "Scan: unit" : "Scan: tile";
         }
 

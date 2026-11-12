@@ -232,6 +232,8 @@
 
 /* Tags anchored to the board. Each anchor is a zero-sized point; its row hangs off that point. */
 .anchor { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+/* The board's coordinates, centred on their point beside the near edges. */
+.coord { position: absolute; left: -20px; width: 40px; top: -10px; height: 20px; padding: 0; -unity-text-align: middle-center; font-size: 15px; color: var(--ink-2); letter-spacing: 1px; }
 .feet-row { position: absolute; left: -44px; width: 88px; top: 8px; flex-direction: row; justify-content: center; align-items: center; }
 .hp-bar { flex-direction: row; width: 46px; height: 6px; background-color: var(--chip); border-width: 1px; border-color: #06090b; }
 .hp-seg { flex-grow: 1; flex-basis: 0; margin-right: 1px; background-color: #2a3338; }

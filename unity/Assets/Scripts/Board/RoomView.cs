@@ -12,6 +12,11 @@ namespace LabEscape.Client
     {
         private const float BackWall = 1.1f;
         private const float FadedAlpha = 0.22f;
+        private const float Edge = 0.24f;
+
+        /// <summary>Where the board's coordinates sit: this far out from the near edges of the tiles, at this height.</summary>
+        public const float CoordOut = Edge + 0.2f;
+        public const float CoordHeight = -0.3f;
 
         private sealed class Block
         {
@@ -42,7 +47,7 @@ namespace LabEscape.Client
             var b = new MeshBuilder();
             float w = board.Width, h2 = board.Height;
             // The slab everything stands on, then the room's two far walls and its low front lip.
-            var edge = 0.24f;
+            var edge = Edge;
             b.Box(new Vector3(-edge, -0.34f, -(h2 + edge)), new Vector3(w + edge, -0.14f, edge), Palette.Frame);
             b.Box(new Vector3(-edge, -0.14f, 0f), new Vector3(w + edge, BackWall, edge), Palette.WallFace);
             b.Box(new Vector3(-edge, -0.14f, -h2), new Vector3(0f, BackWall, 0f), Palette.WallFace);
@@ -78,8 +83,9 @@ namespace LabEscape.Client
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
 
-            BoundsMin = new Vector3(-edge, -0.3f, -(h2 + edge));
-            BoundsMax = new Vector3(w + edge, BackWall, edge);
+            // The near sides leave room for the coordinates.
+            BoundsMin = new Vector3(-edge, -0.3f, -(h2 + CoordOut + 0.2f));
+            BoundsMax = new Vector3(w + CoordOut + 0.2f, BackWall, edge);
         }
 
         private static bool IsBlock(string id) => id == "wall" || id == "pillar" || id == "shutter" || id == "gun";
