@@ -27,6 +27,7 @@ Outside testers found the game fun but want to see more before saying they would
 | Look | 3D with a fixed isometric camera; the top-down view goes away |
 | Platforms | Mac and Windows, plus a web build for testers |
 | When testers first play a run | After the Weapons wing, before the other two wings are built (decided 2026-11-09) |
+| Unity tests in CI | No: the EditMode and PlayMode tests and the builds run on a developer's machine (decided 2026-11-12) |
 | M12 checkpoint: does the Unity fight feel at least as good as the web version? | Yes: the owner played it on 2026-11-12 and found it "a much more enjoyable experience" |
 
 ## The move to Unity
