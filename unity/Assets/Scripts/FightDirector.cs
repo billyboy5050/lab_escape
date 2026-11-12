@@ -60,6 +60,15 @@ namespace LabEscape.Client
         private FightRecord? _replay;
         private int _replayNext;
         private float _replayWait;
+        /// <summary>A saved fight held between commands (P), and one command asked for while it is held (N), played when the board is still.</summary>
+        private bool _replayPaused;
+        private bool _replayStep;
+        /// <summary>The debug overlay (backtick): whether it is open, what it marks on the board, and whether step mode is on.</summary>
+        private bool _debugOpen;
+        private readonly DebugToggles _toggles = new DebugToggles();
+        private bool _stepMode;
+        private IntentReport? _scoredFor;
+        private List<ScoredOptions> _scored = new List<ScoredOptions>();
         /// <summary>When the fight ended, for the names of the web build's downloads.</summary>
         private double _endedAt;
         /// <summary>Counts fights started, so a ?replay= that arrives after the player has started one is dropped.</summary>
@@ -102,6 +111,26 @@ namespace LabEscape.Client
         /// <summary>Who is playing, for the telemetry folder and the replay's meta; null for nobody.</summary>
         public string? Tester => _tester;
 
+        /// <summary>The next of the saved fight's commands to play.</summary>
+        public int ReplayNext => _replayNext;
+
+        /// <summary>A saved fight is held between its commands until P, or N for one command.</summary>
+        public bool ReplayPaused => _replay != null && _replayPaused;
+
+        public bool DebugOpen => _debugOpen;
+
+        /// <summary>What the debug overlay marks on the board, and whether the log writes its debug lines.</summary>
+        public DebugToggles DebugToggles => _toggles;
+
+        /// <summary>Step mode, from the debug overlay. It acts only while the overlay is open, so a closed overlay never holds a fight.</summary>
+        public bool StepMode
+        {
+            get => _stepMode;
+            set => _stepMode = value;
+        }
+
+        private bool Stepping => _debugOpen && _stepMode;
+
         private void Awake()
         {
             Instance = this;
@@ -127,6 +156,7 @@ namespace LabEscape.Client
                 _hud.ShowContentError(e.Message);
                 return;
             }
+            SetDebugOpen(Array.IndexOf(Environment.GetCommandLineArgs(), "-labDebug") >= 0);
             SmokeRun.IsolateTelemetryIfAsked();
             _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
             ShowStartScreen();
@@ -175,6 +205,76 @@ namespace LabEscape.Client
             };
             _hud.AgainClicked += Again;
             _hud.ChangeClicked += ShowStartScreen;
+            _hud.DebugCloseClicked += () => SetDebugOpen(false);
+            _hud.DebugToggleClicked += ToggleMark;
+            _hud.StepModeClicked += () => _stepMode = !_stepMode;
+            _hud.NextClicked += Next;
+            _hud.ReplayPauseClicked += () => SetReplayPaused(!_replayPaused);
+            _hud.ReplayStepClicked += StepReplay;
+        }
+
+        // ------------------------------------------------------------------ the debug overlay
+
+        /// <summary>Opens or closes the debug overlay (backtick). Closed, it marks nothing, holds no frame and writes no debug lines.</summary>
+        public void SetDebugOpen(bool open)
+        {
+            _debugOpen = open;
+            _hud.SetDebugVisible(open);
+        }
+
+        private void ToggleMark(string which)
+        {
+            switch (which)
+            {
+                case "ids": _toggles.Ids = !_toggles.Ids; break;
+                case "spawns": _toggles.Spawns = !_toggles.Spawns; break;
+                case "hazards": _toggles.Hazards = !_toggles.Hazards; break;
+                case "flamer": _toggles.Flamer = !_toggles.Flamer; break;
+                case "log": _toggles.Log = !_toggles.Log; break;
+            }
+        }
+
+        /// <summary>
+        /// N: in step mode, the next frame of the fight, or with `untilPhase` (Shift) the frames up to the next phase. Otherwise, with
+        /// a saved fight paused, its next command.
+        /// </summary>
+        public void Next(bool untilPhase)
+        {
+            if (Flow == null) return;
+            if (Stepping && Flow.Busy)
+            {
+                Flow.Advance(untilPhase);
+                return;
+            }
+            if (ReplayPaused) StepReplay();
+        }
+
+        /// <summary>Holds a saved fight between its commands, or lets it play on. The command playing now finishes either way.</summary>
+        public void SetReplayPaused(bool paused)
+        {
+            if (_replay == null) return;
+            _replayPaused = paused;
+            _replayStep = false;
+            _replayWait = ReplayGap;
+        }
+
+        /// <summary>Plays a saved fight's next command, as soon as the board is still, and holds it there.</summary>
+        public void StepReplay()
+        {
+            if (!Replaying) return;
+            _replayPaused = true;
+            _replayStep = true;
+        }
+
+        /// <summary>The AI's scored options from these intents, worked out once for each new report.</summary>
+        private IReadOnlyList<ScoredOptions> ScoredFrom(IntentReport? rep)
+        {
+            if (!ReferenceEquals(rep, _scoredFor))
+            {
+                _scoredFor = rep;
+                _scored = DebugReport.Scored(rep);
+            }
+            return _scored;
         }
 
         private void ShowStartScreen()
@@ -303,6 +403,8 @@ namespace LabEscape.Client
             _replay = replay;
             _replayNext = 0;
             _replayWait = ReplayGap;
+            _replayPaused = false;
+            _replayStep = false;
             Flow = new FightFlow(c, loadout, settings, meta, timed: replay == null);
             _model = new ActionModel(c);
             _tags = new BoardTags(_hud.TagLayer, c, _cam);
@@ -510,6 +612,8 @@ namespace LabEscape.Client
             ReadPointer();
             ReadKeys();
             if (Flow == null) return;
+            Flow.StepMode = Stepping;
+            Flow.DebugLog = _debugOpen && _toggles.Log;
             // The board runs on its own clock: a heavy blow stops it and the 2x speed doubles it. The interface keeps real time.
             var dt = _clock.Step(real) * Flow.TimeScale;
             Flow.Tick(dt);
@@ -530,8 +634,13 @@ namespace LabEscape.Client
             var rec = _replay;
             var flow = Flow;
             if (rec == null || flow == null || !Replaying || !flow.Idle) return;
-            _replayWait -= dt;
-            if (_replayWait > 0f) return;
+            if (_replayPaused && !_replayStep) return;
+            if (!_replayStep)
+            {
+                _replayWait -= dt;
+                if (_replayWait > 0f) return;
+            }
+            _replayStep = false;
             _replayWait = ReplayGap;
             var r = flow.Apply(rec.Commands[_replayNext]);
             if (!r.Ok)
@@ -547,6 +656,7 @@ namespace LabEscape.Client
         private void ReadStartKeys()
         {
             if (_c == null || !_hud.StartVisible) return;
+            if (Input.GetKeyDown(KeyCode.BackQuote)) SetDebugOpen(!_debugOpen);
             if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
             for (var i = 0; i < _c.Presets.Count && i < ActionKeys.Length; i++)
             {
@@ -612,6 +722,9 @@ namespace LabEscape.Client
                 return;
             }
             if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
+            if (Input.GetKeyDown(KeyCode.BackQuote)) SetDebugOpen(!_debugOpen);
+            if (Input.GetKeyDown(KeyCode.P)) SetReplayPaused(!_replayPaused);
+            if (Input.GetKeyDown(KeyCode.N)) Next(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
             if (Input.GetKeyDown(KeyCode.L))
             {
                 SetLog(!_hud.LogOpen);
@@ -667,6 +780,8 @@ namespace LabEscape.Client
             _overlay.Preview = idle ? _preview : null;
             _overlay.Intents = idle ? m.Intents : null;
             _overlay.ShowIntents = _showIntents;
+            _overlay.Debug = _debugOpen ? _toggles : null;
+            _overlay.Scored = idle && _debugOpen ? ScoredFrom(m.Intents) : null;
         }
 
         private void UpdateHud(float dt)
@@ -682,7 +797,10 @@ namespace LabEscape.Client
             var me = _board!.Units.TryGetValue(0, out var view) ? view : null;
             _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy, me?.ShownHp, me != null && me.GhostLeft > 0f ? me.GhostHp : me?.ShownHp);
             _hud.UpdateActions(c, m.Statuses, m.ModeId, !idle, m.GrappleMode);
-            var hint = Replaying ? $"Playing back a saved fight: command {_replayNext + 1} of {_replay!.Commands.Count}. Space skips, F changes the speed." : m.Hint(flow);
+            // Step mode's hint wins while it holds a fight, a saved fight's included.
+            var hint = !Replaying || (flow.Busy && flow.StepMode) ? m.Hint(flow)
+                : _replayPaused ? $"Saved fight paused before command {_replayNext + 1} of {_replay!.Commands.Count}. P plays on, N plays the next command."
+                : $"Playing back a saved fight: command {_replayNext + 1} of {_replay!.Commands.Count}. P pauses, Space skips, F changes the speed.";
             _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents, _sound.Muted);
             _hud.UpdateMinions(c, shown);
             _hud.UpdateLog(flow.Log);
@@ -690,6 +808,12 @@ namespace LabEscape.Client
             var lines = new List<InfoLine>();
             var title = BuildInfo(lines);
             _hud.UpdateInfo(title, lines);
+            if (_debugOpen)
+            {
+                var report = DebugReport.Panel(c, shown, _board!.Hazards, _board.WavesShown, idle ? ScoredFrom(m.Intents) : (IReadOnlyList<ScoredOptions>)Array.Empty<ScoredOptions>(), flow.Session.Events);
+                var replayAt = _replay != null ? $"{Math.Min(_replayNext, _replay.Commands.Count)}/{_replay.Commands.Count} commands{(Replaying ? "" : ", finished")}" : null;
+                _hud.UpdateDebug(DebugReport.Header(c), _toggles, report, _stepMode, flow.Busy, flow.Holding, flow.Pending, replayAt, _replayPaused, Replaying);
+            }
             if (live.Outcome != null && !flow.Busy && !_hud.EndVisible)
             {
                 var (saved, note) = SaveTelemetry(flow.Session);

@@ -17,6 +17,10 @@ namespace LabEscape.Client
         public CommandPreview? Preview;
         public IntentReport? Intents;
         public bool ShowIntents = true;
+        /// <summary>The debug overlay's marks on the board, or null while the overlay is closed.</summary>
+        public DebugToggles? Debug;
+        /// <summary>Options the AI scored in the intents' dry run, for the debug overlay; null unless the player can act.</summary>
+        public IReadOnlyList<ScoredOptions>? Scored;
     }
 
     /// <summary>
@@ -46,6 +50,9 @@ namespace LabEscape.Client
         private GameState _shown;
         private Stage _stage = Stage.Empty;
         private int _next;
+        private readonly List<Hazard> _hazards = new List<Hazard>();
+        private List<SpawnMark>? _spawns;
+        private int _spawnsFor = -1;
 
         public readonly FxSystem Fx;
         public readonly Ambience Ambience = new Ambience();
@@ -60,6 +67,29 @@ namespace LabEscape.Client
         public IReadOnlyDictionary<int, UnitView> Units => _units;
 
         public IReadOnlyDictionary<int, PropView> Objects => _objects;
+
+        /// <summary>
+        /// The hazards as the board shows them, for the debug overlay. A hazard moves on to the frame's state when a cue of its
+        /// own plays (it primes, holds, fires or stands down), and every hazard at Level, so its mark never runs ahead of the board.
+        /// </summary>
+        public IReadOnlyList<Hazard> Hazards => _hazards;
+
+        /// <summary>How many waves the board has shown arriving: a wave counts once its WaveSpawned cue has played.</summary>
+        public int WavesShown { get; private set; }
+
+        /// <summary>The spawn tiles of the waves the board has not shown arriving yet.</summary>
+        public IReadOnlyList<SpawnMark> Spawns
+        {
+            get
+            {
+                if (_spawns == null || _spawnsFor != WavesShown)
+                {
+                    _spawns = DebugReport.Spawns(_c, _shown, WavesShown);
+                    _spawnsFor = WavesShown;
+                }
+                return _spawns;
+            }
+        }
 
         public BoardView(Content c, RoomDef room, IsoCamera cam, BoardTags tags, GameState initial)
         {
@@ -190,6 +220,10 @@ namespace LabEscape.Client
                 _objects.Remove(id);
             }
 
+            _hazards.Clear();
+            _hazards.AddRange(s.Hazards);
+            WavesShown = s.WavesSpawned;
+
             if (!hard) return;
             foreach (var r in _remains) r.Destroy();
             _remains.Clear();
@@ -309,7 +343,32 @@ namespace LabEscape.Client
                     AddUnit(u).PopIn();
                     break;
                 }
+                case HazardPrimed e:
+                    ShowHazard(e.Hazard);
+                    break;
+                case HazardHeld e:
+                    ShowHazard(e.Hazard);
+                    break;
+                case HazardFired e:
+                    ShowHazard(e.Hazard);
+                    break;
+                case HazardCancelled e:
+                    ShowHazard(e.Hazard);
+                    break;
+                case WaveSpawned e:
+                    WavesShown = Mathf.Max(WavesShown, e.Wave);
+                    break;
             }
+        }
+
+        /// <summary>A hazard's cue has played: its mark moves on to the hazard as the frame leaves it.</summary>
+        private void ShowHazard(string id)
+        {
+            var h = _shown.Hazards.FirstOrDefault(x => x.Id == id);
+            if (h == null) return;
+            var at = _hazards.FindIndex(x => x.Id == id);
+            if (at >= 0) _hazards[at] = h;
+            else _hazards.Add(h);
         }
 
         private static bool IsFlat(BoardObject o) => o.Kind == ObjectKind.Mine || o.Kind == ObjectKind.Corpse;
@@ -588,6 +647,7 @@ namespace LabEscape.Client
                 }
             }
             if (o.Hover.HasValue) Brackets(o.Hover.Value, 0.02f, 0.22f, 0.045f, Palette.WithAlpha(Palette.Ink, 0.9f));
+            if (o.Debug != null && o.Debug.Spawns) DrawSpawns();
 
             var pv = o.Preview != null && o.Preview.Ok ? o.Preview : null;
             if (o.ShowIntents)
@@ -622,6 +682,25 @@ namespace LabEscape.Client
             if (pv != null) DrawPreviewLines(pv);
             _floor.End();
             _top.End();
+        }
+
+        /// <summary>The debug overlay's spawn tiles: a dashed square on each tile a later wave will arrive on.</summary>
+        private void DrawSpawns()
+        {
+            var col = Palette.WithAlpha(Palette.Enemy, 0.9f);
+            foreach (var m in Spawns)
+            {
+                const float inset = 0.1f;
+                float x0 = m.Tile.X + inset, y0 = m.Tile.Y + inset, x1 = m.Tile.X + 1f - inset, y1 = m.Tile.Y + 1f - inset;
+                var a = Iso.Floor(x0, y0, FloorY + 0.003f);
+                var b = Iso.Floor(x1, y0, FloorY + 0.003f);
+                var c = Iso.Floor(x1, y1, FloorY + 0.003f);
+                var d = Iso.Floor(x0, y1, FloorY + 0.003f);
+                FloorDashes(a, b, 0.035f, 0.1f, 0.07f, col);
+                FloorDashes(b, c, 0.035f, 0.1f, 0.07f, col);
+                FloorDashes(c, d, 0.035f, 0.1f, 0.07f, col);
+                FloorDashes(d, a, 0.035f, 0.1f, 0.07f, col);
+            }
         }
 
         private Vector3 Chest(Pos p) => Iso.Tile(p.X, p.Y, 0.4f);
