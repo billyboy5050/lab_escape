@@ -1,7 +1,7 @@
 # Debug overlay and step mode in Unity
 
 - Branch: `feat/unity-debug-overlay`
-- Pull request: <link, once opened>
+- Pull request: https://github.com/billyboy5050/lab_escape/pull/27
 - Roadmap item: M13, part 1 of the remaining list: "Debug overlay and step mode"
 - Started: 2026-11-12
 - Last updated: 2026-11-12, by Claude (Opus 5.5)
@@ -12,17 +12,30 @@ Port the web client's backtick debug panel to the Unity client: engine version a
 
 ## Status
 
-In progress: reading the web panel and the Unity client.
+In progress: building the overlay.
 
 ## Done so far
 
 - Branch cut from `main` at 8bdc409; `npm test` green.
 
+## Plan
+
+- `Logic/DebugReport.cs` (no Unity code): the panel's text from a state (header, wave timer, hazards with their last value-rule decision, Flamer options, chain-rule count) and the board's marks (spawn tiles of later waves, hazard labels).
+- `FightFlow`: step mode (`StepMode`, `Holding`, `Pending`, `Advance(untilPhase)`). In step mode a frame plays out and holds at its end while more are queued; N pumps the next frame, Shift+N runs to the frame before the next phase. Nothing queued: it finishes as usual.
+- `EventFormatter`: the web client's debug log lines (hazard holds, cancel reasons, chain suppressed, AI decisions, debug events) behind a flag.
+- `BoardView`: hazards and waves "as the board shows them", moved on by hazard and wave cues and by `Level`, so the overlay never reads the state mid-frame. Spawn marks on the floor; `BoardTags` draws unit IDs on the figures' tags, hazard labels, wave labels and Flamer scores.
+- HUD: a debug column on the left (`column-debug` in `Fight.uxml`), shown with the backtick, so it covers no board; the camera reframes into what is left.
+- `FightDirector`: backtick toggles; P pauses a replay, N steps (the next frame when step mode holds one, else the next command of a paused replay); `-labDebug` opens the overlay for a smoke run.
+
 ## Next steps
 
-1. Read `src/client/components/DebugPanel.tsx` and the Unity `FightDirector`, `Hud`, `BoardTags`, then plan the port.
+1. Write `Logic/DebugReport.cs` and the step mode in `FightFlow`, with EditMode tests.
 
 ## Decisions
+
+- 2026-11-12: the panel reads `Flow.Shown`, like the rest of the HUD, so in step mode it describes the frame on screen. The board's marks follow cues and `Level`.
+- 2026-11-12: ported what explains a fight (the task's list, plus the Flamer's options, the debug log lines and the chain-rule count). The web client's debug edits (set HP, set AP and movement, spawn a unit, force a wave, hold back wave 3) and restart are not ported here; they go to the roadmap so they are not lost when the web client retires.
+- 2026-11-12: tile names are not written on every tile: the Unity board's edges always carry its coordinates.
 
 ## Open questions
 
