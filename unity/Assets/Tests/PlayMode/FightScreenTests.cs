@@ -89,6 +89,18 @@ namespace LabEscape.Client.Tests
             Assert.That(d.Flow!.Live.Outcome?.Result, Is.EqualTo(FightResult.Win));
             Assert.That(d.EndScreenShown, Is.True);
             AssertBoardIsLevel(d, "at the end");
+
+            // The end card gives the fight in four figures, from its summary.
+            var root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
+            var figures = root.Q("end-figures").Query<Label>(className: "figure-value").ToList().Select(l => l.text).ToList();
+            var summary = d.Flow!.Session.Summary();
+            Assert.That(figures, Is.EqualTo(new[]
+            {
+                summary.Rounds.ToString(),
+                $"{d.Flow!.Live.Units.First(u => u.Id == 0).Hp}/{d.Flow!.Live.Units.First(u => u.Id == 0).MaxHp}",
+                summary.Kills.Values.Sum().ToString(),
+                summary.PlayerDamageTaken.Total.ToString(),
+            }));
         }
 
         [UnityTest]
@@ -341,6 +353,46 @@ namespace LabEscape.Client.Tests
             }
             yield return WaitUntilIdle(d);
             Assert.That(d.Flow!.Live.Round, Is.EqualTo(2));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheBoardShowsItsCoordinatesOnScreen()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            var root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
+            var labels = root.Query<Label>(className: "coord").ToList();
+            var board = d.Content!.RoomFor(d.Flow!.Live.Settings.Room).Board;
+            var expected = Enumerable.Range(0, board.Width).Select(x => Tiles.Name(new Pos(x, 0)).Substring(0, 1))
+                .Concat(Enumerable.Range(0, board.Height).Select(y => Tiles.Name(new Pos(0, y)).Substring(1)));
+            Assert.That(labels.Select(l => l.text), Is.EquivalentTo(expected));
+            var screen = root.worldBound;
+            foreach (var l in labels) Assert.That(screen.Contains(l.worldBound.center), Is.True, $"{l.text} is on screen");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator PointingAtAnActionShowsItsRuleInTheScanner()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            d.ScriptedPointer = true;
+            yield return StartedFight(d);
+            var root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
+            var action = d.Model!.Statuses.First(a => d.Content!.Abilities.ContainsKey(a.Id));
+            d.SetActionPointer(action.Id);
+            yield return null;
+            yield return null;
+            var lines = root.Q("info-body").Query<Label>().ToList().Select(l => l.text).ToList();
+            Assert.That(lines, Has.Member(d.Content!.Abilities[action.Id].Text));
+            d.SetActionPointer(null);
+            yield return null;
+            yield return null;
+            lines = root.Q("info-body").Query<Label>().ToList().Select(l => l.text).ToList();
+            Assert.That(lines, Has.No.Member(d.Content!.Abilities[action.Id].Text));
         }
 
         [UnityTest]

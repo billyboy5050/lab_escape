@@ -28,13 +28,23 @@
 
 .panel {
     background-color: var(--panel);
+    -unity-background-scale-mode: stretch-to-fill;
     border-width: 1px;
     border-color: var(--line);
+    border-top-color: var(--line-2);
     border-radius: 4px;
     padding: 8px 10px;
     margin-bottom: 8px;
 }
 .panel-head { flex-direction: row; justify-content: space-between; align-items: center; }
+/* The web client's terminal frame: a tick of accent at two corners, and an LED before the title. The panel's shade from top to
+   bottom is a texture Hud makes, over its colour. */
+.tick { position: absolute; width: 10px; height: 10px; border-color: var(--accent); opacity: 0.8; }
+.tick.tl { left: -1px; top: -1px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 4px; }
+.tick.br { right: -1px; bottom: -1px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 4px; }
+.title-left { flex-direction: row; align-items: center; }
+.led { width: 9px; height: 9px; margin: 0 7px 3px 0; border-radius: 2px; border-width: 1px; background-color: var(--move); border-color: rgba(63, 224, 197, 0.35); }
+.led.amber { background-color: var(--amber); border-color: rgba(255, 176, 32, 0.35); }
 .panel-title {
     color: var(--accent);
     -unity-font-style: bold;
@@ -95,17 +105,40 @@
     justify-content: flex-start;
 }
 .action-btn:hover { background-color: var(--panel-3); }
+/* A button centres its text, and labels inherit that; the action buttons' labels sit top left. */
+.action-btn { -unity-text-align: upper-left; }
 .action-btn.utility { border-left-color: var(--ink-3); border-left-width: 3px; }
 .action-btn.tech { border-left-color: #3d9be0; border-left-width: 3px; }
 .action-btn.alien { border-left-color: #1fc28a; border-left-width: 3px; }
 .action-btn.selected { background-color: #16413c; border-color: var(--move); }
-.action-btn:disabled { opacity: 0.55; }
-.ab-top { flex-direction: row; justify-content: space-between; width: 100%; flex-shrink: 0; }
-.ab-name { font-size: 13px; -unity-font-style: bold; padding: 0; white-space: normal; flex-shrink: 1; }
-.ab-key { font-size: 11px; color: var(--ink-3); padding: 0; margin-left: 4px; }
+.action-btn:disabled, .action-btn.off { opacity: 0.55; }
+.ab-top { flex-direction: row; justify-content: space-between; align-items: flex-start; width: 100%; flex-shrink: 0; }
+.ab-name { font-size: 13px; -unity-font-style: bold; padding: 0; white-space: normal; flex-grow: 1; flex-shrink: 1; flex-basis: 0; -unity-text-align: upper-left; }
+.ab-key { font-size: 10px; -unity-text-align: middle-center; color: var(--ink-2); min-width: 15px; padding: 0 3px; margin: 1px 0 0 4px; border-width: 1px; border-bottom-width: 2px; border-radius: 3px; border-color: var(--line-2); background-color: var(--chip); }
 .ab-cost { font-size: 10px; color: var(--amber); padding: 0; white-space: normal; flex-shrink: 0; }
 
 .controls { flex-direction: row; align-items: center; }
+/* Keycaps, as the web client's kbd. A button with one holds its words and its key side by side. */
+.btn { flex-direction: row; align-items: center; }
+.btn-text { padding: 0; margin: 0; }
+.kbd {
+    font-size: 10px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    min-width: 17px;
+    padding: 0 4px;
+    margin: 0 0 0 7px;
+    border-width: 1px;
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    border-color: var(--line-2);
+    background-color: var(--chip);
+    color: var(--ink-2);
+}
+.kbd.key-before { margin: 0 6px 0 0; }
+.btn.primary .kbd { background-color: rgba(3, 32, 27, 0.18); border-color: rgba(3, 32, 27, 0.45); color: #03201b; }
+.btn.small .kbd { font-size: 9px; min-width: 14px; padding: 0 3px; margin-left: 5px; }
+.btn.off .btn-text { color: var(--ink-3); }
 .btn {
     background-color: var(--panel-3);
     border-width: 1px;
@@ -123,7 +156,7 @@
 .btn.small { padding: 2px 7px; font-size: 11px; margin: 0; }
 .btn.off { color: var(--ink-3); }
 .hint { flex-grow: 1; flex-shrink: 1; flex-basis: 0; color: var(--ink-2); font-size: 12px; white-space: normal; padding: 0 8px; }
-.control-label { color: var(--ink-3); font-size: 12px; padding: 0; margin-right: 4px; }
+.control-label { color: var(--ink-3); font-size: 12px; padding: 0; margin-right: 5px; }
 .seg { flex-direction: row; margin-right: 8px; }
 .seg-btn {
     background-color: var(--panel-3);
@@ -179,10 +212,22 @@
 .opener-rule { height: 3px; width: 100%; background-color: var(--danger); margin: 6px 0 8px 0; }
 .opener-sub { font-size: 19px; -unity-font-style: bold; letter-spacing: 6px; color: var(--danger); padding: 0; margin: 0; }
 .vignette { position: absolute; left: 0; top: 0; width: 100%; height: 100%; -unity-background-scale-mode: stretch-to-fill; }
-.flash { opacity: 0; transition-property: opacity; transition-duration: 0.45s; }
+/* The alarm and a blow to the player light the board's edges from inside, as the web client's inset glows do. Hud places them
+   over the board and gives them a glow made in code; the slices keep its width the same on every side. */
+.board-overlay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.flash {
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: ease-out;
+    -unity-slice-left: 64;
+    -unity-slice-right: 64;
+    -unity-slice-top: 64;
+    -unity-slice-bottom: 64;
+    -unity-slice-scale: 1.7px;
+}
 .flash.on { opacity: 1; transition-duration: 0s; }
-.alarm { background-color: rgba(255, 176, 32, 0.16); }
-.hurt { border-width: 26px; border-color: rgba(255, 60, 40, 0.5); }
+.alarm { transition-duration: 1s; -unity-background-image-tint-color: rgb(255, 140, 20); }
+.hurt { transition-duration: 0.6s; -unity-background-image-tint-color: rgb(255, 30, 20); }
 .toast {
     position: absolute;
     bottom: 146px;
@@ -202,6 +247,7 @@
 .overlay { align-items: center; justify-content: center; background-color: rgba(3, 5, 6, 0.72); }
 .card {
     background-color: var(--panel-2);
+    -unity-background-scale-mode: stretch-to-fill;
     border-width: 1px;
     border-color: var(--line-2);
     border-radius: 5px;
@@ -214,6 +260,15 @@
 .card-title.win { color: var(--good); }
 .card-title.lose { color: var(--danger); }
 .card .muted { margin-bottom: 14px; }
+/* The end card: a rule under the title in its colour, then the fight in four figures. */
+.end-rule { height: 3px; width: 100%; margin: 2px 0 10px 0; background-color: var(--good); }
+.end-rule.lose { background-color: var(--danger); }
+.figures { flex-direction: row; margin: 0 0 18px 0; }
+.figure { flex-grow: 1; flex-basis: 0; padding: 0 10px; border-left-width: 2px; border-color: var(--line-2); }
+.figure-value { font-size: 30px; -unity-font-style: bold; color: var(--ink); padding: 0; }
+.figure-label { font-size: 12px; color: var(--ink-3); padding: 0; letter-spacing: 1px; }
+.figure-note { font-size: 11px; color: var(--danger); padding: 0; white-space: normal; }
+.figure-label.face { font-size: 14px; }
 .presets { margin-top: 2px; }
 .preset-btn {
     background-color: var(--panel-3);
@@ -232,6 +287,8 @@
 
 /* Tags anchored to the board. Each anchor is a zero-sized point; its row hangs off that point. */
 .anchor { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+/* The board's coordinates, centred on their point beside the near edges. */
+.coord { position: absolute; left: -20px; width: 40px; top: -10px; height: 20px; padding: 0; -unity-text-align: middle-center; font-size: 15px; color: var(--ink-2); letter-spacing: 1px; }
 .feet-row { position: absolute; left: -44px; width: 88px; top: 8px; flex-direction: row; justify-content: center; align-items: center; }
 .hp-bar { flex-direction: row; width: 46px; height: 6px; background-color: var(--chip); border-width: 1px; border-color: #06090b; }
 .hp-seg { flex-grow: 1; flex-basis: 0; margin-right: 1px; background-color: #2a3338; }
@@ -283,3 +340,21 @@
 .incoming-chip.faint { opacity: 0.6; }
 .dies-chip { position: absolute; left: 12px; bottom: 16px; font-size: 18px; -unity-font-style: bold; color: var(--danger); padding: 0; -unity-text-outline-width: 1px; -unity-text-outline-color: #06090b; }
 .float-text { position: absolute; -unity-font-style: bold; -unity-text-outline-width: 1.5px; -unity-text-outline-color: #0b0f12; padding: 0; white-space: nowrap; }
+
+/* The web client's faces, from the system (Fonts.cs). An element with the face it asked for has the class `face`: the condensed
+   display face is set larger, and its spacing opened up, as the web client sets it. Without it, the sizes above stand. */
+.panel-title.face { font-size: 17px; letter-spacing: 2px; }
+.cell-label.face { font-size: 15px; letter-spacing: 1px; }
+.value.small.face { font-size: 19px; letter-spacing: 1px; }
+.incoming.face { font-size: 18px; letter-spacing: 1px; }
+.banner.face { font-size: 36px; letter-spacing: 5px; padding: 6px 44px 3px 44px; }
+.opener-title.face { font-size: 78px; letter-spacing: 10px; }
+.opener-sub.face { font-size: 25px; letter-spacing: 7px; }
+.card-title.face { font-size: 50px; letter-spacing: 4px; }
+.card-title.small.face { font-size: 26px; letter-spacing: 2px; }
+.ab-name.face { font-size: 16px; letter-spacing: 0.5px; }
+.preset-name.face { font-size: 25px; letter-spacing: 2px; }
+.control-label.face { font-size: 14px; letter-spacing: 1px; }
+.coord.face { font-size: 19px; }
+.log-line.face { font-size: 11px; }
+.intercom-text.face { font-size: 13px; }

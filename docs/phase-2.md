@@ -27,6 +27,7 @@ Outside testers found the game fun but want to see more before saying they would
 | Look | 3D with a fixed isometric camera; the top-down view goes away |
 | Platforms | Mac and Windows, plus a web build for testers |
 | When testers first play a run | After the Weapons wing, before the other two wings are built (decided 2026-11-09) |
+| M12 checkpoint: does the Unity fight feel at least as good as the web version? | Yes: the owner played it on 2026-11-12 and found it "a much more enjoyable experience" |
 
 ## The move to Unity
 
@@ -167,7 +168,7 @@ Each is one branch and pull request. Sizes are relative effort.
 | M10 | C# simulator and CI | Same seeds reproduce the committed reports; C# tests run inside the existing `check` job | M |
 | M11 | Rooms as data, any size | Armory plays identically from the new room model; rooms of other sizes load and play headless | M |
 | M12 | Unity fight in greybox | A full Armory fight plays on the isometric camera with previews, intents and HUD. **Owner checkpoint:** it feels at least as good as the web version | L |
-| M13 | Unity parity, retire the web client | Debug overlay, telemetry, sound, shortcuts, content hot reload; working greybox versions of the title, briefing, loadout and result screens; Mac, Windows and web builds run; preview speed acceptable on web | L |
+| M13 | Unity parity, retire the web client | Debug overlay, telemetry, shortcuts, content hot reload (sound was ported early, on 2026-11-12); working greybox versions of the title, briefing, loadout and result screens; Mac, Windows and web builds run; preview speed acceptable on web | L |
 | | **Stage B: game systems** | | |
 | M14 | Room shapes: halls, hallways, big hazards | One room of each shape plays and stays readable; `zone` and `beam` have tests | L |
 | M15 | Run skeleton with events | A 3-room run plays, events grant its upgrades, it resumes after a restart; same seed and choices give the same run | L |
@@ -208,7 +209,7 @@ After one run, testers can explain the loop, name the three branches and say wha
 
 ## Risks
 
-- Stage A is five milestones with nothing new for players. The M12 checkpoint is where to stop if the 3D version does not feel right.
+- Stage A is five milestones with nothing new for players. The M12 checkpoint was where to stop if the 3D version did not feel right; it passed on 2026-11-12.
 - 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can produce only greybox. The first tester round needs about half the models (the player, its minions and the Weapons wing's enemies) and one room kit, so M21 cannot finish until that art exists.
 - No outsider plays a run before M22. Until then the run, the kit rework and Occult rest on the owner's reading of what testers said, with no recorded play behind it.
 - **This repository is public.** Paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository before M20.

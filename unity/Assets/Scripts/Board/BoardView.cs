@@ -70,10 +70,12 @@ namespace LabEscape.Client
             _shown = initial;
             _root = new GameObject("Board").transform;
             _roomView = new RoomView(room, _root);
+            tags.Coordinates(room.Board);
             _floor = new OverlayLayer("Floor overlay", Mats.FloorOverlay, _root);
             _top = new OverlayLayer("Top overlay", Mats.TopOverlay, _root);
             Fx = new FxSystem(_root, tags) { UnitAt = UnitPosition };
             Lighting.Reset();
+            Lighting.SetRoom(_roomView.Centre, _roomView.Reach);
             _cam.Frame(_roomView.BoundsMin, _roomView.BoundsMax);
             Level(initial, true);
         }

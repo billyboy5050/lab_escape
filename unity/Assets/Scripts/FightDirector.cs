@@ -33,12 +33,14 @@ namespace LabEscape.Client
 
         private Content? _c;
         private Hud _hud = null!;
+        private SoundPlayer _sound = null!;
         private IsoCamera _cam = null!;
         private BoardTags? _tags;
         private BoardView? _board;
         private ActionModel? _model;
         private readonly BoardOverlay _overlay = new BoardOverlay();
         private Pos? _hover;
+        private string? _hoverAction;
         private bool _showIntents = true;
         private CommandPreview? _preview;
         private string _previewKey = "";
@@ -86,6 +88,7 @@ namespace LabEscape.Client
             doc.panelSettings = Resources.Load<PanelSettings>("UI/Panel");
             doc.visualTreeAsset = Resources.Load<VisualTreeAsset>("UI/Fight");
             _hud = new Hud(doc);
+            _sound = new SoundPlayer(transform);
             WireHud();
             try
             {
@@ -100,20 +103,33 @@ namespace LabEscape.Client
             SmokeRun.AttachIfAsked(this);
         }
 
+        /// <summary>The sounds this frame's cues and clicks asked for play together, once everything has had its Update.</summary>
+        private void LateUpdate() => _sound?.Flush(Time.unscaledTime);
+
+        public void ToggleSound() => _sound.SetMuted(!_sound.Muted);
+
+        public bool Muted => _sound.Muted;
+
+        public SoundPlayer Sound => _sound;
+
         private void OnDestroy()
         {
+            _sound?.Dispose();
             if (Instance == this) Instance = null;
         }
 
         private void WireHud()
         {
             _hud.ActionClicked += SelectAction;
+            _hud.ActionHovered += SetActionPointer;
             _hud.GrappleModeClicked += m => _model?.SetGrappleMode(m);
             _hud.UndoClicked += () => TryUndo("Nothing to undo");
             _hud.EndTurnClicked += EndTurn;
             _hud.SkipClicked += () => Flow?.Skip();
             _hud.SpeedClicked += s => Flow?.SetSpeed(s);
             _hud.IntentsClicked += () => _showIntents = !_showIntents;
+            _hud.SoundClicked += ToggleSound;
+            _hud.ButtonClicked += () => _sound.Ask(Sfx.Ui);
             _hud.OpenLogClicked += () => SetLog(true);
             _hud.CloseLogClicked += () => SetLog(false);
             _hud.PresetClicked += StartPreset;
@@ -191,6 +207,7 @@ namespace LabEscape.Client
             Flow = null;
             _model = null;
             _hover = null;
+            _hoverAction = null;
             _preview = null;
             _previewKey = "";
             _cam.Still();
@@ -219,6 +236,8 @@ namespace LabEscape.Client
         /// </summary>
         private void OnCue(Cue cue)
         {
+            var sfx = SoundCues.For(cue);
+            if (sfx.HasValue) _sound.Ask(sfx.Value);
             if (cue.Kind != CueKind.Event || Flow == null) return;
             // At 2x the stops are half as long, like everything else.
             var pace = 1f / Flow.TimeScale;
@@ -276,6 +295,7 @@ namespace LabEscape.Client
         private void OnThud(Vector3 at, float weight)
         {
             if (weight < 0.9f) return;
+            _sound.Ask(Sfx.Land);
             _cam.Shake(weight * Feel.ThudTrauma);
             _cam.Kick(Vector3.down, Mathf.Min(Feel.ThudKickMost, weight * Feel.ThudKick));
         }
@@ -292,6 +312,7 @@ namespace LabEscape.Client
                 _hud.Toast($"{a.Name}: {a.Reason}");
                 return;
             }
+            _sound.Ask(Sfx.Select);
             if (id == "sprint")
             {
                 Commit(new SprintCommand());
@@ -318,10 +339,13 @@ namespace LabEscape.Client
 
         public void EndTurn()
         {
-            if (Flow != null && Flow.Idle) Commit(new EndTurnCommand());
+            if (Flow != null && Flow.Idle && Commit(new EndTurnCommand())?.Ok == true) _sound.Ask(Sfx.EndTurn);
         }
 
         public void SetPointer(Pos? tile) => _hover = tile;
+
+        /// <summary>The action button under the pointer, whose rule the Scanner shows; null when there is none.</summary>
+        public void SetActionPointer(string? id) => _hoverAction = id;
 
         private void TryUndo(string message)
         {
@@ -363,6 +387,7 @@ namespace LabEscape.Client
         private void ReadStartKeys()
         {
             if (_c == null || !_hud.StartVisible) return;
+            if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
             for (var i = 0; i < _c.Presets.Count && i < ActionKeys.Length; i++)
             {
                 if (Input.GetKeyDown(ActionKeys[i]))
@@ -395,6 +420,8 @@ namespace LabEscape.Client
                 else _dragging = false;
             }
 
+            // A button that is rebuilt under the pointer never says the pointer left it; leaving the interface does.
+            if (!overUi) _hoverAction = null;
             var inWindow = screen.x >= 0f && screen.y >= 0f && screen.x < Screen.width && screen.y < Screen.height;
             _hover = overUi || !inWindow ? (Pos?)null : _board.PickTile(screen);
             if (Input.GetMouseButtonDown(0) && _hover.HasValue) ClickTile(_hover.Value);
@@ -424,6 +451,7 @@ namespace LabEscape.Client
                 else _model.Clear();
                 return;
             }
+            if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
             if (Input.GetKeyDown(KeyCode.L))
             {
                 SetLog(!_hud.LogOpen);
@@ -495,22 +523,30 @@ namespace LabEscape.Client
             _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy, me?.ShownHp, me != null && me.GhostLeft > 0f ? me.GhostHp : me?.ShownHp);
             _hud.UpdateActions(c, m.Statuses, m.ModeId, !idle, m.GrappleMode);
             var hint = m.Hint(flow);
-            _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents);
+            _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents, _sound.Muted);
             _hud.UpdateMinions(c, shown);
             _hud.UpdateLog(flow.Log);
             _hud.UpdateBanner(flow.Banner, live.Outcome != null && !flow.Busy);
             var lines = new List<InfoLine>();
-            var title = BuildInfo(lines, hint);
+            var title = BuildInfo(lines);
             _hud.UpdateInfo(title, lines);
-            if (live.Outcome != null && !flow.Busy && !_hud.EndVisible) _hud.ShowEnd(live.Outcome);
+            if (live.Outcome != null && !flow.Busy && !_hud.EndVisible)
+            {
+                _hud.ShowEnd(live.Outcome, flow.Session.Summary(), live);
+                _sound.Ask(live.Outcome.Result == FightResult.Win ? Sfx.Win : Sfx.Lose);
+            }
         }
 
-        /// <summary>The scanner panel: the previewed action, or what is under the pointer, or the hint.</summary>
-        private string BuildInfo(List<InfoLine> lines, string hint)
+        /// <summary>
+        /// The scanner panel: the action button under the pointer, the previewed action, or the unit or tile under the pointer.
+        /// The hint is in the controls row, so it is not repeated here.
+        /// </summary>
+        private string BuildInfo(List<InfoLine> lines)
         {
             var c = _c!;
             var flow = Flow!;
             var shown = flow.Shown;
+            if (_hoverAction != null && DescribeAction(lines, _hoverAction)) return "Action";
             var preview = flow.Idle ? _preview : null;
             if (preview != null)
             {
@@ -519,7 +555,7 @@ namespace LabEscape.Client
             }
             if (!_hover.HasValue)
             {
-                lines.Add(new InfoLine(hint, "muted"));
+                lines.Add(new InfoLine(shown.Outcome != null ? "The fight is over." : "Point at a unit, a tile or an action to scan it.", "muted"));
                 return "Scanner";
             }
             var hover = _hover.Value;
@@ -534,6 +570,12 @@ namespace LabEscape.Client
                 note = hazard.State == HazardState.Primed ? $"{def?.Name ?? hazard.Def}. {def?.Cue}" : $"{def?.Name ?? hazard.Def}.";
             }
             else if (room.Board.TerrainId(hover) == "shutter") note = "Shutter: impassable; blocks projectiles but not sight.";
+            // A tile with no unit on it is named first, as the board's coordinates name it.
+            if (unit == null)
+            {
+                var terrain = room.Terrain.TryGetValue(room.Board.TerrainId(hover), out var t) ? t.Name : "";
+                lines.Add(new InfoLine(hazard != null || terrain.Length == 0 ? Tiles.Name(hover) : $"{Tiles.Name(hover)}  {terrain}", "head"));
+            }
             if (unit != null)
             {
                 lines.Add(new InfoLine($"{Words.UnitName(c, unit.Def, unit.Id)}  {Tiles.Name(unit.Pos)}", "head"));
@@ -543,12 +585,20 @@ namespace LabEscape.Client
             }
             foreach (var o in objects) lines.Add(new InfoLine(Words.DescribeObject(c, o), "muted"));
             if (note != null) lines.Add(new InfoLine(note, "muted"));
-            if (lines.Count == 0)
-            {
-                lines.Add(new InfoLine(hint, "muted"));
-                return "Scanner";
-            }
             return unit != null ? "Scan: unit" : "Scan: tile";
+        }
+
+        /// <summary>An action's rule, which tooltips cannot show in a built game: its name and cost, its text, and why it cannot be used.</summary>
+        private bool DescribeAction(List<InfoLine> lines, string id)
+        {
+            var c = _c!;
+            var st = _model?.Statuses.FirstOrDefault(x => x.Id == id);
+            if (st == null) return false;
+            var text = c.Abilities.TryGetValue(id, out var a) ? a.Text : c.Utilities.TryGetValue(id, out var u) ? u.Text : "";
+            lines.Add(new InfoLine($"{st.Name}  ·  {st.Ap} AP", "head"));
+            if (text.Length > 0) lines.Add(new InfoLine(text));
+            if (!st.Usable && st.Reason != null) lines.Add(new InfoLine($"{st.Reason}.", "warn"));
+            return true;
         }
 
         private string PreviewTitle()

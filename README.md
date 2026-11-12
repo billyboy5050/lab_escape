@@ -219,9 +219,11 @@ The same names are used on both sides, with C# capitalisation: `step` is `Engine
 
 Needs Unity 6000.6.8f1 with Mac build support. In Unity Hub choose Add, pick the `unity` folder and open it, then press Play: every scene starts the game. Pick a loadout, and the fight begins.
 
-The keys are the web game's. The number keys, `-` and `=` pick an action, **E** or Enter ends the turn, **Z** undoes a move, **Esc** cancels, **Space** skips the animation, **F** changes the speed, **I** shows or hides intents, **L** opens the intercom log, and **Tab** switches the grapple's mode. The mouse wheel zooms, and when zoomed in the right or middle button, **W A S D** or the arrow keys pan.
+The keys are the web game's. The number keys, `-` and `=` pick an action, **E** or Enter ends the turn, **Z** undoes a move, **Esc** cancels, **Space** skips the animation, **F** changes the speed, **I** shows or hides intents, **L** opens the intercom log, **M** mutes and unmutes (the game remembers), and **Tab** switches the grapple's mode. The mouse wheel zooms, and when zoomed in the right or middle button, **W A S D** or the arrow keys pan.
 
 A fight opens with the lights striking, the room's name and the first wave falling in. **Space** skips that like any other animation.
+
+The board's edges are lettered A to H and numbered 1 to 8, as the log names tiles. Point at a unit, a tile or an action button and the Scanner describes it; for an action that is its rule and, if it cannot be used now, why.
 
 Close the editor before running these, because batch mode cannot share a project with an open editor. `U` is the editor's binary:
 
@@ -243,7 +245,7 @@ $U -batchmode -quit -projectPath unity -executeMethod LabEscape.Client.Editor.Bu
 
 The build lands in `unity/Builds/Mac/`. To play a saved fight through it unattended and take screenshots, run it with `-labSmoke <replay.json> <output folder>`.
 
-A still cannot show whether a motion has weight. To look at an animation, add `-labFilm 0,2,8` to that command: it films what follows those commands of the replay (0 is the fight's opening) and skips the rest. The game then advances a sixtieth of a second for each frame it draws, and every frame is saved at half size under `film/` in the output folder, with a `cues.txt` that says which cue played on which frame.
+A still cannot show whether a motion has weight. To look at an animation, add `-labFilm 0,2,8` to that command: it films what follows those commands of the replay (0 is the fight's opening) and skips the rest. The game then advances a sixtieth of a second for each frame it draws, and every frame is saved at half size under `film/` in the output folder, with a `cues.txt` that says which cue and which sound played on which frame, and how loud the output was. Add `-labNoSystemFonts` to see the game as the web build draws it, without the system faces it takes the web client's type from.
 
 The web build needs the editor's Web Build Support module:
 
@@ -255,9 +257,9 @@ It lands in `unity/Builds/Web/`. Its files are gzip-compressed, so it has to com
 
 | Folder | What it holds |
 | --- | --- |
-| `unity/Assets/Scripts/Logic` | No Unity code: the animation queue (`FightFlow`), the staging that lays a frame's events out in time (`Staging`), the board's clock (`BoardClock`), targeting (`ActionModel`) and log text (`EventFormatter`) |
-| `unity/Assets/Scripts/Board` | The camera, room, unit models, overlays and effects, all built from code. `Feel.cs` holds every number that gives a blow its weight |
-| `unity/Assets/Scripts/Hud` | Fills in the interface, and the tags anchored to the board |
+| `unity/Assets/Scripts/Logic` | No Unity code: the animation queue (`FightFlow`), the staging that lays a frame's events out in time (`Staging`), the board's clock (`BoardClock`), targeting (`ActionModel`), log text (`EventFormatter`), and which cue makes which sound (`SoundCues`) and the synth that makes it (`Synth`) |
+| `unity/Assets/Scripts/Board` | The camera, room, unit models, overlays, effects and sound player, all built from code. `Feel.cs` holds every number that gives a blow its weight |
+| `unity/Assets/Scripts/Hud` | Fills in the interface, the tags and coordinates anchored to the board, and the web client's faces from the system (`Fonts`) |
 | `unity/Assets/Scripts/FightDirector.cs` | Reads input and ties the rest together |
 | `unity/Assets/Resources/UI` | The interface, in UI Toolkit's text formats: `Fight.uxml` and `Fight.uss` |
 | `unity/Assets/Tests` | EditMode: the golden replays on Unity's runtime, and the client logic. PlayMode: the real fight screen |

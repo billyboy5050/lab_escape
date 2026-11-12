@@ -70,11 +70,29 @@ namespace LabEscape.Client
                 RenderTexture.active = before;
                 RenderTexture.ReleaseTemporary(rt);
                 File.WriteAllBytes(Path.Combine(folder, $"{_frame:0000}.jpg"), small.EncodeToJPG(84));
+                NoteLevel();
                 Destroy(shot);
                 Destroy(small);
                 _frame++;
                 if (_d.Idle || _d.EndScreenShown || _d.Flow!.Live.Outcome != null && !_d.Flow.Busy) tail--;
             }
+        }
+
+        private void NoteSound(Sfx s)
+        {
+            _cues?.WriteLine($"{_frame:0000} sound {s}");
+            _cues?.Flush();
+        }
+
+        private readonly float[] _level = new float[1024];
+
+        /// <summary>How loud the game's output is on this frame, when it is not silent: proof that a sound was heard, not only asked for.</summary>
+        private void NoteLevel()
+        {
+            AudioListener.GetOutputData(_level, 0);
+            var peak = 0f;
+            foreach (var x in _level) peak = Mathf.Max(peak, Mathf.Abs(x));
+            if (peak > 0.001f) _cues?.WriteLine($"{_frame:0000} level {peak:0.000}");
         }
 
         private void NoteCue(Cue cue)
@@ -120,6 +138,7 @@ namespace LabEscape.Client
             if (_film != null)
             {
                 _d.Board!.CuePlayed += NoteCue;
+                _d.Sound.Played += NoteSound;
                 _cues!.WriteLine("command 000");
                 if (_film.Contains(0)) yield return Film(0);
                 else flow.SetSpeed(FightSpeed.Skip);
@@ -161,6 +180,8 @@ namespace LabEscape.Client
                 }
             }
             while (flow.Busy || !_d.EndScreenShown) yield return null;
+            // The end card is set down over a few frames; the shot waits for it to land.
+            yield return new WaitForSecondsRealtime(0.5f);
             yield return Shot("zz-end");
             var outcome = flow.Live.Outcome;
             File.WriteAllText(Path.Combine(_out, "result.txt"), $"{outcome?.Result} round {outcome?.Round}: {outcome?.Cause}\ncommands {_record.Commands.Count}\nhash {_d.Content!.Hash}\n");

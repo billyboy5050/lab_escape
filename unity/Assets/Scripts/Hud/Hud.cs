@@ -98,10 +98,11 @@ namespace LabEscape.Client
         private readonly VisualElement _root;
         private readonly VisualElement _boardArea;
         private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
-        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard;
+        private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures;
+        private readonly VisualElement[] _overBoard;
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
-        private readonly Button _undo, _endTurn, _skip, _intents, _speed0, _speed1, _speed2;
+        private readonly Button _undo, _endTurn, _skip, _intents, _sound, _speed0, _speed1, _speed2;
         private readonly ScrollView _log, _logLines;
         private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "";
         private int _logShown;
@@ -110,12 +111,18 @@ namespace LabEscape.Client
         private float _hpJolt;
         private float _now;
         private static Texture2D? _vignetteTexture;
+        private static Texture2D? _panelTexture;
+        private static Texture2D? _glowTexture;
 
         public readonly VisualElement TagLayer;
 
         public event Action<string>? ActionClicked;
+        /// <summary>The pointer has come onto an action button (its id) or left one (null).</summary>
+        public event Action<string?>? ActionHovered;
         public event Action<string>? GrappleModeClicked;
-        public event Action? UndoClicked, EndTurnClicked, SkipClicked, IntentsClicked, OpenLogClicked, CloseLogClicked, AgainClicked, ChangeClicked;
+        public event Action? UndoClicked, EndTurnClicked, SkipClicked, IntentsClicked, SoundClicked, OpenLogClicked, CloseLogClicked, AgainClicked, ChangeClicked;
+        /// <summary>Any button but an action, a preset or End turn, which have sounds of their own: it clicks.</summary>
+        public event Action? ButtonClicked;
         public event Action<FightSpeed>? SpeedClicked;
         public event Action<PresetDef>? PresetClicked;
 
@@ -125,11 +132,12 @@ namespace LabEscape.Client
             T Q<T>(string name) where T : VisualElement => _root.Q<T>(name) ?? throw new InvalidOperationException($"Fight.uxml has no {name}");
             VisualElement E(string name) => Q<VisualElement>(name);
             Label L(string name) => Q<Label>(name);
-            Button B(string name, Action act)
+            Button B(string name, Action act, bool click = true)
             {
                 var b = Q<Button>(name);
                 b.focusable = false;
                 b.clicked += act;
+                if (click) b.clicked += () => ButtonClicked?.Invoke();
                 return b;
             }
 
@@ -151,6 +159,8 @@ namespace LabEscape.Client
             _vignette = E("vignette");
             _opener = E("opener");
             _endCard = E("end-card");
+            _endRule = E("end-rule");
+            _endFigures = E("end-figures");
             _openerTitle = L("opener-title");
             _openerSub = L("opener-sub");
             _hpText = L("hp-text");
@@ -177,11 +187,19 @@ namespace LabEscape.Client
             _openerIn = new Entrance(_opener, 1.35f);
             _endIn = new Entrance(_endCard, 1.3f);
             _vignette.style.backgroundImage = new StyleBackground(Vignette());
+            _alarm.style.backgroundImage = new StyleBackground(EdgeGlow());
+            _hurt.style.backgroundImage = new StyleBackground(EdgeGlow());
+            _overBoard = new[] { _vignette, _alarm, _hurt };
+            Fonts.ApplyAll(_root);
+            // Every panel and card gets the web client's frame: its shade from top to bottom, and a tick at two corners.
+            _root.Query(className: "panel").ForEach(Frame);
+            _root.Query(className: "card").ForEach(Frame);
 
             _undo = B("undo", () => UndoClicked?.Invoke());
-            _endTurn = B("end-turn", () => EndTurnClicked?.Invoke());
+            _endTurn = B("end-turn", () => EndTurnClicked?.Invoke(), false);
             _skip = B("skip", () => SkipClicked?.Invoke());
             _intents = B("intents", () => IntentsClicked?.Invoke());
+            _sound = B("sound", () => SoundClicked?.Invoke());
             _speed1 = B("speed-1", () => SpeedClicked?.Invoke(FightSpeed.Normal));
             _speed2 = B("speed-2", () => SpeedClicked?.Invoke(FightSpeed.Fast));
             _speed0 = B("speed-0", () => SpeedClicked?.Invoke(FightSpeed.Skip));
@@ -189,6 +207,54 @@ namespace LabEscape.Client
             B("close-log", () => CloseLogClicked?.Invoke());
             B("again", () => AgainClicked?.Invoke());
             B("change", () => ChangeClicked?.Invoke());
+        }
+
+        private static void Frame(VisualElement panel)
+        {
+            panel.style.backgroundImage = new StyleBackground(PanelShade());
+            panel.Add(Ui.El("tick tl"));
+            panel.Add(Ui.El("tick br"));
+        }
+
+        /// <summary>The web client's panel gradient, from its second panel colour at the top to its panel colour at the bottom.</summary>
+        private static Texture2D PanelShade()
+        {
+            if (_panelTexture != null) return _panelTexture;
+            const int n = 32;
+            var t = new Texture2D(1, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
+            Color top = Palette.Hex(0x131b20, 0.95f), bottom = Palette.Hex(0x0e1418, 0.95f);
+            var px = new Color32[n];
+            // Texture rows run from the bottom up.
+            for (var y = 0; y < n; y++) px[y] = Color.Lerp(bottom, top, y / (n - 1f));
+            t.SetPixels32(px);
+            t.Apply();
+            _panelTexture = t;
+            return t;
+        }
+
+        /// <summary>
+        /// White light at the edges, gone by the middle: an inset glow, tinted by Fight.uss. Its 64 pixels on each side are slices,
+        /// so the glow keeps its width on a board of any shape.
+        /// </summary>
+        private static Texture2D EdgeGlow()
+        {
+            if (_glowTexture != null) return _glowTexture;
+            const int n = 130, slice = 64;
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
+            var px = new Color32[n * n];
+            for (var y = 0; y < n; y++)
+            {
+                for (var x = 0; x < n; x++)
+                {
+                    float gx = Mathf.Pow(1f - Mathf.Clamp01(Mathf.Min(x, n - 1 - x) / (float)slice), 2.2f);
+                    float gy = Mathf.Pow(1f - Mathf.Clamp01(Mathf.Min(y, n - 1 - y) / (float)slice), 2.2f);
+                    px[y * n + x] = new Color(1f, 1f, 1f, 0.62f * (1f - (1f - gx) * (1f - gy)));
+                }
+            }
+            t.SetPixels32(px);
+            t.Apply();
+            _glowTexture = t;
+            return t;
         }
 
         /// <summary>A soft darkening towards the corners of the board, made in code so the project keeps no image files.</summary>
@@ -242,9 +308,13 @@ namespace LabEscape.Client
             foreach (var p in presets)
             {
                 var chosen = p;
-                var b = new Button(() => PresetClicked?.Invoke(chosen)) { focusable = false, text = "" };
+                var b = new Button(() =>
+                {
+                    ButtonClicked?.Invoke();
+                    PresetClicked?.Invoke(chosen);
+                }) { focusable = false, text = "" };
                 b.AddToClassList("preset-btn");
-                b.Add(Ui.Text($"{i}  {p.Name}", "preset-name"));
+                b.Add(Ui.Text($"{i}  {p.Name.ToUpperInvariant()}", "preset-name display"));
                 b.Add(Ui.Text(string.Join(", ", p.Abilities.Select(a => c.Abilities[a].Name)), "preset-kit"));
                 _presets.Add(b);
                 i++;
@@ -279,15 +349,34 @@ namespace LabEscape.Client
             _hpJolt = 0f;
         }
 
-        public void ShowEnd(Outcome o)
+        /// <summary>The end of the fight: who won, why, and the fight in four figures from its summary.</summary>
+        public void ShowEnd(Outcome o, FightSummary sum, GameState s)
         {
             var win = o.Result == FightResult.Win;
-            _endTitle.text = win ? "Victory" : "Defeat";
+            _endTitle.text = win ? "VICTORY" : "DEFEAT";
             _endTitle.EnableInClassList("win", win);
             _endTitle.EnableInClassList("lose", !win);
+            _endRule.EnableInClassList("lose", !win);
             _endCause.text = o.Cause;
+
+            var player = s.Units.FirstOrDefault(u => u.Id == 0);
+            var taken = sum.PlayerDamageTaken.Total;
+            _endFigures.Clear();
+            _endFigures.Add(Figure(sum.Rounds.ToString(), sum.Rounds == 1 ? "ROUND" : "ROUNDS"));
+            _endFigures.Add(Figure($"{Math.Max(0, player?.Hp ?? 0)}/{player?.MaxHp ?? 0}", "HP LEFT"));
+            _endFigures.Add(Figure(sum.Kills.Values.Sum().ToString(), "KILLS"));
+            _endFigures.Add(Figure(taken.ToString(), "DAMAGE TAKEN", sum.FriendlyFireToPlayer > 0 ? $"{sum.FriendlyFireToPlayer} of it your own fire" : null));
             Ui.Show(_end, true);
             _endIn.Show();
+        }
+
+        private static VisualElement Figure(string value, string label, string? note = null)
+        {
+            var f = Ui.El("figure");
+            f.Add(Ui.Text(value, "figure-value mono"));
+            f.Add(Ui.Text(label, "figure-label display"));
+            if (note != null) f.Add(Ui.Text(note, "figure-note"));
+            return f;
         }
 
         /// <summary>The fight's title, set down over the board as the lights come on. It leaves by itself.</summary>
@@ -311,7 +400,7 @@ namespace LabEscape.Client
             Ui.Show(_logModal, open);
             if (!open) return;
             _logLines.Clear();
-            foreach (var l in s.Intercom.Log) _logLines.Add(Ui.Text($"R{l.Round:00} · “{l.Text}”", "modal-line"));
+            foreach (var l in s.Intercom.Log) _logLines.Add(Ui.Text($"R{l.Round:00} · “{l.Text}”", "modal-line mono"));
         }
 
         private static void FillCells(VisualElement row, int n, int max, string classes, int ghost = 0)
@@ -346,7 +435,7 @@ namespace LabEscape.Client
             FillCells(_apCells, s.Ap, c.Rules.Turn.Ap, "");
             FillCells(_moveCells, s.Movement, c.Rules.Turn.Movement, "");
             _round.text = s.Round.ToString("00");
-            _phase.text = PhaseName(s.Phase);
+            _phase.text = PhaseName(s.Phase).ToUpperInvariant();
             _incoming.text = !showIncoming ? "" : lethal ? "Ending the turn now is lethal" : incoming > 0 ? $"End turn now: −{incoming} HP" : "No incoming attacks";
             _incoming.EnableInClassList("bad", showIncoming && incoming > 0);
             _incoming.EnableInClassList("lethal", showIncoming && lethal);
@@ -379,21 +468,26 @@ namespace LabEscape.Client
             if (sig == _actionsSig) return;
             _actionsSig = sig;
             _actionRow.Clear();
+            // A reason every action shares, such as "Not your turn", is not written on each button: the bar dims instead.
+            var shared = statuses.Count > 0 && statuses.All(x => !x.Usable && x.Reason == statuses[0].Reason) ? statuses[0].Reason : null;
             for (var i = 0; i < statuses.Count; i++)
             {
                 var st = statuses[i];
                 var id = st.Id;
                 var kit = c.Abilities.TryGetValue(st.Id, out var def) ? def.Kit : "utility";
-                var b = new Button(() => ActionClicked?.Invoke(id)) { focusable = false, text = "", tooltip = st.Reason ?? st.Name };
+                // An action that cannot be used stays enabled, so hovering it can say why and clicking it says so too.
+                var b = new Button(() => ActionClicked?.Invoke(id)) { focusable = false, text = "" };
                 b.AddToClassList("action-btn");
                 b.AddToClassList(kit);
                 b.EnableInClassList("selected", selected == st.Id);
-                b.SetEnabled(!disabled && st.Usable);
+                b.EnableInClassList("off", disabled || !st.Usable);
+                b.RegisterCallback<PointerEnterEvent>(_ => ActionHovered?.Invoke(id));
+                b.RegisterCallback<PointerLeaveEvent>(_ => ActionHovered?.Invoke(null));
                 var top = Ui.El("ab-top");
-                top.Add(Ui.Text(st.Name, "ab-name"));
-                top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key"));
+                top.Add(Ui.Text(Fonts.Caps(st.Name), "ab-name display"));
+                top.Add(Ui.Text(i < ActionKeyLabels.Length ? ActionKeyLabels[i] : "", "ab-key mono"));
                 b.Add(top);
-                b.Add(Ui.Text(!st.Usable && st.Reason != null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
+                b.Add(Ui.Text(!st.Usable && st.Reason != null && shared == null ? $"{st.Ap} AP · {st.Reason}" : $"{st.Ap} AP", "ab-cost"));
                 _actionRow.Add(b);
                 if (st.Id != "grapple_hook" || selected != st.Id) continue;
                 var seg = Ui.El("seg", true);
@@ -405,14 +499,19 @@ namespace LabEscape.Client
 
         private Button SegButton(string text, bool on, string mode)
         {
-            var b = new Button(() => GrappleModeClicked?.Invoke(mode)) { focusable = false, text = text };
+            var b = new Button(() =>
+            {
+                ButtonClicked?.Invoke();
+                GrappleModeClicked?.Invoke(mode);
+            }) { focusable = false, text = text };
             b.AddToClassList("seg-btn");
             b.EnableInClassList("on", on);
             return b;
         }
 
-        public void UpdateControls(bool idle, bool canUndo, bool busy, string hint, FightSpeed speed, bool showIntents)
+        public void UpdateControls(bool idle, bool canUndo, bool busy, string hint, FightSpeed speed, bool showIntents, bool muted)
         {
+            _sound.EnableInClassList("off", muted);
             _undo.SetEnabled(idle && canUndo);
             _endTurn.SetEnabled(idle);
             Ui.Show(_skip, busy);
@@ -428,7 +527,7 @@ namespace LabEscape.Client
             var sig = title + "\n" + string.Join("\n", lines.Select(l => l.Style + ":" + l.Text));
             if (sig == _infoSig) return;
             _infoSig = sig;
-            _infoTitle.text = title;
+            _infoTitle.text = title.ToUpperInvariant();
             _infoBody.Clear();
             foreach (var l in lines) _infoBody.Add(Ui.Text(l.Text, $"info-line {l.Style}"));
         }
@@ -448,7 +547,7 @@ namespace LabEscape.Client
                 var extra = m.Ammo.HasValue ? $"ammo {m.Ammo}" : m.Charges.HasValue ? (m.DroneState == DroneState.Deployed ? $"{m.Charges} chg" : Names.Of(m.DroneState!.Value)) : "";
                 var row = Ui.El("minion-row");
                 row.Add(Ui.Text($"{Words.UnitName(c, m.Def, m.Id)}  {where}", "info-line"));
-                row.Add(Ui.Text($"{m.Hp}/{m.MaxHp}  {extra}", "faint"));
+                row.Add(Ui.Text($"{m.Hp}/{m.MaxHp}  {extra}", "faint mono"));
                 _minions.Add(row);
             }
         }
@@ -458,7 +557,7 @@ namespace LabEscape.Client
             if (lines.Count <= 0 || (_logShown > 0 && lines[lines.Count - 1].Id == _logShown)) return;
             foreach (var l in lines.Where(x => x.Id > _logShown || _logShown == 0))
             {
-                _log.Add(Ui.Text(l.Text, $"log-line {KindClass(l.Kind)}"));
+                _log.Add(Ui.Text(l.Text, $"log-line mono {KindClass(l.Kind)}"));
             }
             _logShown = lines[lines.Count - 1].Id;
             while (_log.contentContainer.childCount > 300) _log.contentContainer.RemoveAt(0);
@@ -494,7 +593,7 @@ namespace LabEscape.Client
             }
             if (text == _bannerText) return;
             _bannerText = text;
-            _banner.text = text;
+            _banner.text = text.ToUpperInvariant();
             _banner.EnableInClassList("minion", text == "Minion phase");
             _banner.EnableInClassList("enemy", text == "Enemy phase");
             _banner.EnableInClassList("environment", text == "Environment");
@@ -503,7 +602,7 @@ namespace LabEscape.Client
 
         public void Alert(string text, float seconds)
         {
-            _alert.text = text;
+            _alert.text = text.ToUpperInvariant();
             _alertIn.Show();
             _alertIn.Hide(seconds);
         }
@@ -554,14 +653,17 @@ namespace LabEscape.Client
                 _hpCells.style.translate = new Translate(Mathf.Sin(_now * 67f) * 7f * j, Mathf.Cos(_now * 49f) * 4f * j);
                 _hpText.style.scale = new Scale(new Vector3(1f + 0.5f * j, 1f + 0.5f * j, 1f));
             }
-            // The vignette sits over the board and nothing else.
+            // The vignette and the flashes sit over the board and nothing else.
             var b = _boardArea.worldBound;
             if (b.width > 1f)
             {
-                _vignette.style.left = b.x;
-                _vignette.style.top = b.y;
-                _vignette.style.width = b.width;
-                _vignette.style.height = b.height;
+                foreach (var e in _overBoard)
+                {
+                    e.style.left = b.x;
+                    e.style.top = b.y;
+                    e.style.width = b.width;
+                    e.style.height = b.height;
+                }
             }
             if (_toastLeft > 0f)
             {
