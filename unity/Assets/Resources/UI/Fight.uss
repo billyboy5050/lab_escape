@@ -95,6 +95,9 @@
     min-width: 92px;
     max-width: 150px;
     height: 66px;
+    /* A narrow bar (the debug overlay takes its room from the board area) cuts a long reason short instead of spilling it
+       over the next row; the Scanner gives it in full. */
+    overflow: hidden;
     margin: 0 4px 4px 0;
     padding: 4px 6px;
     background-color: var(--panel-2);
