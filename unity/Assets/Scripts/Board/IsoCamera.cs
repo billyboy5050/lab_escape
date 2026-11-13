@@ -93,11 +93,15 @@ namespace LabEscape.Client
         public void PanPixels(Vector2 delta) => _pan -= delta / _ppu;
 
         /// <summary>Adds trauma, from 0 to 1. It drains away on its own.</summary>
-        public void Shake(float trauma) => _trauma = Mathf.Clamp01(_trauma + trauma);
+        public void Shake(float trauma)
+        {
+            if (!Motion.Reduced) _trauma = Mathf.Clamp01(_trauma + trauma);
+        }
 
         /// <summary>Knocks the view about this many tiles along a direction on the floor; it springs back.</summary>
         public void Kick(Vector3 direction, float tiles)
         {
+            if (Motion.Reduced) return;
             // The speed that carries this spring about that far before it turns round.
             var speed = tiles * Feel.KickHz * 2f * Mathf.PI * 1.6f;
             _kickR.Velocity += Vector3.Dot(direction, Right) * speed;
@@ -105,14 +109,21 @@ namespace LabEscape.Client
         }
 
         /// <summary>Pushes the view in by a fraction of its size; it springs back out.</summary>
-        public void Punch(float amount) => _punch.Velocity += amount * 26f;
+        public void Punch(float amount)
+        {
+            if (!Motion.Reduced) _punch.Velocity += amount * 26f;
+        }
 
         /// <summary>Starts the fight's entrance: close on a point of the floor, then pulling back to the whole room.</summary>
         public void Open(Vector3 focus)
         {
-            _opening = 1f;
+            // Reduced, the camera starts on the whole room instead of pulling back to it.
+            _opening = Motion.Reduced ? 0f : 1f;
             _openingFocus = new Vector2(Vector3.Dot(focus, Right), Vector3.Dot(focus, Up));
         }
+
+        /// <summary>The entrance is still pulling back from the player to the room.</summary>
+        public bool Entering => _opening > 0f;
 
         /// <summary>Ends the entrance and stills the camera where the player left it.</summary>
         public void Still()

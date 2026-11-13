@@ -81,11 +81,12 @@ namespace LabEscape.Client
             var k = Mathf.Clamp01(_age / In);
             // Ease out with a little overshoot.
             var back = 1f + 2.2f * Mathf.Pow(k - 1f, 3f) + 1.2f * Mathf.Pow(k - 1f, 2f);
-            var scale = Mathf.LerpUnclamped(_from, 1f, back);
+            // Reduced, it does not pop in from a larger size: it fades.
+            var scale = Motion.Reduced ? 1f : Mathf.LerpUnclamped(_from, 1f, back);
             var leaving = Mathf.Clamp01((_age - _leaveAt) / Out);
             _e.style.scale = new Scale(new Vector3(scale, scale, 1f));
             _e.style.opacity = Mathf.Clamp01(_age / 0.05f) * (1f - leaving);
-            _e.style.translate = new Translate(0f, -14f * leaving);
+            _e.style.translate = new Translate(0f, Motion.Reduced ? 0f : -14f * leaving);
         }
     }
 
@@ -116,7 +117,8 @@ namespace LabEscape.Client
         private readonly VisualElement[] _overBoard;
         private readonly Label _hpText, _round, _phase, _incoming, _hint, _intercom, _infoTitle, _minionCount, _banner, _alert, _toast, _endTitle, _endCause, _startTitle, _startError, _openerTitle, _openerSub;
         private readonly Entrance _bannerIn, _alertIn, _openerIn, _endIn;
-        private readonly Button _undo, _endTurn, _skip, _intents, _sound, _speed0, _speed1, _speed2;
+        private readonly Button _undo, _endTurn, _skip, _intents, _sound, _motion, _speed0, _speed1, _speed2;
+        private readonly Button _titleSound, _titleMotion;
         private readonly ScrollView _log, _logLines, _debugText;
         private readonly VisualElement _debug, _debugReplay;
         private readonly Label _debugVersion, _debugContent, _debugQueued, _debugReplayAt, _debugReplayPauseText;
@@ -158,6 +160,9 @@ namespace LabEscape.Client
 
         /// <summary>The title screen's Begin was pressed.</summary>
         public event Action? BeginClicked;
+
+        /// <summary>The reduce-motion button, in the fight's controls or on the title.</summary>
+        public event Action? MotionClicked;
 
         /// <summary>The briefing's two buttons: go in, or back to the loadout screen.</summary>
         public event Action? DeployClicked, BriefingBackClicked;
@@ -259,6 +264,9 @@ namespace LabEscape.Client
             _skip = B("skip", () => SkipClicked?.Invoke());
             _intents = B("intents", () => IntentsClicked?.Invoke());
             _sound = B("sound", () => SoundClicked?.Invoke());
+            _motion = B("motion", () => MotionClicked?.Invoke());
+            _titleSound = B("title-sound", () => SoundClicked?.Invoke());
+            _titleMotion = B("title-motion", () => MotionClicked?.Invoke());
             _speed1 = B("speed-1", () => SpeedClicked?.Invoke(FightSpeed.Normal));
             _speed2 = B("speed-2", () => SpeedClicked?.Invoke(FightSpeed.Fast));
             _speed0 = B("speed-0", () => SpeedClicked?.Invoke(FightSpeed.Skip));
@@ -427,6 +435,16 @@ namespace LabEscape.Client
         /// <summary>Tells the camera which part of the screen the panels leave for the board.</summary>
         public void SetFreeAreaOn(IsoCamera cam) => cam.SetFreeArea(FreeScreenArea());
 
+        /// <summary>Shows whether reduce motion is on, on every button that sets it.</summary>
+        public void SetMotionState(bool reduced)
+        {
+            _motion.EnableInClassList("on", reduced);
+            _titleMotion.EnableInClassList("on", reduced);
+        }
+
+        /// <summary>The title's sound button follows the mute.</summary>
+        public void SetTitleSoundState(bool muted) => _titleSound.EnableInClassList("off", muted);
+
         public bool TitleVisible => !_title.ClassListContains("hidden");
 
         /// <summary>
@@ -441,6 +459,7 @@ namespace LabEscape.Client
             _titleFoot.text = footer;
             _titleType = new Typewriter(lines, ScreenText.TitleCharsPerSecond, ScreenText.TitleDelay);
             _titleClock = 0f;
+            if (Motion.Reduced) _titleType.Finish();
             _titleTerminal.Clear();
             _titleLabels.Clear();
             for (var i = 0; i < lines.Count; i++)
@@ -470,6 +489,7 @@ namespace LabEscape.Client
             _briefingDevices.text = BriefingText.Devices(c, room);
             Ui.Show(_briefingDevices, _briefingDevices.text.Length > 0);
             _briefingType = new Typewriter(new[] { BriefingText.Opening(c) }, BriefingText.CharsPerSecond, BriefingText.Delay);
+            if (Motion.Reduced) _briefingType.Finish();
             Lines(_briefingObjective, BriefingText.Objective(c, room, waves));
             Lines(_briefingKnow, BriefingText.KnowTheRoom);
             _briefingKit.Clear();
@@ -576,11 +596,13 @@ namespace LabEscape.Client
         {
             if (BriefingVisible && _briefingType != null)
             {
+                if (Motion.Reduced) _briefingType.Finish();
                 _briefingType.Tick(dt);
                 PaintBriefing();
             }
             if (!TitleVisible || _titleType == null) return;
             _titleClock += dt;
+            if (Motion.Reduced) _titleType.Finish();
             _titleType.Tick(dt);
             PaintTitle();
         }
@@ -603,7 +625,7 @@ namespace LabEscape.Client
             var shown = _titleType.Shown();
             var typing = _titleType.TypingLine();
             // A cursor on the line being printed, or after the last once everything is, blinking twice a second.
-            var cursorOn = ((int)(_titleClock * 2f) & 1) == 0;
+            var cursorOn = Motion.Reduced || ((int)(_titleClock * 2f) & 1) == 0;
             var cursorAt = typing >= 0 ? typing : shown.Count - 1;
             for (var i = 0; i < _titleLabels.Count; i++)
             {
@@ -1054,7 +1076,10 @@ namespace LabEscape.Client
         }
 
         /// <summary>The player has been hit: the HP row jumps.</summary>
-        public void JoltHp() => _hpJolt = 1f;
+        public void JoltHp()
+        {
+            if (!Motion.Reduced) _hpJolt = 1f;
+        }
 
         /// <summary>A line over the board for `seconds`: the default is long enough for a refused action, a content error needs longer.</summary>
         public void Toast(string text, float seconds = 2.2f)
@@ -1066,6 +1091,7 @@ namespace LabEscape.Client
 
         public void Flash(bool alarm, bool hurt)
         {
+            if (Motion.Reduced) return;
             void Restart(VisualElement e, bool on)
             {
                 if (!on) return;
@@ -1085,7 +1111,7 @@ namespace LabEscape.Client
                 _intercomText = text;
                 _typed = 0f;
             }
-            _typed += dt * 60f;
+            _typed = Motion.Reduced ? text.Length : _typed + dt * 60f;
             _intercom.text = text.Substring(0, Mathf.Min(text.Length, Mathf.CeilToInt(_typed)));
 
             _now += dt;

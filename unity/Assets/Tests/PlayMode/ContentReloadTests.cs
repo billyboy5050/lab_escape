@@ -25,6 +25,7 @@ namespace LabEscape.Client.Tests
         {
             _telemetry = Path.Combine(Path.GetTempPath(), "lab-escape-telemetry-" + System.Guid.NewGuid().ToString("N"));
             TelemetrySink.Isolate(_telemetry);
+            Motion.Reduced = false;
             while (FightDirector.Instance == null || FightDirector.Instance.Content == null) yield return null;
             _scratch = new ScratchContent();
             FightDirector.Instance.WatchContentIn(_scratch.Folder);

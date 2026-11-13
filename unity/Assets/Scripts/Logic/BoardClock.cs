@@ -27,6 +27,7 @@ namespace LabEscape.Client
         /// </summary>
         public void Freeze(float seconds)
         {
+            if (Motion.Reduced) return;
             if (_sinceBlow > BurstGap) _burst = 0f;
             _sinceBlow = 0f;
             if (seconds <= _burst) return;
@@ -37,6 +38,7 @@ namespace LabEscape.Client
         /// <summary>Runs the board at `factor` of its speed for this many real seconds, easing back over the last third.</summary>
         public void Slow(float factor, float seconds)
         {
+            if (Motion.Reduced) return;
             _slow = factor;
             _slowFor = _slowLeft = seconds;
         }

@@ -402,7 +402,7 @@ namespace LabEscape.Client
             var root = Model.Root.transform;
             root.position = Ground;
             root.rotation = Quaternion.Euler(0f, _yaw, 0f);
-            var bob = Mathf.Sin(time * 2.6f + _phase) * 0.012f;
+            var bob = LabEscape.Client.Motion.Reduced ? 0f : Mathf.Sin(time * 2.6f + _phase) * 0.012f;
             Model.Body.localPosition = new Vector3(0f, bob + _hover + _height + _hop, 0f);
             var lean = _lean.Value;
             var tilt = lean.magnitude;

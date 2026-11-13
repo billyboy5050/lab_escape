@@ -148,6 +148,12 @@ The screens before and after a fight are described in the paragraph on the scree
 
 `FightDirector.WatchContentIn` points the watch at another folder, so a test can edit a copy of `content/` (`ScratchContent`) and put the game back after; there is no test of starting on broken content, which only a second director could show, so the watch's own tests cover the file side and the Mac build the rest.
 
+**Shortcuts and settings (2026-11-13, M13's fifth part).** The web client's keys were compared with `FightDirector`'s, one by one. Every web key has its Unity counterpart except V, the web board's view switch, which the one fixed camera makes pointless. What was missing:
+
+- **Modified keys are the system's on every screen.** The fight already ignored any key pressed with Ctrl, Cmd or Alt; the title, loadout screen and briefing did not, so Cmd+M, which minimises the window, also muted the game. `KeyRules.Modified` (no Unity code, as `actionKeys.ts` is for the web client) is now asked on every screen.
+- **Shift+Z does not undo,** as in the web client (`KeyRules.Undoes`).
+- **Reduce motion.** The web client has only the system's `prefers-reduced-motion`, which shortens its effects. The Unity client has a setting of its own, `Motion.Reduced`, which the C key and a button in the fight's controls and on the title toggle, and which is remembered under one `PlayerPrefs` key and read back as untrusted (only "1" is on). On, it takes off what moves the screen for its own sake: the camera's shake, kick, punch and pull-back (`IsoCamera`), the board clock's hit stop and slow-down (`BoardClock`), the red edge flashes, the HP jolt and the pop-in of banners and cards (`Hud`), the lights' tube-strike flicker and the alarm's pulse (`Ambience`), the units' idle bob, and every typewriter (the title, the briefing, the fight's intercom line), whose cursor stops blinking. What carries information stays: units still walk, lunge, are shoved and squash, and effects still play. The system's own preference is not read yet (see the [roadmap](roadmap.md#smaller-items)), so the setting starts off.
+
 **Unity 6.3 LTS (2026-11-12).** The project was started on 6000.6.8f1, an update release, and moved back to 6000.3.28f1, the LTS the phase plan asks for. 6.3 has no `physicscore2d`, `tetgen` or `timelinefoundation` built-in module, so the manifest no longer lists them, and its test framework is 1.6.0 where 6.6's was 1.8.0. Nothing else changed: the tests, the Mac, Windows and web builds, the system fonts and the sound behave as they did on 6.6, and the web build is 11 MB.
 
 The editor reads `content/` directly. A player cannot, so `ContentBuildStep` copies the files into `Assets/Resources/Content` before each build; that copy is ignored by git.
@@ -180,10 +186,6 @@ The camera shakes by the square of its trauma, is kicked the way a blow went and
 Every number that sets how this feels is in `Feel.cs`. None of them is a rule, and none is in `content/`.
 
 **Looking at it.** A screenshot cannot show whether a motion has weight. The smoke run's `-labFilm` saves every frame of chosen animations (README, [Unity client](../README.md#unity-client)); the first pass was tuned from those frames.
-
-Not done here:
-
-- **A reduced-motion setting.** The web client has one. See the [roadmap](roadmap.md#smaller-items).
 
 ### The fight's presentation
 
