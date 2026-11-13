@@ -107,6 +107,9 @@ namespace LabEscape.Client
         private readonly ScrollView _log, _logLines, _debugText;
         private readonly VisualElement _debug, _debugReplay;
         private readonly Label _debugVersion, _debugContent, _debugQueued, _debugReplayAt, _debugReplayPauseText;
+        private readonly Label _editUnit, _editHp, _editAp, _editMove, _editSpawn, _editSpawnGoText;
+        private readonly Button _editSetHp, _editSetAp, _editSpawnGo, _editForceWave, _editHoldWave, _editRestart;
+        private readonly Button[] _editSteppers;
         private readonly Button _debugIds, _debugSpawns, _debugHazards, _debugFlamer, _debugLog, _debugStep, _debugNext, _debugNextPhase, _debugReplayPause, _debugReplayStep;
         private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "", _debugSig = "";
         private int _logShown;
@@ -139,6 +142,15 @@ namespace LabEscape.Client
         public event Action<bool>? NextClicked;
         /// <summary>One of the debug overlay's toggles was flipped: ids, spawns, hazards, flamer or log.</summary>
         public event Action<string>? DebugToggleClicked;
+
+        /// <summary>The unit to edit was stepped (-1 or 1), or the kind to spawn (1 or -1 through <see cref="DebugSpawnCycled"/>).</summary>
+        public event Action<int>? DebugUnitCycled, DebugSpawnCycled;
+
+        /// <summary>A value to set was stepped: "hp", "ap" or "move", and by how much.</summary>
+        public event Action<string, int>? DebugStepped;
+
+        /// <summary>One of the edit buttons was pressed: "setHp", "setAp", "spawn", "forceWave", "holdWave", or "restart".</summary>
+        public event Action<string>? DebugEditClicked;
 
         public Hud(UIDocument doc)
         {
@@ -247,6 +259,32 @@ namespace LabEscape.Client
             _debugNextPhase = B("debug-next-phase", () => NextClicked?.Invoke(true));
             _debugReplayPause = B("debug-replay-pause", () => ReplayPauseClicked?.Invoke());
             _debugReplayStep = B("debug-replay-step", () => ReplayStepClicked?.Invoke());
+            _editUnit = L("edit-unit");
+            _editHp = L("edit-hp");
+            _editAp = L("edit-ap");
+            _editMove = L("edit-move");
+            _editSpawn = L("edit-spawn");
+            _editSpawnGoText = L("edit-spawn-go-text");
+            var steppers = new List<Button>
+            {
+                B("edit-unit-prev", () => DebugUnitCycled?.Invoke(-1)),
+                B("edit-unit-next", () => DebugUnitCycled?.Invoke(1)),
+                B("edit-hp-down", () => DebugStepped?.Invoke("hp", -1)),
+                B("edit-hp-up", () => DebugStepped?.Invoke("hp", 1)),
+                B("edit-ap-down", () => DebugStepped?.Invoke("ap", -1)),
+                B("edit-ap-up", () => DebugStepped?.Invoke("ap", 1)),
+                B("edit-move-down", () => DebugStepped?.Invoke("move", -1)),
+                B("edit-move-up", () => DebugStepped?.Invoke("move", 1)),
+                B("edit-spawn-prev", () => DebugSpawnCycled?.Invoke(-1)),
+                B("edit-spawn-next", () => DebugSpawnCycled?.Invoke(1)),
+            };
+            _editSteppers = steppers.ToArray();
+            _editSetHp = B("edit-set-hp", () => DebugEditClicked?.Invoke("setHp"));
+            _editSetAp = B("edit-set-ap", () => DebugEditClicked?.Invoke("setAp"));
+            _editSpawnGo = B("edit-spawn-go", () => DebugEditClicked?.Invoke("spawn"));
+            _editForceWave = B("edit-force-wave", () => DebugEditClicked?.Invoke("forceWave"));
+            _editHoldWave = B("edit-hold-wave", () => DebugEditClicked?.Invoke("holdWave"));
+            _editRestart = B("edit-restart", () => DebugEditClicked?.Invoke("restart"));
         }
 
         private static void Frame(VisualElement panel)
@@ -361,6 +399,7 @@ namespace LabEscape.Client
             // The debug overlay has no fight to describe until the next one starts.
             _debugText.Clear();
             _debugSig = "";
+            DisableEdits();
             Ui.Show(_debugReplay, false);
             _startTitle.text = title;
             _presets.Clear();
@@ -424,6 +463,38 @@ namespace LabEscape.Client
             _debugContent.text = text ?? "";
             _debugContent.EnableInClassList("error", error);
             Ui.Show(_debugContent, text != null);
+        }
+
+        /// <summary>No fight to edit: the buttons that act on one are off until the next fight starts.</summary>
+        private void DisableEdits()
+        {
+            foreach (var b in new[] { _editSetHp, _editSetAp, _editSpawnGo, _editForceWave, _editHoldWave, _editRestart }) b.SetEnabled(false);
+            _editSpawnGo.RemoveFromClassList("on");
+            _editSpawnGoText.text = "Spawn on a tile";
+        }
+
+        /// <summary>
+        /// Fills in the edit controls. They act only while `canEdit` (the player's turn, nothing moving, no saved fight playing
+        /// back); Force next wave also needs a wave to bring, and restarting needs a fight.
+        /// </summary>
+        public void UpdateEdits(string unit, int hp, int ap, int move, string spawn, bool spawnWaiting, bool canEdit, bool canForceWave, bool wave3Held, bool canRestart, bool canHold)
+        {
+            if (!DebugVisible) return;
+            _editUnit.text = unit;
+            _editHp.text = hp.ToString();
+            _editAp.text = ap.ToString();
+            _editMove.text = move.ToString();
+            _editSpawn.text = spawn;
+            _editSpawnGoText.text = spawnWaiting ? "Click a tile (Esc cancels)" : "Spawn on a tile";
+            _editSpawnGo.EnableInClassList("on", spawnWaiting);
+            _editHoldWave.EnableInClassList("on", wave3Held);
+            foreach (var b in _editSteppers) b.SetEnabled(true);
+            _editSetHp.SetEnabled(canEdit);
+            _editSetAp.SetEnabled(canEdit);
+            _editSpawnGo.SetEnabled(canEdit || spawnWaiting);
+            _editForceWave.SetEnabled(canEdit && canForceWave);
+            _editHoldWave.SetEnabled(canHold);
+            _editRestart.SetEnabled(canRestart);
         }
 
         /// <summary>

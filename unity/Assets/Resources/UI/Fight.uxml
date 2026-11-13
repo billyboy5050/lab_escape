@@ -32,6 +32,45 @@
                         <ui:Button name="debug-next" class="btn small" focusable="false"><ui:Label class="btn-text" text="Next action" /><ui:Label class="kbd mono" text="N" /></ui:Button>
                         <ui:Button name="debug-next-phase" class="btn small" focusable="false"><ui:Label class="btn-text" text="Next phase" /><ui:Label class="kbd mono" text="Shift+N" /></ui:Button>
                     </ui:VisualElement>
+                    <ui:Label class="debug-section display" text="EDIT STATE" />
+                    <ui:Label class="faint mono debug-note" text="Each edit is a command, so it is in the saved fight." />
+                    <ui:VisualElement class="debug-row">
+                        <ui:Button name="edit-unit-prev" class="btn small step" text="&lt;" focusable="false" />
+                        <ui:Label name="edit-unit" class="mono debug-value wide" />
+                        <ui:Button name="edit-unit-next" class="btn small step" text="&gt;" focusable="false" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="debug-row">
+                        <ui:Label class="faint mono debug-name" text="HP" />
+                        <ui:Button name="edit-hp-down" class="btn small step" text="-" focusable="false" />
+                        <ui:Label name="edit-hp" class="mono debug-value" />
+                        <ui:Button name="edit-hp-up" class="btn small step" text="+" focusable="false" />
+                        <ui:Button name="edit-set-hp" class="btn small" focusable="false"><ui:Label class="btn-text" text="Set HP" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="debug-row">
+                        <ui:Label class="faint mono debug-name" text="AP" />
+                        <ui:Button name="edit-ap-down" class="btn small step" text="-" focusable="false" />
+                        <ui:Label name="edit-ap" class="mono debug-value" />
+                        <ui:Button name="edit-ap-up" class="btn small step" text="+" focusable="false" />
+                        <ui:Label class="faint mono debug-name" text="Move" />
+                        <ui:Button name="edit-move-down" class="btn small step" text="-" focusable="false" />
+                        <ui:Label name="edit-move" class="mono debug-value" />
+                        <ui:Button name="edit-move-up" class="btn small step" text="+" focusable="false" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="debug-row">
+                        <ui:Button name="edit-set-ap" class="btn small" focusable="false"><ui:Label class="btn-text" text="Set AP and movement" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="debug-row">
+                        <ui:Button name="edit-spawn-prev" class="btn small step" text="&lt;" focusable="false" />
+                        <ui:Label name="edit-spawn" class="mono debug-value wide" />
+                        <ui:Button name="edit-spawn-next" class="btn small step" text="&gt;" focusable="false" />
+                        <ui:Button name="edit-spawn-go" class="btn small" focusable="false"><ui:Label name="edit-spawn-go-text" class="btn-text" text="Spawn on a tile" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:Label class="debug-section display" text="WAVES AND FIGHT" />
+                    <ui:VisualElement class="debug-row">
+                        <ui:Button name="edit-force-wave" class="btn small" focusable="false"><ui:Label class="btn-text" text="Force next wave" /></ui:Button>
+                        <ui:Button name="edit-hold-wave" class="btn small" focusable="false"><ui:Label class="btn-text" text="Hold back wave 3" /></ui:Button>
+                        <ui:Button name="edit-restart" class="btn small" focusable="false"><ui:Label class="btn-text" text="Restart fight" /></ui:Button>
+                    </ui:VisualElement>
                     <ui:VisualElement name="debug-replay" class="hidden">
                         <ui:Label class="debug-section display" text="SAVED FIGHT" />
                         <ui:VisualElement class="debug-row">
