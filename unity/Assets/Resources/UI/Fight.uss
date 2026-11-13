@@ -465,3 +465,20 @@
 .dock-status { flex-grow: 1; flex-shrink: 1; font-size: 13px; color: var(--ink-2); white-space: normal; padding: 0; }
 .dock-status.warn { color: var(--danger); }
 .dock .btn { margin-left: 8px; }
+
+/* The briefing: the room from above, and the intercom's words beside it. */
+.plan-col { flex-grow: 0; flex-basis: 360px; flex-shrink: 0; }
+.plan { align-items: flex-start; padding: 20px 0 6px 28px; }
+.plan-grid { position: relative; }
+.plan-tile { position: absolute; border-width: 1px; border-color: rgba(0, 0, 0, 0.35); }
+.plan-tile.device { border-width: 2px; border-color: var(--amber); }
+.plan-tile.start { border-width: 2px; border-color: var(--move); align-items: center; justify-content: center; }
+.plan-mark { color: var(--move); font-size: 16px; padding: 0; -unity-font-style: bold; }
+.plan-edge { position: absolute; font-size: 11px; color: var(--ink-3); padding: 0; margin-top: -16px; -unity-text-align: middle-center; }
+.transmission { font-size: 14px; color: var(--amber); background-color: #060909; border-width: 1px; border-color: var(--line); border-radius: 3px; padding: 10px 12px; margin-bottom: 8px; white-space: normal; min-height: 56px; }
+.brief-head { margin-top: 12px; }
+.brief-line { font-size: 13px; color: var(--ink-2); white-space: normal; padding: 0; margin-bottom: 4px; }
+.chips { flex-direction: row; flex-wrap: wrap; }
+.chip { font-size: 12px; color: var(--ink); background-color: var(--panel-3); border-width: 1px; border-color: var(--line-2); border-radius: 3px; padding: 3px 8px; margin: 0 6px 6px 0; }
+.chip.kit-tech { border-color: var(--move); }
+.chip.kit-alien { border-color: var(--good); }

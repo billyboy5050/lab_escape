@@ -224,6 +224,41 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <ui:VisualElement name="briefing" class="fill overlay hidden">
+            <ui:VisualElement name="briefing-card" class="card screen-card">
+                <ui:VisualElement class="screen-head">
+                    <ui:VisualElement>
+                        <ui:Label class="screen-kicker display" text="BRIEFING · INTERCEPTED TRANSMISSION" />
+                        <ui:Label name="briefing-title" class="card-title display" />
+                    </ui:VisualElement>
+                    <ui:Label name="briefing-grid" class="faint mono screen-help" />
+                </ui:VisualElement>
+                <ui:ScrollView name="briefing-body" class="loadout-body">
+                    <ui:VisualElement class="loadout-cols">
+                        <ui:VisualElement class="loadout-col plan-col">
+                            <ui:VisualElement name="briefing-plan" class="plan" />
+                            <ui:Label name="briefing-devices" class="muted utilities" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="loadout-col">
+                            <ui:VisualElement class="col-head"><ui:Label class="col-title display" text="LAB INTERCOM" /></ui:VisualElement>
+                            <ui:Label name="briefing-transmission" class="transmission mono" />
+                            <ui:VisualElement class="col-head brief-head"><ui:Label class="col-title display" text="OBJECTIVE" /></ui:VisualElement>
+                            <ui:VisualElement name="briefing-objective" />
+                            <ui:VisualElement class="col-head brief-head"><ui:Label class="col-title display" text="YOUR KIT" /></ui:VisualElement>
+                            <ui:VisualElement name="briefing-kit" class="chips" />
+                            <ui:VisualElement class="col-head brief-head"><ui:Label class="col-title display" text="KNOW THE ROOM" /></ui:VisualElement>
+                            <ui:VisualElement name="briefing-know" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:VisualElement class="dock">
+                    <ui:Label class="dock-status" />
+                    <ui:Button name="briefing-back" class="btn" focusable="false"><ui:Label class="btn-text" text="Back to loadout" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
+                    <ui:Button name="briefing-deploy" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Enter the room" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <ui:VisualElement name="end" class="fill overlay hidden" picking-mode="Ignore">
             <ui:VisualElement name="end-card" class="card">
                 <ui:Label name="end-title" class="card-title display" />

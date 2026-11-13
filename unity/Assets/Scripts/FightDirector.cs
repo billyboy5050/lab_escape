@@ -273,6 +273,8 @@ namespace LabEscape.Client
             };
             _hud.DebugEditClicked += DebugEdit;
             _hud.BeginClicked += ShowStartScreen;
+            _hud.DeployClicked += Deploy;
+            _hud.BriefingBackClicked += ShowStartScreen;
         }
 
         // ------------------------------------------------------------------ content hot reload
@@ -682,6 +684,22 @@ namespace LabEscape.Client
         public void StartFromPicker()
         {
             if (_picker == null || !_picker.CanStart) return;
+            ShowBriefing();
+        }
+
+        /// <summary>The briefing for the fight the picks make. Going in starts it; the fight's turn clock starts then.</summary>
+        public void ShowBriefing()
+        {
+            if (_c == null || _picker == null) return;
+            TearDownFight();
+            _screen = GameScreen.Briefing;
+            _hud.ShowBriefing(_c, _c.RoomFor(_picker.ToSettings().Room), _picker.ToLoadout(), _picker.ToSettings());
+        }
+
+        /// <summary>Goes in: the briefing's fight starts with the picks it was shown for.</summary>
+        public void Deploy()
+        {
+            if (_screen != GameScreen.Briefing || _picker == null || !_picker.CanStart) return;
             StartFight(_picker.ToLoadout(), _picker.ToSettings(), _picker.PresetId);
         }
 
@@ -983,6 +1001,12 @@ namespace LabEscape.Client
             if (_screen == GameScreen.Title)
             {
                 if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) ShowStartScreen();
+                return;
+            }
+            if (_screen == GameScreen.Briefing)
+            {
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Deploy();
+                else if (Input.GetKeyDown(KeyCode.Escape)) ShowStartScreen();
                 return;
             }
             if (_screen != GameScreen.Loadout) return;

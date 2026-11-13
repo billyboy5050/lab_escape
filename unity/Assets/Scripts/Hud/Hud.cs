@@ -100,6 +100,9 @@ namespace LabEscape.Client
         private readonly VisualElement _title, _titleTerminal;
         private readonly Label _titleRoom, _titleBlurb, _titleFoot;
         private readonly Label _startKicker, _startHelp;
+        private readonly VisualElement _briefing, _briefingPlan, _briefingObjective, _briefingKit, _briefingKnow;
+        private readonly Label _briefingTitle, _briefingGrid, _briefingDevices, _briefingTransmission;
+        private Typewriter? _briefingType;
         public readonly LoadoutView Loadout;
         private readonly List<Label> _titleLabels = new List<Label>();
         private Typewriter? _titleType;
@@ -152,6 +155,9 @@ namespace LabEscape.Client
 
         /// <summary>The title screen's Begin was pressed.</summary>
         public event Action? BeginClicked;
+
+        /// <summary>The briefing's two buttons: go in, or back to the loadout screen.</summary>
+        public event Action? DeployClicked, BriefingBackClicked;
 
         /// <summary>The unit to edit was stepped (-1 or 1), or the kind to spawn (1 or -1 through <see cref="DebugSpawnCycled"/>).</summary>
         public event Action<int>? DebugUnitCycled, DebugSpawnCycled;
@@ -300,6 +306,17 @@ namespace LabEscape.Client
             _titleBlurb = L("title-blurb");
             _titleFoot = L("title-foot");
             B("title-begin", () => BeginClicked?.Invoke());
+            _briefing = E("briefing");
+            _briefingPlan = E("briefing-plan");
+            _briefingObjective = E("briefing-objective");
+            _briefingKit = E("briefing-kit");
+            _briefingKnow = E("briefing-know");
+            _briefingTitle = L("briefing-title");
+            _briefingGrid = L("briefing-grid");
+            _briefingDevices = L("briefing-devices");
+            _briefingTransmission = L("briefing-transmission");
+            B("briefing-deploy", () => DeployClicked?.Invoke());
+            B("briefing-back", () => BriefingBackClicked?.Invoke());
             _startKicker = L("start-kicker");
             _startHelp = L("start-help");
             Loadout = new LoadoutView(_root);
@@ -424,9 +441,60 @@ namespace LabEscape.Client
             Ui.Show(_title, true);
         }
 
-        /// <summary>Keeps the screens that animate going: the title's terminal.</summary>
+        public bool BriefingVisible => !_briefing.ClassListContains("hidden");
+
+        /// <summary>
+        /// Between the loadout and the fight: the room from above, the intercom's first line, the goal and the kit. It says what
+        /// the rules sheet says and nothing the game hides. The fight starts only when the player goes in.
+        /// </summary>
+        public void ShowBriefing(Content c, RoomDef room, Loadout loadout, FightSettings settings)
+        {
+            HideScreens();
+            var waves = BriefingText.WavesInPlay(room, settings);
+            _briefingTitle.text = Fonts.Caps(room.Name);
+            _briefingGrid.text = BriefingText.Grid(room, waves);
+            _briefingPlan.Clear();
+            _briefingPlan.Add(RoomPlan.Build(c, room));
+            _briefingDevices.text = BriefingText.Devices(c, room);
+            Ui.Show(_briefingDevices, _briefingDevices.text.Length > 0);
+            _briefingType = new Typewriter(new[] { BriefingText.Opening(c) }, BriefingText.CharsPerSecond, BriefingText.Delay);
+            Lines(_briefingObjective, BriefingText.Objective(c, room, waves));
+            Lines(_briefingKnow, BriefingText.KnowTheRoom);
+            _briefingKit.Clear();
+            foreach (var (name, kit) in BriefingText.Kit(c, loadout)) _briefingKit.Add(Ui.Text(name, $"chip kit-{kit}"));
+            PaintBriefing();
+            Ui.Show(_briefing, true);
+        }
+
+        private static void Lines(VisualElement into, IReadOnlyList<string> lines)
+        {
+            into.Clear();
+            foreach (var line in lines) into.Add(Ui.Text("- " + line, "brief-line"));
+        }
+
+        private void PaintBriefing()
+        {
+            var text = _briefingType?.Shown().FirstOrDefault() ?? "";
+            _briefingTransmission.text = text;
+        }
+
+        /// <summary>What the intercom has printed so far, for tests.</summary>
+        public string Transmission => _briefingTransmission.text;
+
+        public void FinishBriefingTyping()
+        {
+            _briefingType?.Finish();
+            PaintBriefing();
+        }
+
+        /// <summary>Keeps the screens that animate going: the title's terminal and the briefing's intercom.</summary>
         public void TickScreens(float dt)
         {
+            if (BriefingVisible && _briefingType != null)
+            {
+                _briefingType.Tick(dt);
+                PaintBriefing();
+            }
             if (!TitleVisible || _titleType == null) return;
             _titleClock += dt;
             _titleType.Tick(dt);
@@ -467,6 +535,7 @@ namespace LabEscape.Client
         {
             Ui.Show(_title, false);
             Ui.Show(_start, false);
+            Ui.Show(_briefing, false);
         }
 
         /// <summary>

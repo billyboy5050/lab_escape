@@ -260,6 +260,10 @@ namespace LabEscape.Client.Tests
             Assert.That(Root.Q<Button>("hold-wave").ClassListContains("on"), Is.True);
             PressButton(Root.Q<Button>("start-fight"));
             yield return null;
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Briefing), "the briefing comes first");
+            Assert.That(d.Flow, Is.Null);
+            PressButton(Root.Q<Button>("briefing-deploy"));
+            yield return null;
             Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Fight));
             var record = d.Flow!.Session.Record;
             Assert.That(record.Loadout.Abilities, Is.EquivalentTo(tech.Abilities));
@@ -295,6 +299,112 @@ namespace LabEscape.Client.Tests
             Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Title));
             Assert.That(d.Hud.TitleVisible, Is.True);
             Assert.That(d.Hud.StartVisible, Is.False);
+        }
+
+        private static IEnumerator OpenBriefing(string preset, bool hold = false)
+        {
+            yield return OpenLoadout();
+            var d = FightDirector.Instance!;
+            d.SelectPreset(d.Content!.Presets.First(p => p.Id == preset));
+            d.Picker!.HoldWave3 = hold;
+            PressButton(Root.Q<Button>("start-fight"));
+            yield return null;
+            yield return null;
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheBriefingShowsTheRoomTheObjectiveAndTheKit()
+        {
+            yield return OpenBriefing("tech");
+            var d = FightDirector.Instance!;
+            var c = d.Content!;
+            var room = c.DefaultRoom;
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Briefing));
+            Assert.That(d.Hud.BriefingVisible, Is.True);
+            Assert.That(d.Hud.StartVisible, Is.False, "the loadout screen is put away");
+            Assert.That(Root.Q<Label>("briefing-grid").text, Is.EqualTo(BriefingText.Grid(room, room.Waves.Count)));
+
+            // The plan has a tile for every tile of the room, drawn as the room is.
+            var tiles = Root.Q("briefing-plan").Query(className: "plan-tile").ToList();
+            Assert.That(tiles.Count, Is.EqualTo(room.Width * room.Height));
+            foreach (var kind in new[] { "floor", "wall", "barrier" })
+            {
+                var expected = Enumerable.Range(0, room.Width).SelectMany(x => Enumerable.Range(0, room.Height).Select(y => new Pos(x, y))).Count(p => RoomPlan.Kind(room, p) == kind);
+                Assert.That(tiles.Count(t => t.ClassListContains(kind)), Is.EqualTo(expected), kind);
+            }
+            var devices = room.Hazards.SelectMany(h => h.Tiles).Distinct().ToList();
+            Assert.That(tiles.Count(t => t.ClassListContains("device")), Is.EqualTo(devices.Count));
+            Assert.That(Root.Q("plan-" + room.PlayerStart).ClassListContains("start"), Is.True);
+            Assert.That(Root.Q<Label>("briefing-devices").text, Is.EqualTo(BriefingText.Devices(c, room)));
+
+            var objective = Root.Q("briefing-objective").Query<Label>().ToList().Select(l => l.text).ToList();
+            Assert.That(objective.Count, Is.EqualTo(3));
+            Assert.That(objective[0], Does.Contain($"{c.Units["player"].Hp} HP"));
+            Assert.That(objective[2], Does.Contain($"round {room.RoundCap}"));
+            var kit = Root.Q("briefing-kit").Query<Label>().ToList().Select(l => l.text).ToList();
+            var tech = c.Presets.First(p => p.Id == "tech");
+            Assert.That(kit.Count, Is.EqualTo(tech.Abilities.Count + tech.Upgrades.Count));
+            foreach (var a in tech.Abilities) Assert.That(kit, Does.Contain(c.Abilities[a].Name));
+            foreach (var u in tech.Upgrades) Assert.That(kit, Does.Contain(c.Upgrades[u].Name));
+            Assert.That(Root.Q("briefing-know").Query<Label>().ToList().Count, Is.EqualTo(BriefingText.KnowTheRoom.Count));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheIntercomPrintsItsOpeningLineAFewCharactersAtATime()
+        {
+            yield return OpenBriefing("tech");
+            var d = FightDirector.Instance!;
+            var opening = BriefingText.Opening(d.Content!);
+            Assert.That(opening, Is.Not.Empty, "the content has an opening line");
+            Assert.That(d.Hud.Transmission.Length, Is.LessThan(opening.Length));
+            d.Hud.FinishBriefingTyping();
+            yield return null;
+            Assert.That(d.Hud.Transmission, Is.EqualTo(opening));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheBriefingFitsItsCardAndHoldingWaveBackShowsInIt()
+        {
+            yield return OpenBriefing("hybrid", hold: true);
+            var d = FightDirector.Instance!;
+            var room = d.Content!.DefaultRoom;
+            Assert.That(Root.Q<Label>("briefing-grid").text, Is.EqualTo(BriefingText.Grid(room, 2)));
+            Assert.That(Root.Q("briefing-objective").Query<Label>().ToList()[0].text, Does.Contain("arrives in 2 waves"));
+            var card = Root.Q("briefing-card").worldBound;
+            Assert.That(card.width, Is.GreaterThan(100f));
+            foreach (var name in new[] { "briefing-plan", "briefing-body", "briefing-deploy", "briefing-back", "briefing-transmission" })
+            {
+                var box = Root.Q(name).worldBound;
+                Assert.That(box.width, Is.GreaterThan(0f), $"{name} is drawn");
+                Assert.That(box.xMin, Is.GreaterThanOrEqualTo(card.xMin - 0.5f), name);
+                Assert.That(box.xMax, Is.LessThanOrEqualTo(card.xMax + 0.5f), name);
+                Assert.That(box.yMax, Is.LessThanOrEqualTo(card.yMax + 0.5f), name);
+            }
+            var plan = Root.Q("briefing-plan").worldBound;
+            Assert.That(plan.height, Is.GreaterThanOrEqualTo(room.Height * RoomPlan.TilePx - 0.5f), "the plan has room for every row");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator GoingInStartsTheFightAndBackKeepsThePicks()
+        {
+            yield return OpenBriefing("alien");
+            var d = FightDirector.Instance!;
+            PressButton(Root.Q<Button>("briefing-back"));
+            yield return null;
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Loadout));
+            Assert.That(d.Picker!.PresetId, Is.EqualTo("alien"), "the picks are as they were");
+            Assert.That(Root.Q<Button>("start-fight").enabledSelf, Is.True);
+            PressButton(Root.Q<Button>("start-fight"));
+            yield return null;
+            PressButton(Root.Q<Button>("briefing-deploy"));
+            yield return null;
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Fight));
+            Assert.That(d.Hud.BriefingVisible, Is.False);
+            Assert.That(d.Flow!.Session.Record.Meta?.Preset, Is.EqualTo("alien"));
         }
     }
 }
