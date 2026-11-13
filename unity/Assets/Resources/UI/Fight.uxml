@@ -167,15 +167,94 @@
 
         <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />
 
-        <ui:VisualElement name="start" class="fill overlay">
-            <ui:VisualElement class="card">
-                <ui:Label name="start-title" class="card-title display" />
-                <ui:Label class="muted" text="Choose a loadout. Press its number, or click it." />
-                <ui:VisualElement name="presets" class="presets" />
+        <ui:VisualElement name="title" class="fill overlay hidden">
+            <ui:VisualElement class="title-card">
+                <ui:VisualElement class="row title-kicker-row"><ui:VisualElement class="led red" /><ui:Label class="title-kicker display" text="CONTAINMENT BREACH" /></ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:Label class="title-logo display" text="LAB " />
+                    <ui:Label class="title-logo accent display" text="ESCAPE" />
+                </ui:VisualElement>
+                <ui:Label name="title-room" class="title-sub display" />
+                <ui:VisualElement name="title-terminal" class="terminal" />
+                <ui:VisualElement class="row title-actions">
+                    <ui:Button name="title-begin" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Begin" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
+                    <ui:Label name="title-blurb" class="muted title-blurb" />
+                </ui:VisualElement>
+                <ui:Label name="title-foot" class="title-foot faint mono" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="start" class="fill overlay hidden">
+            <ui:VisualElement name="start-card" class="card screen-card">
+                <ui:VisualElement class="screen-head">
+                    <ui:VisualElement>
+                        <ui:Label name="start-kicker" class="screen-kicker display" />
+                        <ui:Label name="start-title" class="card-title display" />
+                    </ui:VisualElement>
+                    <ui:Label name="start-help" class="muted screen-help" />
+                </ui:VisualElement>
                 <ui:Label name="start-error" class="warn hidden" />
-                <ui:VisualElement name="recent-box" class="recent hidden">
-                    <ui:Label class="recent-title display" text="WATCH A SAVED FIGHT" />
-                    <ui:VisualElement name="recent" />
+                <ui:ScrollView name="loadout-body" class="loadout-body">
+                    <ui:VisualElement name="presets" class="presets" />
+                    <ui:VisualElement class="loadout-cols">
+                        <ui:VisualElement class="loadout-col">
+                            <ui:VisualElement class="col-head"><ui:Label class="col-title display" text="ABILITIES" /><ui:Label name="ability-count" class="mono faint" /></ui:VisualElement>
+                            <ui:VisualElement name="abilities" />
+                            <ui:Label name="utilities" class="muted utilities" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="loadout-col">
+                            <ui:VisualElement class="col-head"><ui:Label class="col-title display" text="UPGRADES" /><ui:Label name="upgrade-count" class="mono faint" /></ui:VisualElement>
+                            <ui:VisualElement name="upgrades" />
+                            <ui:VisualElement class="col-head deploy-head"><ui:Label class="col-title display" text="DEPLOYMENT" /></ui:VisualElement>
+                            <ui:Button name="hold-wave" class="btn small hold-wave" focusable="false"><ui:Label class="btn-text" text="Hold back wave 3: clearing wave 2 wins" /></ui:Button>
+                            <ui:Label name="tester-note" class="faint tester-note" />
+                            <ui:VisualElement name="recent-box" class="recent hidden">
+                                <ui:Label class="recent-title display" text="WATCH A SAVED FIGHT" />
+                                <ui:VisualElement name="recent" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:VisualElement name="start-dock" class="dock">
+                    <ui:Label name="dock-counts" class="mono faint dock-counts" />
+                    <ui:Label name="dock-status" class="dock-status" />
+                    <ui:Button name="back-title" class="btn" focusable="false"><ui:Label class="btn-text" text="Back" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
+                    <ui:Button name="start-fight" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Start fight" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="briefing" class="fill overlay hidden">
+            <ui:VisualElement name="briefing-card" class="card screen-card">
+                <ui:VisualElement class="screen-head">
+                    <ui:VisualElement>
+                        <ui:Label class="screen-kicker display" text="BRIEFING · INTERCEPTED TRANSMISSION" />
+                        <ui:Label name="briefing-title" class="card-title display" />
+                    </ui:VisualElement>
+                    <ui:Label name="briefing-grid" class="faint mono screen-help" />
+                </ui:VisualElement>
+                <ui:ScrollView name="briefing-body" class="loadout-body">
+                    <ui:VisualElement class="loadout-cols">
+                        <ui:VisualElement class="loadout-col plan-col">
+                            <ui:VisualElement name="briefing-plan" class="plan" />
+                            <ui:Label name="briefing-devices" class="muted utilities" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="loadout-col">
+                            <ui:VisualElement class="col-head"><ui:Label class="col-title display" text="LAB INTERCOM" /></ui:VisualElement>
+                            <ui:Label name="briefing-transmission" class="transmission mono" />
+                            <ui:VisualElement class="col-head brief-head"><ui:Label class="col-title display" text="OBJECTIVE" /></ui:VisualElement>
+                            <ui:VisualElement name="briefing-objective" />
+                            <ui:VisualElement class="col-head brief-head"><ui:Label class="col-title display" text="YOUR KIT" /></ui:VisualElement>
+                            <ui:VisualElement name="briefing-kit" class="chips" />
+                            <ui:VisualElement class="col-head brief-head"><ui:Label class="col-title display" text="KNOW THE ROOM" /></ui:VisualElement>
+                            <ui:VisualElement name="briefing-know" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:VisualElement class="dock">
+                    <ui:Label class="dock-status" />
+                    <ui:Button name="briefing-back" class="btn" focusable="false"><ui:Label class="btn-text" text="Back to loadout" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
+                    <ui:Button name="briefing-deploy" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Enter the room" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -189,6 +268,7 @@
                 <ui:VisualElement class="row">
                     <ui:Button name="again" class="btn primary" focusable="false"><ui:Label class="btn-text" text="Fight again" /><ui:Label class="kbd mono" text="R" /></ui:Button>
                     <ui:Button name="change" class="btn" text="Change loadout" focusable="false" />
+                    <ui:Button name="report-open" class="btn" text="Full report" focusable="false" />
                 </ui:VisualElement>
                 <ui:Label name="end-saved" class="faint end-saved hidden" />
                 <ui:VisualElement name="end-downloads" class="row downloads hidden">
@@ -197,6 +277,19 @@
                     <ui:Button name="download-summary" class="btn small" text="Summary" focusable="false" />
                     <ui:Button name="download-events" class="btn small" text="Event stream" focusable="false" />
                 </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="report-modal" class="fill overlay hidden">
+            <ui:VisualElement name="report-card" class="card report-card">
+                <ui:VisualElement class="panel-head">
+                    <ui:VisualElement>
+                        <ui:Label name="report-kicker" class="screen-kicker display" />
+                        <ui:Label name="report-title" class="card-title small display" />
+                    </ui:VisualElement>
+                    <ui:Button name="close-report" class="btn small" focusable="false"><ui:Label class="btn-text" text="Close" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
+                </ui:VisualElement>
+                <ui:ScrollView name="report-body" class="modal-lines" />
             </ui:VisualElement>
         </ui:VisualElement>
 

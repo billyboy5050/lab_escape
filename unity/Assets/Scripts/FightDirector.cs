@@ -69,6 +69,9 @@ namespace LabEscape.Client
         /// <summary>The debug overlay's edit controls: what they would set, and the kind of unit waiting for a tile to be clicked.</summary>
         private readonly DebugEdits _edits = new DebugEdits();
         private bool _stepMode;
+        private GameScreen _screen = GameScreen.Title;
+        /// <summary>The loadout screen's picks, which outlive a fight and are remembered between sessions.</summary>
+        private LoadoutPicker? _picker;
         private IntentReport? _scoredFor;
         private List<ScoredOptions> _scored = new List<ScoredOptions>();
         /// <summary>When the fight ended, for the names of the web build's downloads.</summary>
@@ -127,6 +130,12 @@ namespace LabEscape.Client
         public bool ReplayPaused => _replay != null && _replayPaused;
 
         public bool DebugOpen => _debugOpen;
+
+        /// <summary>The loadout screen's picks, for tests.</summary>
+        public LoadoutPicker? Picker => _picker;
+
+        /// <summary>Where the player is: the title, the loadout screen, the briefing, or a fight.</summary>
+        public GameScreen CurrentScreen => _screen;
 
         /// <summary>The debug overlay's edit controls, for tests.</summary>
         public DebugEdits Edits => _edits;
@@ -191,8 +200,9 @@ namespace LabEscape.Client
             SetDebugOpen(Array.IndexOf(Environment.GetCommandLineArgs(), "-labDebug") >= 0);
             ShowContentNote();
             SmokeRun.IsolateTelemetryIfAsked();
+            _picker = NewPicker(_c!);
             _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
-            ShowStartScreen();
+            ShowTitle();
             // A saved fight to play back at once: a file on the command line, or ?replay= in the web build.
             var file = Telemetry.Arg(Environment.GetCommandLineArgs(), "-labReplay");
             if (file != null) PlayReplayFile(file);
@@ -230,7 +240,13 @@ namespace LabEscape.Client
             _hud.ButtonClicked += () => _sound.Ask(Sfx.Ui);
             _hud.OpenLogClicked += () => SetLog(true);
             _hud.CloseLogClicked += () => SetLog(false);
-            _hud.PresetClicked += StartPreset;
+            _hud.PresetClicked += SelectPreset;
+            _hud.Loadout.AbilityToggled += id => Pick(p => p.ToggleAbility(id));
+            _hud.Loadout.UpgradeToggled += id => Pick(p => p.ToggleUpgrade(id));
+            _hud.Loadout.ClearClicked += () => Pick(p => p.Clear());
+            _hud.Loadout.HoldWaveClicked += () => Pick(p => p.HoldWave3 = !p.HoldWave3);
+            _hud.Loadout.StartClicked += StartFromPicker;
+            _hud.Loadout.BackClicked += ShowTitle;
             _hud.SavedFightClicked += folder => PlayReplayFile(Path.Combine(folder, "replay.json"));
             _hud.DownloadClicked += f =>
             {
@@ -256,6 +272,11 @@ namespace LabEscape.Client
                 }
             };
             _hud.DebugEditClicked += DebugEdit;
+            _hud.BeginClicked += ShowStartScreen;
+            _hud.DeployClicked += Deploy;
+            _hud.BriefingBackClicked += ShowStartScreen;
+            _hud.ReportClicked += OpenReport;
+            _hud.ReportCloseClicked += _hud.HideReport;
         }
 
         // ------------------------------------------------------------------ content hot reload
@@ -333,6 +354,17 @@ namespace LabEscape.Client
             ShowContentNote();
             // A selected preset follows its edited picks, so the fight and its telemetry match what was played.
             _preset = presetId == null ? null : next.Presets.FirstOrDefault(p => p.Id == presetId);
+            // The loadout screen's picks follow the new content: a preset's edited picks, or the picks if they still fit.
+            var hold = _picker?.HoldWave3 ?? false;
+            if (_picker != null) LoadoutPrefs.Save(TelemetrySink.Prefs, _picker.ToLoadout(), _picker.PresetId);
+            _picker = NewPicker(next);
+            _picker.HoldWave3 = hold;
+            if (Flow == null && _screen == GameScreen.Title)
+            {
+                ShowTitle();
+                _hud.Toast("Content reloaded.", ContentToastSeconds);
+                return;
+            }
             if (Flow == null)
             {
                 ShowStartScreen();
@@ -529,10 +561,21 @@ namespace LabEscape.Client
             return _scored;
         }
 
+        /// <summary>The first screen. Begin goes on to the loadout screen.</summary>
+        public void ShowTitle()
+        {
+            TearDownFight();
+            _screen = GameScreen.Title;
+            _hud.ShowTitle(_c!.DefaultRoom.Name, ScreenText.TitleLines(_c), ScreenText.TitleBlurb, ScreenText.TitleFooter(_c));
+        }
+
+        /// <summary>The loadout screen, where a fight is chosen and saved fights are watched again.</summary>
         public void ShowStartScreen()
         {
             TearDownFight();
-            _hud.ShowStart(_c!.DefaultRoom.Name, _c.Presets, _c, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
+            _screen = GameScreen.Loadout;
+            _picker ??= NewPicker(_c!);
+            _hud.ShowStart(_c!.DefaultRoom.Name, _c, _picker, _tester, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
         }
 
         /// <summary>Plays back a saved fight from a replay file. One that cannot be read or does not fit this game is refused, with why.</summary>
@@ -620,10 +663,46 @@ namespace LabEscape.Client
             }
         }
 
-        private void StartPreset(PresetDef p)
+        /// <summary>The picks the loadout screen opens on: the last session's if it is still a loadout, else the default preset's.</summary>
+        private static LoadoutPicker NewPicker(Content c)
         {
-            _preset = p;
-            StartFight(new Loadout(p.Abilities, p.Upgrades), new FightSettings(), p.Id);
+            var (loadout, presetId) = LoadoutPrefs.Load(TelemetrySink.Prefs, c);
+            return new LoadoutPicker(c, loadout, presetId);
+        }
+
+        /// <summary>A pick on the loadout screen: made, remembered and drawn.</summary>
+        private void Pick(Action<LoadoutPicker> change)
+        {
+            if (_c == null || _picker == null) return;
+            change(_picker);
+            LoadoutPrefs.Save(TelemetrySink.Prefs, _picker.ToLoadout(), _picker.PresetId);
+            _hud.UpdateLoadout(_c, _picker);
+        }
+
+        /// <summary>A preset picked on the loadout screen: its abilities and upgrades are picked, and nothing starts.</summary>
+        public void SelectPreset(PresetDef p) => Pick(picker => picker.SelectPreset(p));
+
+        /// <summary>Starts the fight the loadout screen has picked, if what it picked can be fought.</summary>
+        public void StartFromPicker()
+        {
+            if (_picker == null || !_picker.CanStart) return;
+            ShowBriefing();
+        }
+
+        /// <summary>The briefing for the fight the picks make. Going in starts it; the fight's turn clock starts then.</summary>
+        public void ShowBriefing()
+        {
+            if (_c == null || _picker == null) return;
+            TearDownFight();
+            _screen = GameScreen.Briefing;
+            _hud.ShowBriefing(_c, _c.RoomFor(_picker.ToSettings().Room), _picker.ToLoadout(), _picker.ToSettings());
+        }
+
+        /// <summary>Goes in: the briefing's fight starts with the picks it was shown for.</summary>
+        public void Deploy()
+        {
+            if (_screen != GameScreen.Briefing || _picker == null || !_picker.CanStart) return;
+            StartFight(_picker.ToLoadout(), _picker.ToSettings(), _picker.PresetId);
         }
 
         private void Again()
@@ -654,6 +733,7 @@ namespace LabEscape.Client
                 if (_tester != null) meta.Tester = _tester;
             }
             _starts++;
+            _screen = GameScreen.Fight;
             _replay = replay;
             _replayNext = 0;
             _replayWait = ReplayGap;
@@ -853,6 +933,14 @@ namespace LabEscape.Client
             if (Flow != null && Flow.Idle && !Replaying && !Flow.Undo()) _hud.Toast(message);
         }
 
+        /// <summary>The incident report for the fight that has ended, over its end card.</summary>
+        public void OpenReport()
+        {
+            if (Flow == null || _c == null || Flow.Live.Outcome == null) return;
+            var room = _c.RoomFor(Flow.Live.Settings.Room);
+            _hud.ShowReport(ReportModel.From(_c, room, Flow.Session.Summary(), Flow.Live, Flow.Session.Record));
+        }
+
         private void SetLog(bool open)
         {
             if (Flow != null) _hud.SetLogOpen(open, Flow.Shown);
@@ -865,6 +953,7 @@ namespace LabEscape.Client
             // A long hitch is not played back as one huge step, which would throw every spring across the room.
             var real = FixedStep ?? Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             TickWatch(real);
+            _hud.TickScreens(real);
             if (Flow == null)
             {
                 ReadStartKeys();
@@ -916,14 +1005,36 @@ namespace LabEscape.Client
 
         private void ReadStartKeys()
         {
-            if (_c == null || !_hud.StartVisible) return;
+            if (_c == null) return;
             if (Input.GetKeyDown(KeyCode.BackQuote)) SetDebugOpen(!_debugOpen);
             if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
+            if (_screen == GameScreen.Title)
+            {
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) ShowStartScreen();
+                return;
+            }
+            if (_screen == GameScreen.Briefing)
+            {
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Deploy();
+                else if (Input.GetKeyDown(KeyCode.Escape)) ShowStartScreen();
+                return;
+            }
+            if (_screen != GameScreen.Loadout) return;
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                ShowTitle();
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                StartFromPicker();
+                return;
+            }
             for (var i = 0; i < _c.Presets.Count && i < ActionKeys.Length; i++)
             {
                 if (Input.GetKeyDown(ActionKeys[i]))
                 {
-                    StartPreset(_c.Presets[i]);
+                    SelectPreset(_c.Presets[i]);
                     return;
                 }
             }
@@ -978,6 +1089,7 @@ namespace LabEscape.Client
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (_edits.Armed != null) _edits.Armed = null;
+                else if (_hud.ReportVisible) _hud.HideReport();
                 else if (_hud.LogOpen) SetLog(false);
                 else if (_model!.First != null) _model.ClearFirst();
                 else _model.Clear();
@@ -992,7 +1104,7 @@ namespace LabEscape.Client
                 SetLog(!_hud.LogOpen);
                 return;
             }
-            if (_hud.LogOpen) return;
+            if (_hud.LogOpen || _hud.ReportVisible) return;
             if (Input.GetKeyDown(KeyCode.Z)) TryUndo("Nothing to undo: AP spent or nothing moved");
             if (Input.GetKeyDown(KeyCode.Space)) Flow!.Skip();
             if (Input.GetKeyDown(KeyCode.F)) Flow!.SetSpeed(Flow.Speed == FightSpeed.Normal ? FightSpeed.Fast : Flow.Speed == FightSpeed.Fast ? FightSpeed.Skip : FightSpeed.Normal);

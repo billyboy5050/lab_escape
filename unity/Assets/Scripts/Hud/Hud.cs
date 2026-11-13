@@ -97,7 +97,20 @@ namespace LabEscape.Client
 
         private readonly VisualElement _root;
         private readonly VisualElement _boardArea;
-        private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
+        private readonly VisualElement _title, _titleTerminal;
+        private readonly Label _titleRoom, _titleBlurb, _titleFoot;
+        private readonly Label _startKicker, _startHelp;
+        private readonly VisualElement _briefing, _briefingPlan, _briefingObjective, _briefingKit, _briefingKnow;
+        private readonly Label _briefingTitle, _briefingGrid, _briefingDevices, _briefingTransmission;
+        private Typewriter? _briefingType;
+        private readonly VisualElement _reportModal;
+        private readonly ScrollView _reportBody;
+        private readonly Label _reportKicker, _reportTitle;
+        public readonly LoadoutView Loadout;
+        private readonly List<Label> _titleLabels = new List<Label>();
+        private Typewriter? _titleType;
+        private float _titleClock;
+        private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _end, _logModal;
         private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures, _recentBox, _recent, _endDownloads;
         private readonly Label _endSaved;
         private readonly VisualElement[] _overBoard;
@@ -143,6 +156,15 @@ namespace LabEscape.Client
         /// <summary>One of the debug overlay's toggles was flipped: ids, spawns, hazards, flamer or log.</summary>
         public event Action<string>? DebugToggleClicked;
 
+        /// <summary>The title screen's Begin was pressed.</summary>
+        public event Action? BeginClicked;
+
+        /// <summary>The briefing's two buttons: go in, or back to the loadout screen.</summary>
+        public event Action? DeployClicked, BriefingBackClicked;
+
+        /// <summary>The end card's Full report, and the report's Close.</summary>
+        public event Action? ReportClicked, ReportCloseClicked;
+
         /// <summary>The unit to edit was stepped (-1 or 1), or the kind to spawn (1 or -1 through <see cref="DebugSpawnCycled"/>).</summary>
         public event Action<int>? DebugUnitCycled, DebugSpawnCycled;
 
@@ -177,7 +199,6 @@ namespace LabEscape.Client
             _infoBody = E("info-body");
             _minions = E("minions");
             _start = E("start");
-            _presets = E("presets");
             _end = E("end");
             _logModal = E("log-modal");
             _alarm = E("flash-alarm");
@@ -285,6 +306,34 @@ namespace LabEscape.Client
             _editForceWave = B("edit-force-wave", () => DebugEditClicked?.Invoke("forceWave"));
             _editHoldWave = B("edit-hold-wave", () => DebugEditClicked?.Invoke("holdWave"));
             _editRestart = B("edit-restart", () => DebugEditClicked?.Invoke("restart"));
+            _title = E("title");
+            _titleTerminal = E("title-terminal");
+            _titleRoom = L("title-room");
+            _titleBlurb = L("title-blurb");
+            _titleFoot = L("title-foot");
+            B("title-begin", () => BeginClicked?.Invoke());
+            _briefing = E("briefing");
+            _briefingPlan = E("briefing-plan");
+            _briefingObjective = E("briefing-objective");
+            _briefingKit = E("briefing-kit");
+            _briefingKnow = E("briefing-know");
+            _briefingTitle = L("briefing-title");
+            _briefingGrid = L("briefing-grid");
+            _briefingDevices = L("briefing-devices");
+            _briefingTransmission = L("briefing-transmission");
+            B("briefing-deploy", () => DeployClicked?.Invoke());
+            B("briefing-back", () => BriefingBackClicked?.Invoke());
+            _reportModal = E("report-modal");
+            _reportBody = Q<ScrollView>("report-body");
+            _reportKicker = L("report-kicker");
+            _reportTitle = L("report-title");
+            B("report-open", () => ReportClicked?.Invoke());
+            B("close-report", () => ReportCloseClicked?.Invoke());
+            _startKicker = L("start-kicker");
+            _startHelp = L("start-help");
+            Loadout = new LoadoutView(_root);
+            Loadout.ButtonClicked += () => ButtonClicked?.Invoke();
+            Loadout.PresetClicked += p => PresetClicked?.Invoke(p);
         }
 
         private static void Frame(VisualElement panel)
@@ -378,8 +427,210 @@ namespace LabEscape.Client
         /// <summary>Tells the camera which part of the screen the panels leave for the board.</summary>
         public void SetFreeAreaOn(IsoCamera cam) => cam.SetFreeArea(FreeScreenArea());
 
-        public void ShowStart(string title, IEnumerable<PresetDef> presets, Content c, IReadOnlyList<Telemetry.SavedFight>? saved = null)
+        public bool TitleVisible => !_title.ClassListContains("hidden");
+
+        /// <summary>
+        /// The first screen: who you are and why you are running. The terminal prints its lines a character at a time, as the web
+        /// client's does; <see cref="TickScreens"/> keeps it going, and <see cref="FinishTitleTyping"/> prints the rest.
+        /// </summary>
+        public void ShowTitle(string room, IReadOnlyList<string> lines, string blurb, string footer)
         {
+            HideScreens();
+            _titleRoom.text = room.ToUpperInvariant();
+            _titleBlurb.text = blurb;
+            _titleFoot.text = footer;
+            _titleType = new Typewriter(lines, ScreenText.TitleCharsPerSecond, ScreenText.TitleDelay);
+            _titleClock = 0f;
+            _titleTerminal.Clear();
+            _titleLabels.Clear();
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var label = Ui.Text("", i >= ScreenText.TitleStatusLines ? "terminal-line mono alert" : "terminal-line mono");
+                _titleLabels.Add(label);
+                _titleTerminal.Add(label);
+            }
+            PaintTitle();
+            Ui.Show(_title, true);
+        }
+
+        public bool BriefingVisible => !_briefing.ClassListContains("hidden");
+
+        /// <summary>
+        /// Between the loadout and the fight: the room from above, the intercom's first line, the goal and the kit. It says what
+        /// the rules sheet says and nothing the game hides. The fight starts only when the player goes in.
+        /// </summary>
+        public void ShowBriefing(Content c, RoomDef room, Loadout loadout, FightSettings settings)
+        {
+            HideScreens();
+            var waves = BriefingText.WavesInPlay(room, settings);
+            _briefingTitle.text = Fonts.Caps(room.Name);
+            _briefingGrid.text = BriefingText.Grid(room, waves);
+            _briefingPlan.Clear();
+            _briefingPlan.Add(RoomPlan.Build(c, room));
+            _briefingDevices.text = BriefingText.Devices(c, room);
+            Ui.Show(_briefingDevices, _briefingDevices.text.Length > 0);
+            _briefingType = new Typewriter(new[] { BriefingText.Opening(c) }, BriefingText.CharsPerSecond, BriefingText.Delay);
+            Lines(_briefingObjective, BriefingText.Objective(c, room, waves));
+            Lines(_briefingKnow, BriefingText.KnowTheRoom);
+            _briefingKit.Clear();
+            foreach (var (name, kit) in BriefingText.Kit(c, loadout)) _briefingKit.Add(Ui.Text(name, $"chip kit-{kit}"));
+            PaintBriefing();
+            Ui.Show(_briefing, true);
+        }
+
+        public bool ReportVisible => !_reportModal.ClassListContains("hidden");
+
+        public void HideReport() => Ui.Show(_reportModal, false);
+
+        /// <summary>The incident report: who hurt whom, by source, and the fight's facts, over the end card.</summary>
+        public void ShowReport(ReportModel m)
+        {
+            _reportKicker.text = Fonts.Caps(m.Kicker);
+            _reportTitle.text = Fonts.Caps(m.Heading);
+            _reportTitle.EnableInClassList("win", m.Won);
+            _reportTitle.EnableInClassList("lose", !m.Won);
+            var body = _reportBody.contentContainer;
+            body.Clear();
+            body.Add(Ui.Text(m.Verdict, "report-verdict"));
+            var pills = Ui.El("pills");
+            for (var i = 0; i < m.Pills.Count; i++) pills.Add(Ui.Text(m.Pills[i], i == m.Pills.Count - 1 && m.FriendlyFireWarns ? "pill warn" : "pill"));
+            body.Add(pills);
+            body.Add(Ui.Text(m.Loadout, "muted"));
+            foreach (var section in m.Sections)
+            {
+                var box = Ui.El("report-section");
+                box.Add(Ui.Text(Fonts.Caps(section.Title), "col-title display"));
+                foreach (var bar in section.Bars)
+                {
+                    var row = Ui.El("bar-row");
+                    row.Add(Ui.Text(bar.Label, "bar-label"));
+                    var track = Ui.El("bar-track");
+                    var fill = Ui.El("bar-fill");
+                    fill.style.width = new StyleLength(new Length(100f * bar.Value / section.Max, LengthUnit.Percent));
+                    fill.style.backgroundColor = BarColor(bar.Category);
+                    track.Add(fill);
+                    row.Add(track);
+                    row.Add(Ui.Text(bar.Value.ToString(), "bar-value mono"));
+                    box.Add(row);
+                }
+                if (section.Note != null) box.Add(Ui.Text(section.Note, section.NoteWarns ? "report-note warn" : "report-note"));
+                body.Add(box);
+            }
+            var facts = Ui.El("report-section");
+            facts.Add(Ui.Text(Fonts.Caps("Fight"), "col-title display"));
+            foreach (var (label, value) in m.Facts)
+            {
+                var row = Ui.El("kv-row");
+                row.Add(Ui.Text(label, "kv-key"));
+                row.Add(Ui.Text(value, "kv-value"));
+                facts.Add(row);
+            }
+            body.Add(facts);
+            var tel = Ui.El("report-section");
+            tel.Add(Ui.Text(Fonts.Caps("Telemetry"), "col-title display"));
+            tel.Add(Ui.Text(m.Telemetry, "report-note"));
+            body.Add(tel);
+            var intercom = Ui.El("report-section");
+            intercom.Add(Ui.Text(Fonts.Caps("Intercom"), "col-title display"));
+            if (m.Intercom.Count == 0) intercom.Add(Ui.Text("Nothing was said.", "report-note"));
+            foreach (var (round, text) in m.Intercom) intercom.Add(Ui.Text($"R{round} \"{text}\"", "kv-value"));
+            body.Add(intercom);
+            _reportBody.scrollOffset = Vector2.zero;
+            Ui.Show(_reportModal, true);
+        }
+
+        private static Color BarColor(SourceCategory c)
+        {
+            switch (c)
+            {
+                case SourceCategory.Enemy: return Palette.Enemy;
+                case SourceCategory.Hazard: return Palette.Hazard;
+                case SourceCategory.Player: return Palette.Player;
+                default: return Palette.Minion;
+            }
+        }
+
+        private static void Lines(VisualElement into, IReadOnlyList<string> lines)
+        {
+            into.Clear();
+            foreach (var line in lines) into.Add(Ui.Text("- " + line, "brief-line"));
+        }
+
+        private void PaintBriefing()
+        {
+            var text = _briefingType?.Shown().FirstOrDefault() ?? "";
+            _briefingTransmission.text = text;
+        }
+
+        /// <summary>What the intercom has printed so far, for tests.</summary>
+        public string Transmission => _briefingTransmission.text;
+
+        public void FinishBriefingTyping()
+        {
+            _briefingType?.Finish();
+            PaintBriefing();
+        }
+
+        /// <summary>Keeps the screens that animate going: the title's terminal and the briefing's intercom.</summary>
+        public void TickScreens(float dt)
+        {
+            if (BriefingVisible && _briefingType != null)
+            {
+                _briefingType.Tick(dt);
+                PaintBriefing();
+            }
+            if (!TitleVisible || _titleType == null) return;
+            _titleClock += dt;
+            _titleType.Tick(dt);
+            PaintTitle();
+        }
+
+        /// <summary>Prints the whole title terminal at once.</summary>
+        public void FinishTitleTyping()
+        {
+            _titleType?.Finish();
+            PaintTitle();
+        }
+
+        /// <summary>What the title's terminal shows now, one line to a line, without its cursor: for tests.</summary>
+        public IReadOnlyList<string> TitleTerminal() => _titleType?.Shown() ?? new List<string>();
+
+        public bool TitleTypingDone => _titleType == null || _titleType.Done;
+
+        private void PaintTitle()
+        {
+            if (_titleType == null) return;
+            var shown = _titleType.Shown();
+            var typing = _titleType.TypingLine();
+            // A cursor on the line being printed, or after the last once everything is, blinking twice a second.
+            var cursorOn = ((int)(_titleClock * 2f) & 1) == 0;
+            var cursorAt = typing >= 0 ? typing : shown.Count - 1;
+            for (var i = 0; i < _titleLabels.Count; i++)
+            {
+                var text = shown[i];
+                var visible = text.Length > 0 || (i == 0 && typing == 0);
+                _titleLabels[i].text = text + (i == cursorAt && cursorOn && visible ? "_" : "");
+                Ui.Show(_titleLabels[i], visible);
+            }
+        }
+
+        /// <summary>Every screen before a fight is put away, so the one asked for is the only one.</summary>
+        private void HideScreens()
+        {
+            Ui.Show(_title, false);
+            Ui.Show(_start, false);
+            Ui.Show(_briefing, false);
+            // The report belongs to the fight that ended: leaving it, by any road, puts the report away.
+            Ui.Show(_reportModal, false);
+        }
+
+        /// <summary>
+        /// The loadout screen: the presets and picks, and the saved fights to watch again. `room` is where the fight is, and
+        /// `tester` the playtest's ID if there is one. The picks are drawn by <see cref="UpdateLoadout"/>.
+        /// </summary>
+        public void ShowStart(string room, Content c, LoadoutPicker picker, string? tester, IReadOnlyList<Telemetry.SavedFight>? saved = null)
+        {
+            HideScreens();
             _recent.Clear();
             foreach (var f in saved ?? Array.Empty<Telemetry.SavedFight>())
             {
@@ -399,28 +650,20 @@ namespace LabEscape.Client
             // The debug overlay has no fight to describe until the next one starts.
             _debugText.Clear();
             _debugSig = "";
-            DisableEdits();
             Ui.Show(_debugReplay, false);
-            _startTitle.text = title;
-            _presets.Clear();
-            var i = 1;
-            foreach (var p in presets)
-            {
-                var chosen = p;
-                var b = new Button(() =>
-                {
-                    ButtonClicked?.Invoke();
-                    PresetClicked?.Invoke(chosen);
-                }) { focusable = false, text = "" };
-                b.AddToClassList("preset-btn");
-                b.Add(Ui.Text($"{i}  {p.Name.ToUpperInvariant()}", "preset-name display"));
-                b.Add(Ui.Text(string.Join(", ", p.Abilities.Select(a => c.Abilities[a].Name)), "preset-kit"));
-                _presets.Add(b);
-                i++;
-            }
+            DisableEdits();
+            _startKicker.text = Fonts.Caps($"Requisition · {room}");
+            _startTitle.text = Fonts.Caps("Loadout");
+            _startHelp.text = $"Choose up to {picker.MaxAbilities} of {c.AbilityOrder.Count} abilities and up to {picker.MaxUpgrades} upgrades, or press a preset's number. Nothing carries between attempts.";
+            Loadout.Show(true);
+            Loadout.Build(c, tester);
+            Loadout.Update(c, picker);
             Ui.Show(_start, true);
             Ui.Show(_end, false);
         }
+
+        /// <summary>Redraws what is picked, after a pick.</summary>
+        public void UpdateLoadout(Content c, LoadoutPicker picker) => Loadout.Update(c, picker);
 
         /// <summary>A line under the loadouts, such as why a replay was refused. Null clears it.</summary>
         public void ShowStartMessage(string? message)
@@ -431,13 +674,17 @@ namespace LabEscape.Client
 
         public void ShowContentError(string message)
         {
+            HideScreens();
+            _startKicker.text = "";
+            _startHelp.text = "";
             _startTitle.text = "The content did not load";
             _startError.text = message;
             Ui.Show(_startError, true);
+            Loadout.Show(false);
             Ui.Show(_start, true);
         }
 
-        public void HideStart() => Ui.Show(_start, false);
+        public void HideStart() => HideScreens();
 
         public bool StartVisible => !_start.ClassListContains("hidden");
 
@@ -533,6 +780,7 @@ namespace LabEscape.Client
             _statusSig = _actionsSig = _infoSig = _minionSig = _intercomText = _bannerText = "";
             Ui.Show(_end, false);
             Ui.Show(_logModal, false);
+            Ui.Show(_reportModal, false);
             _bannerIn.HideNow();
             _alertIn.HideNow();
             _openerIn.HideNow();
