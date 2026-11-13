@@ -268,6 +268,7 @@
                 <ui:VisualElement class="row">
                     <ui:Button name="again" class="btn primary" focusable="false"><ui:Label class="btn-text" text="Fight again" /><ui:Label class="kbd mono" text="R" /></ui:Button>
                     <ui:Button name="change" class="btn" text="Change loadout" focusable="false" />
+                    <ui:Button name="report-open" class="btn" text="Full report" focusable="false" />
                 </ui:VisualElement>
                 <ui:Label name="end-saved" class="faint end-saved hidden" />
                 <ui:VisualElement name="end-downloads" class="row downloads hidden">
@@ -276,6 +277,19 @@
                     <ui:Button name="download-summary" class="btn small" text="Summary" focusable="false" />
                     <ui:Button name="download-events" class="btn small" text="Event stream" focusable="false" />
                 </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="report-modal" class="fill overlay hidden">
+            <ui:VisualElement name="report-card" class="card report-card">
+                <ui:VisualElement class="panel-head">
+                    <ui:VisualElement>
+                        <ui:Label name="report-kicker" class="screen-kicker display" />
+                        <ui:Label name="report-title" class="card-title small display" />
+                    </ui:VisualElement>
+                    <ui:Button name="close-report" class="btn small" focusable="false"><ui:Label class="btn-text" text="Close" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
+                </ui:VisualElement>
+                <ui:ScrollView name="report-body" class="modal-lines" />
             </ui:VisualElement>
         </ui:VisualElement>
 

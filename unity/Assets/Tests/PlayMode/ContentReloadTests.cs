@@ -301,5 +301,43 @@ namespace LabEscape.Client.Tests
             Assert.That(Root.Q<Label>("debug-version").text, Is.EqualTo(DebugReport.Header(d.Content!)));
             Assert.That(Root.Q<Label>("debug-content").text, Does.Contain(_scratch.Folder));
         }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheTitleStaysAndShowsTheNewContentWhenContentReloads()
+        {
+            var d = FightDirector.Instance!;
+            d.ShowTitle();
+            yield return null;
+
+            _scratch.SetUnitHp("guard", 7);
+            Reload(d);
+            yield return null;
+
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Title));
+            Assert.That(d.Hud.TitleVisible, Is.True);
+            Assert.That(Root.Q<Label>("title-foot").text, Does.Contain(d.Content!.Hash));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TheBriefingGoesBackToTheLoadoutScreenWhenContentReloads()
+        {
+            var d = FightDirector.Instance!;
+            d.ShowStartScreen();
+            d.SelectPreset(d.Content!.Presets.First(p => p.Id == "tech"));
+            d.ShowBriefing();
+            yield return null;
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Briefing));
+
+            _scratch.SetUnitHp("guard", 7);
+            Reload(d);
+            yield return null;
+
+            Assert.That(d.CurrentScreen, Is.EqualTo(GameScreen.Loadout));
+            Assert.That(d.Hud.BriefingVisible, Is.False);
+            Assert.That(Root.Q<Label>("start-error").text, Is.EqualTo("Content reloaded."));
+            Assert.That(d.Picker!.PresetId, Is.EqualTo("tech"), "the picks are kept");
+        }
     }
 }

@@ -275,6 +275,8 @@ namespace LabEscape.Client
             _hud.BeginClicked += ShowStartScreen;
             _hud.DeployClicked += Deploy;
             _hud.BriefingBackClicked += ShowStartScreen;
+            _hud.ReportClicked += OpenReport;
+            _hud.ReportCloseClicked += _hud.HideReport;
         }
 
         // ------------------------------------------------------------------ content hot reload
@@ -931,6 +933,14 @@ namespace LabEscape.Client
             if (Flow != null && Flow.Idle && !Replaying && !Flow.Undo()) _hud.Toast(message);
         }
 
+        /// <summary>The incident report for the fight that has ended, over its end card.</summary>
+        public void OpenReport()
+        {
+            if (Flow == null || _c == null || Flow.Live.Outcome == null) return;
+            var room = _c.RoomFor(Flow.Live.Settings.Room);
+            _hud.ShowReport(ReportModel.From(_c, room, Flow.Session.Summary(), Flow.Live, Flow.Session.Record));
+        }
+
         private void SetLog(bool open)
         {
             if (Flow != null) _hud.SetLogOpen(open, Flow.Shown);
@@ -1079,6 +1089,7 @@ namespace LabEscape.Client
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (_edits.Armed != null) _edits.Armed = null;
+                else if (_hud.ReportVisible) _hud.HideReport();
                 else if (_hud.LogOpen) SetLog(false);
                 else if (_model!.First != null) _model.ClearFirst();
                 else _model.Clear();
@@ -1093,7 +1104,7 @@ namespace LabEscape.Client
                 SetLog(!_hud.LogOpen);
                 return;
             }
-            if (_hud.LogOpen) return;
+            if (_hud.LogOpen || _hud.ReportVisible) return;
             if (Input.GetKeyDown(KeyCode.Z)) TryUndo("Nothing to undo: AP spent or nothing moved");
             if (Input.GetKeyDown(KeyCode.Space)) Flow!.Skip();
             if (Input.GetKeyDown(KeyCode.F)) Flow!.SetSpeed(Flow.Speed == FightSpeed.Normal ? FightSpeed.Fast : Flow.Speed == FightSpeed.Fast ? FightSpeed.Skip : FightSpeed.Normal);

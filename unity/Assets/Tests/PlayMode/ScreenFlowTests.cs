@@ -406,5 +406,58 @@ namespace LabEscape.Client.Tests
             Assert.That(d.Hud.BriefingVisible, Is.False);
             Assert.That(d.Flow!.Session.Record.Meta?.Preset, Is.EqualTo("alien"));
         }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator TheEndCardOpensAFullReportThatCloses()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            var record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-hybrid.json"))));
+            d.StartFight(record.Loadout, record.Settings, "hybrid");
+            d.Flow!.SetSpeed(FightSpeed.Skip);
+            foreach (var cmd in record.Commands)
+            {
+                while (!d.Idle && d.Flow.Live.Outcome == null) yield return null;
+                while (d.Flow.Busy) yield return null;
+                Assert.That(d.Commit(cmd)!.Ok, Is.True);
+            }
+            while (d.Flow.Busy) yield return null;
+            yield return null;
+            Assert.That(d.EndScreenShown, Is.True);
+            Assert.That(d.Hud.ReportVisible, Is.False);
+
+            PressButton(Root.Q<Button>("report-open"));
+            yield return null;
+            yield return null;
+            Assert.That(d.Hud.ReportVisible, Is.True);
+            var summary = d.Flow.Session.Summary();
+            var model = ReportModel.From(d.Content!, d.Content!.DefaultRoom, summary, d.Flow.Live, d.Flow.Session.Record);
+            Assert.That(Root.Q<Label>("report-title").text, Is.EqualTo(Fonts.Caps(model.Heading)));
+            var body = Root.Q("report-body");
+            Assert.That(body.Query(className: "bar-row").ToList().Count, Is.EqualTo(12), "four bars in each of three sections");
+            Assert.That(body.Query(className: "kv-row").ToList().Count, Is.EqualTo(model.Facts.Count));
+            Assert.That(body.Query<Label>(className: "pill").ToList().Select(l => l.text), Is.EqualTo(model.Pills));
+            var fills = body.Query(className: "bar-fill").ToList();
+            Assert.That(fills.All(f => f.resolvedStyle.width >= 0f), Is.True);
+            var card = Root.Q("report-card").worldBound;
+            Assert.That(card.width, Is.GreaterThan(100f));
+            foreach (var row in body.Query(className: "bar-row").ToList())
+            {
+                Assert.That(row.worldBound.xMin, Is.GreaterThanOrEqualTo(card.xMin - 0.5f));
+                Assert.That(row.worldBound.xMax, Is.LessThanOrEqualTo(card.xMax + 0.5f));
+            }
+
+            PressButton(Root.Q<Button>("close-report"));
+            yield return null;
+            Assert.That(d.Hud.ReportVisible, Is.False);
+            Assert.That(d.EndScreenShown, Is.True, "the end card is still there");
+
+            PressButton(Root.Q<Button>("report-open"));
+            yield return null;
+            d.StartFight(record.Loadout, record.Settings, "hybrid");
+            yield return null;
+            Assert.That(d.Hud.ReportVisible, Is.False, "a new fight puts the report away");
+        }
     }
 }

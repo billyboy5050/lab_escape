@@ -103,6 +103,9 @@ namespace LabEscape.Client
         private readonly VisualElement _briefing, _briefingPlan, _briefingObjective, _briefingKit, _briefingKnow;
         private readonly Label _briefingTitle, _briefingGrid, _briefingDevices, _briefingTransmission;
         private Typewriter? _briefingType;
+        private readonly VisualElement _reportModal;
+        private readonly ScrollView _reportBody;
+        private readonly Label _reportKicker, _reportTitle;
         public readonly LoadoutView Loadout;
         private readonly List<Label> _titleLabels = new List<Label>();
         private Typewriter? _titleType;
@@ -158,6 +161,9 @@ namespace LabEscape.Client
 
         /// <summary>The briefing's two buttons: go in, or back to the loadout screen.</summary>
         public event Action? DeployClicked, BriefingBackClicked;
+
+        /// <summary>The end card's Full report, and the report's Close.</summary>
+        public event Action? ReportClicked, ReportCloseClicked;
 
         /// <summary>The unit to edit was stepped (-1 or 1), or the kind to spawn (1 or -1 through <see cref="DebugSpawnCycled"/>).</summary>
         public event Action<int>? DebugUnitCycled, DebugSpawnCycled;
@@ -317,6 +323,12 @@ namespace LabEscape.Client
             _briefingTransmission = L("briefing-transmission");
             B("briefing-deploy", () => DeployClicked?.Invoke());
             B("briefing-back", () => BriefingBackClicked?.Invoke());
+            _reportModal = E("report-modal");
+            _reportBody = Q<ScrollView>("report-body");
+            _reportKicker = L("report-kicker");
+            _reportTitle = L("report-title");
+            B("report-open", () => ReportClicked?.Invoke());
+            B("close-report", () => ReportCloseClicked?.Invoke());
             _startKicker = L("start-kicker");
             _startHelp = L("start-help");
             Loadout = new LoadoutView(_root);
@@ -464,6 +476,78 @@ namespace LabEscape.Client
             foreach (var (name, kit) in BriefingText.Kit(c, loadout)) _briefingKit.Add(Ui.Text(name, $"chip kit-{kit}"));
             PaintBriefing();
             Ui.Show(_briefing, true);
+        }
+
+        public bool ReportVisible => !_reportModal.ClassListContains("hidden");
+
+        public void HideReport() => Ui.Show(_reportModal, false);
+
+        /// <summary>The incident report: who hurt whom, by source, and the fight's facts, over the end card.</summary>
+        public void ShowReport(ReportModel m)
+        {
+            _reportKicker.text = Fonts.Caps(m.Kicker);
+            _reportTitle.text = Fonts.Caps(m.Heading);
+            _reportTitle.EnableInClassList("win", m.Won);
+            _reportTitle.EnableInClassList("lose", !m.Won);
+            var body = _reportBody.contentContainer;
+            body.Clear();
+            body.Add(Ui.Text(m.Verdict, "report-verdict"));
+            var pills = Ui.El("pills");
+            for (var i = 0; i < m.Pills.Count; i++) pills.Add(Ui.Text(m.Pills[i], i == m.Pills.Count - 1 && m.FriendlyFireWarns ? "pill warn" : "pill"));
+            body.Add(pills);
+            body.Add(Ui.Text(m.Loadout, "muted"));
+            foreach (var section in m.Sections)
+            {
+                var box = Ui.El("report-section");
+                box.Add(Ui.Text(Fonts.Caps(section.Title), "col-title display"));
+                foreach (var bar in section.Bars)
+                {
+                    var row = Ui.El("bar-row");
+                    row.Add(Ui.Text(bar.Label, "bar-label"));
+                    var track = Ui.El("bar-track");
+                    var fill = Ui.El("bar-fill");
+                    fill.style.width = new StyleLength(new Length(100f * bar.Value / section.Max, LengthUnit.Percent));
+                    fill.style.backgroundColor = BarColor(bar.Category);
+                    track.Add(fill);
+                    row.Add(track);
+                    row.Add(Ui.Text(bar.Value.ToString(), "bar-value mono"));
+                    box.Add(row);
+                }
+                if (section.Note != null) box.Add(Ui.Text(section.Note, section.NoteWarns ? "report-note warn" : "report-note"));
+                body.Add(box);
+            }
+            var facts = Ui.El("report-section");
+            facts.Add(Ui.Text(Fonts.Caps("Fight"), "col-title display"));
+            foreach (var (label, value) in m.Facts)
+            {
+                var row = Ui.El("kv-row");
+                row.Add(Ui.Text(label, "kv-key"));
+                row.Add(Ui.Text(value, "kv-value"));
+                facts.Add(row);
+            }
+            body.Add(facts);
+            var tel = Ui.El("report-section");
+            tel.Add(Ui.Text(Fonts.Caps("Telemetry"), "col-title display"));
+            tel.Add(Ui.Text(m.Telemetry, "report-note"));
+            body.Add(tel);
+            var intercom = Ui.El("report-section");
+            intercom.Add(Ui.Text(Fonts.Caps("Intercom"), "col-title display"));
+            if (m.Intercom.Count == 0) intercom.Add(Ui.Text("Nothing was said.", "report-note"));
+            foreach (var (round, text) in m.Intercom) intercom.Add(Ui.Text($"R{round} \"{text}\"", "kv-value"));
+            body.Add(intercom);
+            _reportBody.scrollOffset = Vector2.zero;
+            Ui.Show(_reportModal, true);
+        }
+
+        private static Color BarColor(SourceCategory c)
+        {
+            switch (c)
+            {
+                case SourceCategory.Enemy: return Palette.Enemy;
+                case SourceCategory.Hazard: return Palette.Hazard;
+                case SourceCategory.Player: return Palette.Player;
+                default: return Palette.Minion;
+            }
         }
 
         private static void Lines(VisualElement into, IReadOnlyList<string> lines)
@@ -694,6 +778,7 @@ namespace LabEscape.Client
             _statusSig = _actionsSig = _infoSig = _minionSig = _intercomText = _bannerText = "";
             Ui.Show(_end, false);
             Ui.Show(_logModal, false);
+            Ui.Show(_reportModal, false);
             _bannerIn.HideNow();
             _alertIn.HideNow();
             _openerIn.HideNow();
