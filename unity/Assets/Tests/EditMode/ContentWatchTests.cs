@@ -176,6 +176,15 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void ProblemsAreListedOneToALineWithAnEndlessListCut()
+        {
+            Assert.That(ContentWatch.FormatProblems(new[] { "a", "b" }), Is.EqualTo("- a\n- b"));
+            var many = Enumerable.Range(1, 9).Select(i => "p" + i).ToList();
+            Assert.That(ContentWatch.FormatProblems(many, 3), Is.EqualTo("- p1\n- p2\n- p3\n- and 6 more"));
+            Assert.That(ContentWatch.FormatProblems(many, int.MaxValue).Split('\n').Length, Is.EqualTo(9));
+        }
+
+        [Test]
         public void ARejectionGivesTheProblemsTheLoaderGives()
         {
             _scratch.SetUnitHp("guard", new JValue("many"));

@@ -297,6 +297,7 @@ namespace LabEscape.Client
         {
             var first = _c == null;
             var presetId = _preset?.Id;
+            Debug.Log($"[Content] reloaded: content {_c?.Hash ?? "none"} -> {next.Hash}");
             _c = next;
             _contentProblems = null;
             if (_watch != null) _watch.Hash = next.Hash;

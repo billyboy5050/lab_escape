@@ -178,7 +178,7 @@ Do not ask about things this file or the docs already answer, or about routine c
 - `golden/rooms.json` is hand-written test data, not game content: rooms of other sizes that the golden replays fight in. After editing it, run `npm run golden:record`.
 - A fight that throws writes its command log to `reports/error-seed-<N>.json`. That is a bug repro, not a report: turn it into a test or attach it to the fix, and do not commit it under `reports/`.
 - A test that plays whole bot fights needs `BOT_FIGHT_TIMEOUT_MS` from `tests/helpers.ts` as its timeout. Such tests take a second or two locally but several times that on the CI runner, past Vitest's 5 s default.
-- Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values.
+- Saving a content file while the dev server runs restarts the current fight. That is deliberate: one fight log never mixes two sets of values. The Unity client does the same with the editor's `content/`, or with the folder a build is given as `-labContent`.
 - `npm test` runs only the files under `tests/` (`test.include` in `vite.config.ts`). Without that limit Vitest also finds the tests in every agent worktree under `.claude/worktrees/`, which are copies of other branches.
 - Unity imports everything under `core/Core`, so .NET's output goes to `core/.build/` (set in `core/Directory.Build.props`). The `.meta` files Unity writes in that folder are ignored by git; nothing refers to them.
 - When the project changes Unity version, delete `unity/Library` and `unity/Builds` before building. On the move from 6.6 to 6.3, players built over 6.6's caches crashed or hung on start, though the tests passed.
