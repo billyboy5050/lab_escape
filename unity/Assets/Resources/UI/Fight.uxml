@@ -184,15 +184,42 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:VisualElement name="start" class="fill overlay">
-            <ui:VisualElement class="card">
-                <ui:Label name="start-title" class="card-title display" />
-                <ui:Label class="muted" text="Choose a loadout. Press its number, or click it." />
-                <ui:VisualElement name="presets" class="presets" />
+        <ui:VisualElement name="start" class="fill overlay hidden">
+            <ui:VisualElement name="start-card" class="card screen-card">
+                <ui:VisualElement class="screen-head">
+                    <ui:VisualElement>
+                        <ui:Label name="start-kicker" class="screen-kicker display" />
+                        <ui:Label name="start-title" class="card-title display" />
+                    </ui:VisualElement>
+                    <ui:Label name="start-help" class="muted screen-help" />
+                </ui:VisualElement>
                 <ui:Label name="start-error" class="warn hidden" />
-                <ui:VisualElement name="recent-box" class="recent hidden">
-                    <ui:Label class="recent-title display" text="WATCH A SAVED FIGHT" />
-                    <ui:VisualElement name="recent" />
+                <ui:ScrollView name="loadout-body" class="loadout-body">
+                    <ui:VisualElement name="presets" class="presets" />
+                    <ui:VisualElement class="loadout-cols">
+                        <ui:VisualElement class="loadout-col">
+                            <ui:VisualElement class="col-head"><ui:Label class="col-title display" text="ABILITIES" /><ui:Label name="ability-count" class="mono faint" /></ui:VisualElement>
+                            <ui:VisualElement name="abilities" />
+                            <ui:Label name="utilities" class="muted utilities" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="loadout-col">
+                            <ui:VisualElement class="col-head"><ui:Label class="col-title display" text="UPGRADES" /><ui:Label name="upgrade-count" class="mono faint" /></ui:VisualElement>
+                            <ui:VisualElement name="upgrades" />
+                            <ui:VisualElement class="col-head deploy-head"><ui:Label class="col-title display" text="DEPLOYMENT" /></ui:VisualElement>
+                            <ui:Button name="hold-wave" class="btn small hold-wave" focusable="false"><ui:Label class="btn-text" text="Hold back wave 3: clearing wave 2 wins" /></ui:Button>
+                            <ui:Label name="tester-note" class="faint tester-note" />
+                            <ui:VisualElement name="recent-box" class="recent hidden">
+                                <ui:Label class="recent-title display" text="WATCH A SAVED FIGHT" />
+                                <ui:VisualElement name="recent" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:VisualElement name="start-dock" class="dock">
+                    <ui:Label name="dock-counts" class="mono faint dock-counts" />
+                    <ui:Label name="dock-status" class="dock-status" />
+                    <ui:Button name="back-title" class="btn" focusable="false"><ui:Label class="btn-text" text="Back" /><ui:Label class="kbd mono" text="Esc" /></ui:Button>
+                    <ui:Button name="start-fight" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Start fight" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

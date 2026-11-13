@@ -70,6 +70,8 @@ namespace LabEscape.Client
         private readonly DebugEdits _edits = new DebugEdits();
         private bool _stepMode;
         private GameScreen _screen = GameScreen.Title;
+        /// <summary>The loadout screen's picks, which outlive a fight and are remembered between sessions.</summary>
+        private LoadoutPicker? _picker;
         private IntentReport? _scoredFor;
         private List<ScoredOptions> _scored = new List<ScoredOptions>();
         /// <summary>When the fight ended, for the names of the web build's downloads.</summary>
@@ -128,6 +130,9 @@ namespace LabEscape.Client
         public bool ReplayPaused => _replay != null && _replayPaused;
 
         public bool DebugOpen => _debugOpen;
+
+        /// <summary>The loadout screen's picks, for tests.</summary>
+        public LoadoutPicker? Picker => _picker;
 
         /// <summary>Where the player is: the title, the loadout screen, the briefing, or a fight.</summary>
         public GameScreen CurrentScreen => _screen;
@@ -195,6 +200,7 @@ namespace LabEscape.Client
             SetDebugOpen(Array.IndexOf(Environment.GetCommandLineArgs(), "-labDebug") >= 0);
             ShowContentNote();
             SmokeRun.IsolateTelemetryIfAsked();
+            _picker = NewPicker(_c!);
             _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
             ShowTitle();
             // A saved fight to play back at once: a file on the command line, or ?replay= in the web build.
@@ -234,7 +240,13 @@ namespace LabEscape.Client
             _hud.ButtonClicked += () => _sound.Ask(Sfx.Ui);
             _hud.OpenLogClicked += () => SetLog(true);
             _hud.CloseLogClicked += () => SetLog(false);
-            _hud.PresetClicked += StartPreset;
+            _hud.PresetClicked += SelectPreset;
+            _hud.Loadout.AbilityToggled += id => Pick(p => p.ToggleAbility(id));
+            _hud.Loadout.UpgradeToggled += id => Pick(p => p.ToggleUpgrade(id));
+            _hud.Loadout.ClearClicked += () => Pick(p => p.Clear());
+            _hud.Loadout.HoldWaveClicked += () => Pick(p => p.HoldWave3 = !p.HoldWave3);
+            _hud.Loadout.StartClicked += StartFromPicker;
+            _hud.Loadout.BackClicked += ShowTitle;
             _hud.SavedFightClicked += folder => PlayReplayFile(Path.Combine(folder, "replay.json"));
             _hud.DownloadClicked += f =>
             {
@@ -338,6 +350,11 @@ namespace LabEscape.Client
             ShowContentNote();
             // A selected preset follows its edited picks, so the fight and its telemetry match what was played.
             _preset = presetId == null ? null : next.Presets.FirstOrDefault(p => p.Id == presetId);
+            // The loadout screen's picks follow the new content: a preset's edited picks, or the picks if they still fit.
+            var hold = _picker?.HoldWave3 ?? false;
+            if (_picker != null) LoadoutPrefs.Save(TelemetrySink.Prefs, _picker.ToLoadout(), _picker.PresetId);
+            _picker = NewPicker(next);
+            _picker.HoldWave3 = hold;
             if (Flow == null && _screen == GameScreen.Title)
             {
                 ShowTitle();
@@ -553,7 +570,8 @@ namespace LabEscape.Client
         {
             TearDownFight();
             _screen = GameScreen.Loadout;
-            _hud.ShowStart(_c!.DefaultRoom.Name, _c.Presets, _c, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
+            _picker ??= NewPicker(_c!);
+            _hud.ShowStart(_c!.DefaultRoom.Name, _c, _picker, _tester, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
         }
 
         /// <summary>Plays back a saved fight from a replay file. One that cannot be read or does not fit this game is refused, with why.</summary>
@@ -641,10 +659,30 @@ namespace LabEscape.Client
             }
         }
 
-        private void StartPreset(PresetDef p)
+        /// <summary>The picks the loadout screen opens on: the last session's if it is still a loadout, else the default preset's.</summary>
+        private static LoadoutPicker NewPicker(Content c)
         {
-            _preset = p;
-            StartFight(new Loadout(p.Abilities, p.Upgrades), new FightSettings(), p.Id);
+            var (loadout, presetId) = LoadoutPrefs.Load(TelemetrySink.Prefs, c);
+            return new LoadoutPicker(c, loadout, presetId);
+        }
+
+        /// <summary>A pick on the loadout screen: made, remembered and drawn.</summary>
+        private void Pick(Action<LoadoutPicker> change)
+        {
+            if (_c == null || _picker == null) return;
+            change(_picker);
+            LoadoutPrefs.Save(TelemetrySink.Prefs, _picker.ToLoadout(), _picker.PresetId);
+            _hud.UpdateLoadout(_c, _picker);
+        }
+
+        /// <summary>A preset picked on the loadout screen: its abilities and upgrades are picked, and nothing starts.</summary>
+        public void SelectPreset(PresetDef p) => Pick(picker => picker.SelectPreset(p));
+
+        /// <summary>Starts the fight the loadout screen has picked, if what it picked can be fought.</summary>
+        public void StartFromPicker()
+        {
+            if (_picker == null || !_picker.CanStart) return;
+            StartFight(_picker.ToLoadout(), _picker.ToSettings(), _picker.PresetId);
         }
 
         private void Again()
@@ -953,11 +991,16 @@ namespace LabEscape.Client
                 ShowTitle();
                 return;
             }
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                StartFromPicker();
+                return;
+            }
             for (var i = 0; i < _c.Presets.Count && i < ActionKeys.Length; i++)
             {
                 if (Input.GetKeyDown(ActionKeys[i]))
                 {
-                    StartPreset(_c.Presets[i]);
+                    SelectPreset(_c.Presets[i]);
                     return;
                 }
             }

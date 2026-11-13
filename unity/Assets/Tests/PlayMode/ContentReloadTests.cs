@@ -209,7 +209,7 @@ namespace LabEscape.Client.Tests
             Assert.That(d.Flow, Is.Null, "no fight is left");
             Assert.That(d.Hud.StartVisible, Is.True);
             Assert.That(Root.Q<Label>("start-error").text, Does.Contain("tech preset is gone"));
-            var names = Root.Q("presets").Query<Label>(className: "preset-name").ToList().Select(l => l.text).ToList();
+            var names = Root.Q("presets").Query<Label>(className: "preset-name").ToList().Select(l => l.text.ToUpperInvariant()).ToList();
             Assert.That(names, Has.None.Contains("TECH"));
         }
 
@@ -280,7 +280,7 @@ namespace LabEscape.Client.Tests
 
             Assert.That(d.Flow, Is.Null);
             Assert.That(Root.Q<Label>("start-error").text, Is.EqualTo("Content reloaded."));
-            var names = Root.Q("presets").Query<Label>(className: "preset-name").ToList().Select(l => l.text).ToList();
+            var names = Root.Q("presets").Query<Label>(className: "preset-name").ToList().Select(l => l.text.ToUpperInvariant()).ToList();
             Assert.That(names, Has.Some.Contains("REFIT"));
         }
 

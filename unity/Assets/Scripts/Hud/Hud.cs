@@ -99,10 +99,12 @@ namespace LabEscape.Client
         private readonly VisualElement _boardArea;
         private readonly VisualElement _title, _titleTerminal;
         private readonly Label _titleRoom, _titleBlurb, _titleFoot;
+        private readonly Label _startKicker, _startHelp;
+        public readonly LoadoutView Loadout;
         private readonly List<Label> _titleLabels = new List<Label>();
         private Typewriter? _titleType;
         private float _titleClock;
-        private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
+        private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _end, _logModal;
         private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures, _recentBox, _recent, _endDownloads;
         private readonly Label _endSaved;
         private readonly VisualElement[] _overBoard;
@@ -185,7 +187,6 @@ namespace LabEscape.Client
             _infoBody = E("info-body");
             _minions = E("minions");
             _start = E("start");
-            _presets = E("presets");
             _end = E("end");
             _logModal = E("log-modal");
             _alarm = E("flash-alarm");
@@ -299,6 +300,11 @@ namespace LabEscape.Client
             _titleBlurb = L("title-blurb");
             _titleFoot = L("title-foot");
             B("title-begin", () => BeginClicked?.Invoke());
+            _startKicker = L("start-kicker");
+            _startHelp = L("start-help");
+            Loadout = new LoadoutView(_root);
+            Loadout.ButtonClicked += () => ButtonClicked?.Invoke();
+            Loadout.PresetClicked += p => PresetClicked?.Invoke(p);
         }
 
         private static void Frame(VisualElement panel)
@@ -463,8 +469,13 @@ namespace LabEscape.Client
             Ui.Show(_start, false);
         }
 
-        public void ShowStart(string title, IEnumerable<PresetDef> presets, Content c, IReadOnlyList<Telemetry.SavedFight>? saved = null)
+        /// <summary>
+        /// The loadout screen: the presets and picks, and the saved fights to watch again. `room` is where the fight is, and
+        /// `tester` the playtest's ID if there is one. The picks are drawn by <see cref="UpdateLoadout"/>.
+        /// </summary>
+        public void ShowStart(string room, Content c, LoadoutPicker picker, string? tester, IReadOnlyList<Telemetry.SavedFight>? saved = null)
         {
+            HideScreens();
             _recent.Clear();
             foreach (var f in saved ?? Array.Empty<Telemetry.SavedFight>())
             {
@@ -484,29 +495,20 @@ namespace LabEscape.Client
             // The debug overlay has no fight to describe until the next one starts.
             _debugText.Clear();
             _debugSig = "";
-            DisableEdits();
             Ui.Show(_debugReplay, false);
-            _startTitle.text = title;
-            Ui.Show(_title, false);
-            _presets.Clear();
-            var i = 1;
-            foreach (var p in presets)
-            {
-                var chosen = p;
-                var b = new Button(() =>
-                {
-                    ButtonClicked?.Invoke();
-                    PresetClicked?.Invoke(chosen);
-                }) { focusable = false, text = "" };
-                b.AddToClassList("preset-btn");
-                b.Add(Ui.Text($"{i}  {p.Name.ToUpperInvariant()}", "preset-name display"));
-                b.Add(Ui.Text(string.Join(", ", p.Abilities.Select(a => c.Abilities[a].Name)), "preset-kit"));
-                _presets.Add(b);
-                i++;
-            }
+            DisableEdits();
+            _startKicker.text = Fonts.Caps($"Requisition · {room}");
+            _startTitle.text = Fonts.Caps("Loadout");
+            _startHelp.text = $"Choose up to {picker.MaxAbilities} of {c.AbilityOrder.Count} abilities and up to {picker.MaxUpgrades} upgrades, or press a preset's number. Nothing carries between attempts.";
+            Loadout.Show(true);
+            Loadout.Build(c, tester);
+            Loadout.Update(c, picker);
             Ui.Show(_start, true);
             Ui.Show(_end, false);
         }
+
+        /// <summary>Redraws what is picked, after a pick.</summary>
+        public void UpdateLoadout(Content c, LoadoutPicker picker) => Loadout.Update(c, picker);
 
         /// <summary>A line under the loadouts, such as why a replay was refused. Null clears it.</summary>
         public void ShowStartMessage(string? message)
@@ -517,9 +519,13 @@ namespace LabEscape.Client
 
         public void ShowContentError(string message)
         {
+            HideScreens();
+            _startKicker.text = "";
+            _startHelp.text = "";
             _startTitle.text = "The content did not load";
             _startError.text = message;
             Ui.Show(_startError, true);
+            Loadout.Show(false);
             Ui.Show(_start, true);
         }
 
