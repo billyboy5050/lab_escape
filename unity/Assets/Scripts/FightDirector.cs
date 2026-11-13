@@ -66,6 +66,8 @@ namespace LabEscape.Client
         /// <summary>The debug overlay (backtick): whether it is open, what it marks on the board, and whether step mode is on.</summary>
         private bool _debugOpen;
         private readonly DebugToggles _toggles = new DebugToggles();
+        /// <summary>The debug overlay's edit controls: what they would set, and the kind of unit waiting for a tile to be clicked.</summary>
+        private readonly DebugEdits _edits = new DebugEdits();
         private bool _stepMode;
         private IntentReport? _scoredFor;
         private List<ScoredOptions> _scored = new List<ScoredOptions>();
@@ -125,6 +127,12 @@ namespace LabEscape.Client
         public bool ReplayPaused => _replay != null && _replayPaused;
 
         public bool DebugOpen => _debugOpen;
+
+        /// <summary>The debug overlay's edit controls, for tests.</summary>
+        public DebugEdits Edits => _edits;
+
+        /// <summary>The fight's settings: the room, and how many waves are in play (2 when wave 3 is held back).</summary>
+        public FightSettings Settings => _settings;
 
         /// <summary>The folder watched for saved content, or null when there is none to watch.</summary>
         public string? WatchedContent => _watch?.Folder;
@@ -236,6 +244,18 @@ namespace LabEscape.Client
             _hud.NextClicked += Next;
             _hud.ReplayPauseClicked += () => SetReplayPaused(!_replayPaused);
             _hud.ReplayStepClicked += StepReplay;
+            _hud.DebugUnitCycled += d => { if (Flow != null && _c != null) _edits.CycleUnit(Flow.Shown, d); };
+            _hud.DebugSpawnCycled += d => { if (_c != null) _edits.CycleSpawn(_c, d); };
+            _hud.DebugStepped += (which, by) =>
+            {
+                switch (which)
+                {
+                    case "hp": _edits.StepHp(by); break;
+                    case "ap": _edits.StepAp(by); break;
+                    case "move": _edits.StepMove(by); break;
+                }
+            };
+            _hud.DebugEditClicked += DebugEdit;
         }
 
         // ------------------------------------------------------------------ content hot reload
@@ -392,7 +412,66 @@ namespace LabEscape.Client
         public void SetDebugOpen(bool open)
         {
             _debugOpen = open;
+            if (!open) _edits.Armed = null;
             _hud.SetDebugVisible(open, _c != null ? DebugReport.Header(_c) : "");
+        }
+
+        /// <summary>One of the edit buttons. Each of the first four is a command, so it is in the fight's log and its replay.</summary>
+        private void DebugEdit(string which)
+        {
+            if (Flow == null || _c == null) return;
+            switch (which)
+            {
+                case "setHp":
+                    if (CanAct) Commit(_edits.SetHp());
+                    break;
+                case "setAp":
+                    if (CanAct) Commit(_edits.SetApAndMove());
+                    break;
+                case "spawn":
+                    // The spawn waits for a click on a tile. Pressing again takes it back.
+                    if (_edits.Armed != null) _edits.Armed = null;
+                    else if (CanAct) _edits.Armed = _edits.SpawnDef;
+                    break;
+                case "forceWave":
+                    if (CanAct && DebugEdits.CanForceWave(_c, Flow.Live)) Commit(_edits.ForceWave());
+                    break;
+                case "holdWave":
+                    HoldBackWave3(_settings.MaxWaves != 2);
+                    break;
+                case "restart":
+                    RestartFight();
+                    break;
+            }
+        }
+
+        /// <summary>Spawns the kind of unit the overlay holds on a tile, or the nearest free one. The spawn is a command, recorded in the replay.</summary>
+        public void DebugSpawnAt(Pos tile)
+        {
+            var def = _edits.Armed ?? _edits.SpawnDef;
+            _edits.Armed = null;
+            if (CanAct) Commit(_edits.Spawn(def, tile));
+        }
+
+        /// <summary>
+        /// Holds wave 3 back, or lets it come, and starts the fight again, as the web client's checkbox does: the setting is the
+        /// fight's, so it is in its replay, and a fight cannot change it half-way. Not for a saved fight, whose settings are its own.
+        /// </summary>
+        public void HoldBackWave3(bool hold)
+        {
+            if (Flow == null || _replay != null || _loadout == null) return;
+            var settings = _settings.Clone();
+            settings.MaxWaves = hold ? 2 : (int?)null;
+            StartFight(_loadout, settings, _preset?.Id);
+        }
+
+        /// <summary>Starts the fight again with the same loadout and settings. A saved fight is played from its first command.</summary>
+        public void RestartFight()
+        {
+            if (Flow == null) return;
+            var rec = _replay;
+            if (rec != null) StartFight(rec.Loadout, rec.Settings, rec.Meta?.Preset, rec);
+            else if (_loadout != null) StartFight(_loadout, _settings, _preset?.Id);
         }
 
         private void ToggleMark(string which)
@@ -592,6 +671,7 @@ namespace LabEscape.Client
             Flow.Snapped += OnSnapped;
             _clock.Reset();
             _finalFrame = false;
+            _edits.Reset(c);
             Open(room);
             // A fight can start after this frame's Update has run. Frame the room now, or its first frame is drawn through a
             // camera that has not been told where the board is.
@@ -740,6 +820,11 @@ namespace LabEscape.Client
         public void ClickTile(Pos tile)
         {
             if (Flow == null || _model == null || !Flow.Idle || Replaying) return;
+            if (_edits.Armed != null)
+            {
+                DebugSpawnAt(tile);
+                return;
+            }
             var cmd = _model.Click(tile);
             if (cmd != null) Commit(cmd);
         }
@@ -892,7 +977,8 @@ namespace LabEscape.Client
             }
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (_hud.LogOpen) SetLog(false);
+                if (_edits.Armed != null) _edits.Armed = null;
+                else if (_hud.LogOpen) SetLog(false);
                 else if (_model!.First != null) _model.ClearFirst();
                 else _model.Clear();
                 return;
@@ -923,7 +1009,7 @@ namespace LabEscape.Client
 
         private void UpdatePreview()
         {
-            var cmd = _hover.HasValue && CanAct ? _model!.CandidateFor(_hover.Value) : null;
+            var cmd = _hover.HasValue && CanAct && _edits.Armed == null ? _model!.CandidateFor(_hover.Value) : null;
             var key = cmd?.ToJson() ?? "";
             if (key == _previewKey && ReferenceEquals(_previewBase, Flow!.Live)) return;
             _previewKey = key;
@@ -941,7 +1027,8 @@ namespace LabEscape.Client
             var idle = CanAct;
             var st = m.Selected;
             _overlay.Highlights.Clear();
-            if (idle && st == null) _overlay.Highlights.Add((m.Moves.Select(x => x.Tile).ToList(), HighlightKind.Move));
+            var placing = _edits.Armed != null;
+            if (idle && st == null && !placing) _overlay.Highlights.Add((m.Moves.Select(x => x.Tile).ToList(), HighlightKind.Move));
             if (idle && st != null && st.Id != "sprint")
             {
                 if (m.TwoStep && m.First.HasValue)
@@ -952,7 +1039,7 @@ namespace LabEscape.Client
                 else _overlay.Highlights.Add((m.FirstTiles, HighlightKind.Target));
             }
             _overlay.Hover = _hover;
-            _overlay.MovePath = idle && st == null && _hover.HasValue ? m.Moves.FirstOrDefault(x => x.Tile == _hover.Value)?.Path : null;
+            _overlay.MovePath = idle && st == null && !placing && _hover.HasValue ? m.Moves.FirstOrDefault(x => x.Tile == _hover.Value)?.Path : null;
             _overlay.Preview = idle ? _preview : null;
             _overlay.Intents = idle ? m.Intents : null;
             _overlay.ShowIntents = _showIntents;
@@ -974,7 +1061,8 @@ namespace LabEscape.Client
             _hud.UpdateStatus(c, shown, idle ? m.Intents : null, flow.Busy, me?.ShownHp, me != null && me.GhostLeft > 0f ? me.GhostHp : me?.ShownHp);
             _hud.UpdateActions(c, m.Statuses, m.ModeId, !idle, m.GrappleMode);
             // Step mode's hint wins while it holds a fight, a saved fight's included.
-            var hint = !Replaying || (flow.Busy && flow.StepMode) ? m.Hint(flow)
+            var hint = _edits.Armed != null ? $"Click a tile to spawn {DebugEdits.SpawnName(c, _edits.Armed)} there, or the nearest free one. Esc cancels."
+                : !Replaying || (flow.Busy && flow.StepMode) ? m.Hint(flow)
                 : _replayPaused ? $"Saved fight paused before command {_replayNext + 1} of {_replay!.Commands.Count}. P plays on, N plays the next command."
                 : $"Playing back a saved fight: command {_replayNext + 1} of {_replay!.Commands.Count}. P pauses, Space skips, F changes the speed.";
             _hud.UpdateControls(idle, flow.Session.CanUndo, flow.Busy, hint, flow.Speed, _showIntents, _sound.Muted);
@@ -989,6 +1077,9 @@ namespace LabEscape.Client
                 var report = DebugReport.Panel(c, shown, _board!.Hazards, _board.WavesShown, idle ? ScoredFrom(m.Intents) : (IReadOnlyList<ScoredOptions>)Array.Empty<ScoredOptions>(), flow.Session.Events);
                 var replayAt = _replay != null ? $"{Math.Min(_replayNext, _replay.Commands.Count)}/{_replay.Commands.Count} commands{(Replaying ? "" : ", finished")}" : null;
                 _hud.UpdateDebug(DebugReport.Header(c), _toggles, report, _stepMode, flow.Busy, flow.Holding, flow.Pending, replayAt, _replayPaused, Replaying);
+                _edits.Sync(c, shown);
+                _hud.UpdateEdits(DebugEdits.UnitLabel(c, shown, _edits.UnitId), _edits.Hp, _edits.Ap, _edits.Move, DebugEdits.SpawnName(c, _edits.SpawnDef), _edits.Armed != null,
+                    idle, DebugEdits.CanForceWave(c, live), _settings.MaxWaves == 2, canRestart: true, canHold: _replay == null);
             }
             if (live.Outcome != null && !flow.Busy && !_hud.EndVisible)
             {

@@ -202,7 +202,12 @@
 .debug-section.face { font-size: 15px; }
 .debug-toggles { margin-right: 0; }
 .debug-toggles .seg-btn { padding: 3px 7px; font-size: 11px; }
-.debug-row { flex-direction: row; align-items: center; margin-bottom: 4px; }
+.debug-row { flex-direction: row; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+.debug-name { font-size: 11px; padding: 0; margin: 0 5px 0 0; min-width: 24px; }
+.debug-value { font-size: 12px; padding: 0; margin: 0 5px; min-width: 22px; -unity-text-align: middle-center; color: var(--ink); }
+.debug-value.wide { min-width: 130px; }
+.btn.small.step { min-width: 22px; padding: 2px 4px; -unity-text-align: middle-center; }
+
 .debug-row .btn.small { margin-right: 5px; }
 .btn.on { background-color: #16413c; border-color: var(--move); }
 .debug-note { font-size: 11px; padding: 0; }
