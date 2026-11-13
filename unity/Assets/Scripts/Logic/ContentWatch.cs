@@ -69,6 +69,13 @@ namespace LabEscape.Client
 
         public string Folder => _folder;
 
+        /// <summary>A list of problems, one to a line, for the first `max` and a count of the rest.</summary>
+        public static string FormatProblems(IReadOnlyList<string> problems, int max = 6)
+        {
+            var text = string.Join("\n", problems.Take(max).Select(p => "- " + p));
+            return problems.Count > max ? text + $"\n- and {problems.Count - max} more" : text;
+        }
+
         /// <summary>The hash of the content the game holds, or null if it holds none yet. Poll compares what it reads with it.</summary>
         public string? Hash { get; set; }
 

@@ -14,6 +14,7 @@
                         <ui:Button name="debug-close" class="btn small" focusable="false"><ui:Label class="btn-text" text="Hide" /><ui:Label class="kbd mono" text="`" /></ui:Button>
                     </ui:VisualElement>
                     <ui:Label name="debug-version" class="debug-version faint mono" />
+                    <ui:Label name="debug-content" class="debug-content mono hidden" />
                     <ui:Label class="debug-section display" text="ON THE BOARD" />
                     <ui:VisualElement class="seg debug-toggles">
                         <ui:Button name="debug-ids" class="seg-btn" text="IDs" focusable="false" />

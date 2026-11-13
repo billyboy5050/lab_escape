@@ -73,9 +73,16 @@ namespace LabEscape.Client
         private double _endedAt;
         /// <summary>Counts fights started, so a ?replay= that arrives after the player has started one is dropped.</summary>
         private int _starts;
+        /// <summary>Content hot reload: the watch on the content folder (null where there is none), and why the last save was refused.</summary>
+        private ContentWatch? _watch;
+        private float _watchWait;
+        private IReadOnlyList<string>? _contentProblems;
 
         /// <summary>A replay plays its next command this long after the board is still, as the web client's does.</summary>
         private const float ReplayGap = 0.12f;
+
+        /// <summary>How often the content folder is looked at, in real seconds.</summary>
+        private const float WatchEvery = 0.5f;
 
         /// <summary>How many saved fights the start screen offers to play back.</summary>
         private const int SavedFightsShown = 6;
@@ -119,6 +126,12 @@ namespace LabEscape.Client
 
         public bool DebugOpen => _debugOpen;
 
+        /// <summary>The folder watched for saved content, or null when there is none to watch.</summary>
+        public string? WatchedContent => _watch?.Folder;
+
+        /// <summary>Why the last save to the content folder was refused, or null if it was not or has been put right.</summary>
+        public IReadOnlyList<string>? ContentProblems => _contentProblems;
+
         /// <summary>What the debug overlay marks on the board, and whether the log writes its debug lines.</summary>
         public DebugToggles DebugToggles => _toggles;
 
@@ -147,16 +160,28 @@ namespace LabEscape.Client
             _hud = new Hud(doc);
             _sound = new SoundPlayer(transform);
             WireHud();
+            var folder = GameContent.Folder;
+            // Made before the first load, so a save in between is read.
+            if (folder != null) _watch = new ContentWatch(folder);
             try
             {
                 _c = GameContent.Load();
             }
-            catch (ContentError e)
+            catch (Exception e)
             {
-                _hud.ShowContentError(e.Message);
+                // Whatever is wrong with the files, the game waits on the start screen, and starts once a save makes them valid.
+                ShowContentFailure(e is ContentError ce ? ce.Problems : new[] { "Content could not be read: " + e.Message });
                 return;
             }
+            if (_watch != null) _watch.Hash = _c.Hash;
+            Begin();
+        }
+
+        /// <summary>Everything that needs content: the start screen, and whatever the command line or the page's address asks to play.</summary>
+        private void Begin()
+        {
             SetDebugOpen(Array.IndexOf(Environment.GetCommandLineArgs(), "-labDebug") >= 0);
+            ShowContentNote();
             SmokeRun.IsolateTelemetryIfAsked();
             _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
             ShowStartScreen();
@@ -211,6 +236,153 @@ namespace LabEscape.Client
             _hud.NextClicked += Next;
             _hud.ReplayPauseClicked += () => SetReplayPaused(!_replayPaused);
             _hud.ReplayStepClicked += StepReplay;
+        }
+
+        // ------------------------------------------------------------------ content hot reload
+
+        /// <summary>Looks at the content folder on a timer. Saving a content file while the game runs reloads it, as the web client does.</summary>
+        private void TickWatch(float dt)
+        {
+            if (_watch == null) return;
+            _watchWait -= dt;
+            if (_watchWait > 0f) return;
+            _watchWait = WatchEvery;
+            CheckContent();
+        }
+
+        /// <summary>
+        /// One look at the content folder (the timer's, and a test's). Content that has changed and is valid replaces the game's and
+        /// restarts the fight, so one fight's log never mixes two sets of values. Content that is not valid is refused with its
+        /// reason, and the game goes on with what it has.
+        /// </summary>
+        public void CheckContent()
+        {
+            var r = _watch?.Poll() ?? WatchResult.Nothing;
+            switch (r.Kind)
+            {
+                case WatchKind.Reloaded:
+                    ApplyContent(r.Content!);
+                    break;
+                case WatchKind.Rejected:
+                    RejectContent(r);
+                    break;
+                case WatchKind.Restored:
+                    _contentProblems = null;
+                    ShowContentNote();
+                    if (_c != null) _hud.Toast("Content is back to what the game has: nothing to reload.", ContentToastSeconds);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Points the hot reload at another folder, or with null back at the default, and loads what is there, as a reload would. For
+        /// tests and scripted runs, which edit a copy of content/ and must put the game back as it was.
+        /// </summary>
+        public void WatchContentIn(string? folder)
+        {
+            GameContent.FolderOverride = folder;
+            var at = GameContent.Folder;
+            _watch = at != null ? new ContentWatch(at) : null;
+            if (_watch != null) _watch.Hash = _c?.Hash;
+            _contentProblems = null;
+            var next = GameContent.Load();
+            if (_c == null || next.Hash != _c.Hash) ApplyContent(next);
+            else ShowContentNote();
+        }
+
+        /// <summary>A reload's message stays up longer than a refused click's.</summary>
+        private const float ContentToastSeconds = 4f;
+
+        private void ApplyContent(Content next)
+        {
+            var first = _c == null;
+            var presetId = _preset?.Id;
+            _c = next;
+            _contentProblems = null;
+            if (_watch != null) _watch.Hash = next.Hash;
+            if (first)
+            {
+                // The game started on content that would not load, and this is the first that does.
+                Begin();
+                _hud.Toast("Content loaded.", ContentToastSeconds);
+                return;
+            }
+            // The hash in the overlay's header, and the line under it.
+            SetDebugOpen(_debugOpen);
+            ShowContentNote();
+            // A selected preset follows its edited picks, so the fight and its telemetry match what was played.
+            _preset = presetId == null ? null : next.Presets.FirstOrDefault(p => p.Id == presetId);
+            if (Flow == null)
+            {
+                ShowStartScreen();
+                _hud.ShowStartMessage("Content reloaded.");
+                return;
+            }
+            if (_replay != null)
+            {
+                // A saved fight is only valid against the content it was recorded with.
+                ShowStartScreen();
+                _hud.ShowStartMessage("Content reloaded. The saved fight was recorded with other values, so it was stopped.");
+                return;
+            }
+            RestartFight(next, presetId);
+        }
+
+        /// <summary>Starts the player's fight again from the new content, or puts the start screen back with the reason it cannot.</summary>
+        private void RestartFight(Content next, string? presetId)
+        {
+            var loadout = _loadout!;
+            if (_preset != null) loadout = new Loadout(_preset.Abilities, _preset.Upgrades);
+            else if (presetId != null)
+            {
+                ShowStartScreen();
+                _hud.ShowStartMessage($"Content reloaded. The {presetId} preset is gone, so pick again.");
+                return;
+            }
+            var problems = Engine.LoadoutProblems(next, loadout);
+            if (problems.Count > 0)
+            {
+                ShowStartScreen();
+                _hud.ShowStartMessage($"Content reloaded. The loadout no longer fits ({string.Join("; ", problems)}), so pick again.");
+                return;
+            }
+            try
+            {
+                StartFight(loadout, _settings, _preset?.Id);
+            }
+            catch (Exception e)
+            {
+                // A fight that cannot start leaves no fight behind and the start screen up, saying why.
+                ShowStartScreen();
+                _hud.ShowStartMessage($"Content reloaded, but the fight could not start: {e.Message}");
+                return;
+            }
+            _hud.Toast("Content reloaded: the fight restarted with the new values.", ContentToastSeconds);
+        }
+
+        private void RejectContent(WatchResult r)
+        {
+            _contentProblems = r.Problems;
+            Debug.LogWarning("[Content] not reloaded, keeping the old values:\n" + ContentWatch.FormatProblems(r.Problems, int.MaxValue));
+            ShowContentNote();
+            if (_c == null) ShowContentFailure(r.Problems);
+            else _hud.Toast("Content error, keeping the old values: " + r.Summary, ContentToastSeconds + 2f);
+        }
+
+        /// <summary>The game has no content to run on: the start screen says why, and, if a folder is watched, what will start it.</summary>
+        private void ShowContentFailure(IReadOnlyList<string> problems)
+        {
+            _contentProblems = problems;
+            var watching = _watch != null ? $"\n\nWatching {_watch.Folder}: the game starts when it reads valid content." : "";
+            _hud.ShowContentError("Content failed validation:\n" + ContentWatch.FormatProblems(problems) + watching);
+        }
+
+        /// <summary>The debug overlay's line about hot reload: where the game looks, or what it refused.</summary>
+        private void ShowContentNote()
+        {
+            if (_watch == null) _hud.SetContentNote(null, false);
+            else if (_contentProblems != null) _hud.SetContentNote("Content refused, old values kept:\n" + ContentWatch.FormatProblems(_contentProblems), true);
+            else _hud.SetContentNote($"Watching {_watch.Folder}. Save a content file and the fight restarts.", false);
         }
 
         // ------------------------------------------------------------------ the debug overlay
@@ -277,7 +449,7 @@ namespace LabEscape.Client
             return _scored;
         }
 
-        private void ShowStartScreen()
+        public void ShowStartScreen()
         {
             TearDownFight();
             _hud.ShowStart(_c!.DefaultRoom.Name, _c.Presets, _c, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
@@ -389,6 +561,8 @@ namespace LabEscape.Client
             _loadout = loadout;
             _settings = settings;
             var c = _c!;
+            // The preset a fight came from, so a hot reload can follow its edited picks.
+            _preset = presetId == null ? null : c.Presets.FirstOrDefault(p => p.Id == presetId);
             _hud.HideStart();
             _hud.ResetFight();
             RecordMeta meta;
@@ -604,6 +778,7 @@ namespace LabEscape.Client
         {
             // A long hitch is not played back as one huge step, which would throw every spring across the room.
             var real = FixedStep ?? Mathf.Min(Time.unscaledDeltaTime, 0.1f);
+            TickWatch(real);
             if (Flow == null)
             {
                 ReadStartKeys();
