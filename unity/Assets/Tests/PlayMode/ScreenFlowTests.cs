@@ -407,13 +407,9 @@ namespace LabEscape.Client.Tests
             Assert.That(d.Flow!.Session.Record.Meta?.Preset, Is.EqualTo("alien"));
         }
 
-        [UnityTest]
-        [Timeout(300000)]
-        public IEnumerator TheEndCardOpensAFullReportThatCloses()
+        /// <summary>Plays a recorded winning line to its end, with the animations skipped, and leaves the end card up.</summary>
+        private static IEnumerator PlayWinningLine(FightDirector d, FightRecord record)
         {
-            yield return WaitForDirector();
-            var d = FightDirector.Instance!;
-            var record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-hybrid.json"))));
             d.StartFight(record.Loadout, record.Settings, "hybrid");
             d.Flow!.SetSpeed(FightSpeed.Skip);
             foreach (var cmd in record.Commands)
@@ -424,6 +420,42 @@ namespace LabEscape.Client.Tests
             }
             while (d.Flow.Busy) yield return null;
             yield return null;
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator TheReportIsPutAwayWhenTheFightIsLeftWithItOpen()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            var record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-hybrid.json"))));
+            yield return PlayWinningLine(d, record);
+            PressButton(Root.Q<Button>("report-open"));
+            yield return null;
+            Assert.That(d.Hud.ReportVisible, Is.True);
+
+            // A reload, or any other road to the loadout screen, takes the fight away: its report must not stay above the next screen.
+            d.ShowStartScreen();
+            yield return null;
+            Assert.That(d.Hud.ReportVisible, Is.False);
+            Assert.That(d.Hud.StartVisible, Is.True);
+
+            yield return PlayWinningLine(d, record);
+            PressButton(Root.Q<Button>("report-open"));
+            yield return null;
+            d.ShowTitle();
+            yield return null;
+            Assert.That(d.Hud.ReportVisible, Is.False, "nor above the title");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator TheEndCardOpensAFullReportThatCloses()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            var record = Records.CheckCompatible(d.Content!, JsonIn.Parse(File.ReadAllText(GameContent.RepoPath("reports", "winning-line-hybrid.json"))));
+            yield return PlayWinningLine(d, record);
             Assert.That(d.EndScreenShown, Is.True);
             Assert.That(d.Hud.ReportVisible, Is.False);
 

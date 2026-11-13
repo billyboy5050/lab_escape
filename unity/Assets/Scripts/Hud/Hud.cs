@@ -620,6 +620,8 @@ namespace LabEscape.Client
             Ui.Show(_title, false);
             Ui.Show(_start, false);
             Ui.Show(_briefing, false);
+            // The report belongs to the fight that ended: leaving it, by any road, puts the report away.
+            Ui.Show(_reportModal, false);
         }
 
         /// <summary>

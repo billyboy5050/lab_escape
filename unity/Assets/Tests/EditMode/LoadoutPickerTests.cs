@@ -189,5 +189,22 @@ namespace LabEscape.Client.Tests
             var (_, preset) = LoadoutPrefs.Load(prefs, C);
             Assert.That(preset, Is.EqualTo(LoadoutPrefs.DefaultPresetId));
         }
+
+        [Test]
+        public void ContentWithNoPresetsOpensWithNothingPickedInsteadOfFailing()
+        {
+            var files = ContentLoader.FilesFromDirectory(GameContent.RepoPath("content"));
+            files.Root["presets"] = new Newtonsoft.Json.Linq.JArray();
+            var none = ContentLoader.Build(files);
+            Assert.That(none.Presets, Is.Empty, "the content is valid with no presets");
+            var (loadout, preset) = LoadoutPrefs.Load(Prefs(), none);
+            Assert.That(preset, Is.Null);
+            Assert.That(loadout.Abilities, Is.Empty);
+            var picker = new LoadoutPicker(none, loadout, preset);
+            Assert.That(picker.CanStart, Is.False);
+            Assert.That(picker.Status(), Is.EqualTo("Pick at least one ability."));
+            picker.ToggleAbility(none.AbilityOrder[0]);
+            Assert.That(picker.CanStart, Is.True, "abilities can still be picked by hand");
+        }
     }
 }

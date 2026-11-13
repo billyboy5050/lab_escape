@@ -30,7 +30,7 @@ namespace LabEscape.Client
         /// <summary>
         /// The loadout and preset to open the loadout screen on. A preset that still exists gives its own picks, so it follows an
         /// edit to the content; otherwise the saved picks stand if they are a loadout this content accepts, and if they are not the
-        /// default preset's do.
+        /// default preset's do, or nothing if the content has no presets.
         /// </summary>
         public static (Loadout Loadout, string? PresetId) Load(IPrefs prefs, Content c)
         {
@@ -39,8 +39,9 @@ namespace LabEscape.Client
             if (preset != null) return (new Loadout(preset.Abilities, preset.Upgrades), preset.Id);
             var saved = ParseLoadout(prefs.Get(LoadoutKey));
             if (saved != null && saved.Abilities.Count > 0 && Engine.LoadoutProblems(c, saved).Count == 0) return (saved, null);
-            var fallback = c.Presets.FirstOrDefault(p => p.Id == DefaultPresetId) ?? c.Presets[0];
-            return (new Loadout(fallback.Abilities, fallback.Upgrades), fallback.Id);
+            var fallback = c.Presets.FirstOrDefault(p => p.Id == DefaultPresetId) ?? c.Presets.FirstOrDefault();
+            // Content with no presets at all is valid: the screen opens with nothing picked.
+            return fallback == null ? (new Loadout(new string[0], new string[0]), null) : (new Loadout(fallback.Abilities, fallback.Upgrades), fallback.Id);
         }
 
         private static Loadout? ParseLoadout(string? text)
