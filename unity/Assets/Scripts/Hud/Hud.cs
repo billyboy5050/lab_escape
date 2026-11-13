@@ -106,7 +106,7 @@ namespace LabEscape.Client
         private readonly Button _undo, _endTurn, _skip, _intents, _sound, _speed0, _speed1, _speed2;
         private readonly ScrollView _log, _logLines, _debugText;
         private readonly VisualElement _debug, _debugReplay;
-        private readonly Label _debugVersion, _debugQueued, _debugReplayAt, _debugReplayPauseText;
+        private readonly Label _debugVersion, _debugContent, _debugQueued, _debugReplayAt, _debugReplayPauseText;
         private readonly Button _debugIds, _debugSpawns, _debugHazards, _debugFlamer, _debugLog, _debugStep, _debugNext, _debugNextPhase, _debugReplayPause, _debugReplayStep;
         private string _statusSig = "", _actionsSig = "", _infoSig = "", _minionSig = "", _intercomText = "", _bannerText = "", _debugSig = "";
         private int _logShown;
@@ -202,6 +202,7 @@ namespace LabEscape.Client
             _debugReplay = E("debug-replay");
             _debugText = Q<ScrollView>("debug-text");
             _debugVersion = L("debug-version");
+            _debugContent = L("debug-content");
             _debugQueued = L("debug-queued");
             _debugReplayAt = L("debug-replay-at");
             _debugReplayPauseText = L("debug-replay-pause-text");
@@ -412,6 +413,17 @@ namespace LabEscape.Client
             Ui.Show(_debug, on);
             _debugVersion.text = header;
             _debugSig = "";
+        }
+
+        /// <summary>
+        /// The debug overlay's line about content hot reload: the folder being watched, or why the last save was refused (`error`).
+        /// Null takes the line away, as for a build with no folder to watch.
+        /// </summary>
+        public void SetContentNote(string? text, bool error)
+        {
+            _debugContent.text = text ?? "";
+            _debugContent.EnableInClassList("error", error);
+            Ui.Show(_debugContent, text != null);
         }
 
         /// <summary>
@@ -725,10 +737,11 @@ namespace LabEscape.Client
         /// <summary>The player has been hit: the HP row jumps.</summary>
         public void JoltHp() => _hpJolt = 1f;
 
-        public void Toast(string text)
+        /// <summary>A line over the board for `seconds`: the default is long enough for a refused action, a content error needs longer.</summary>
+        public void Toast(string text, float seconds = 2.2f)
         {
             _toast.text = text;
-            _toastLeft = 2.2f;
+            _toastLeft = seconds;
             Ui.Show(_toast, true);
         }
 

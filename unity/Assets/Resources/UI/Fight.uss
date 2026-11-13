@@ -196,6 +196,8 @@
 .column-debug { width: 330px; flex-shrink: 0; margin-right: 10px; }
 .debug-panel { flex-grow: 1; margin-bottom: 0; }
 .debug-version { font-size: 11px; white-space: normal; padding: 0; margin-bottom: 4px; }
+.debug-content { font-size: 11px; white-space: normal; padding: 0; margin-bottom: 4px; color: var(--ink-2); }
+.debug-content.error { color: var(--danger); }
 .debug-section { color: var(--amber); font-size: 12px; letter-spacing: 1px; -unity-font-style: bold; padding: 0; margin: 8px 0 3px 0; }
 .debug-section.face { font-size: 15px; }
 .debug-toggles { margin-right: 0; }
