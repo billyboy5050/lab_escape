@@ -44,6 +44,7 @@
 .tick.br { right: -1px; bottom: -1px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 4px; }
 .title-left { flex-direction: row; align-items: center; }
 .led { width: 9px; height: 9px; margin: 0 7px 3px 0; border-radius: 2px; border-width: 1px; background-color: var(--move); border-color: rgba(63, 224, 197, 0.35); }
+.led.red { background-color: var(--danger); border-color: rgba(255, 77, 61, 0.35); }
 .led.amber { background-color: var(--amber); border-color: rgba(255, 176, 32, 0.35); }
 .panel-title {
     color: var(--accent);
@@ -406,3 +407,20 @@
 .coord.face { font-size: 19px; }
 .log-line.face { font-size: 11px; }
 .intercom-text.face { font-size: 13px; }
+
+/* The title screen: the web client's, without its art. */
+.title-card { width: 700px; padding: 34px 42px; background-color: rgba(10, 14, 16, 0.96); border-width: 1px; border-color: var(--line-2); border-radius: 5px; }
+.title-kicker-row { align-items: center; margin-bottom: 4px; }
+.title-kicker { color: var(--danger); font-size: 13px; letter-spacing: 3px; padding: 0 0 0 8px; }
+.title-kicker.face { font-size: 16px; }
+.title-logo { font-size: 58px; -unity-font-style: bold; letter-spacing: 3px; color: var(--ink); padding: 0; }
+.title-logo.accent { color: var(--accent); }
+.title-logo.face { font-size: 78px; letter-spacing: 5px; }
+.title-sub { font-size: 16px; letter-spacing: 3px; color: var(--ink-2); padding: 0; margin-bottom: 10px; }
+.terminal { background-color: #060909; border-width: 1px; border-color: var(--line); border-radius: 3px; padding: 10px 14px; margin: 8px 0 18px 0; min-height: 124px; }
+.terminal-line { font-size: 14px; color: var(--accent); padding: 0; white-space: pre; min-height: 20px; }
+.terminal-line.alert { color: var(--amber); }
+.title-actions { align-items: center; }
+.title-blurb { font-size: 13px; margin: 0 0 0 18px; flex-shrink: 1; flex-grow: 1; flex-basis: 0; }
+.title-foot { font-size: 11px; padding: 0; margin-top: 18px; white-space: normal; }
+.btn.big { padding: 9px 22px; font-size: 16px; }

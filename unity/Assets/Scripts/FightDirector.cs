@@ -69,6 +69,7 @@ namespace LabEscape.Client
         /// <summary>The debug overlay's edit controls: what they would set, and the kind of unit waiting for a tile to be clicked.</summary>
         private readonly DebugEdits _edits = new DebugEdits();
         private bool _stepMode;
+        private GameScreen _screen = GameScreen.Title;
         private IntentReport? _scoredFor;
         private List<ScoredOptions> _scored = new List<ScoredOptions>();
         /// <summary>When the fight ended, for the names of the web build's downloads.</summary>
@@ -127,6 +128,9 @@ namespace LabEscape.Client
         public bool ReplayPaused => _replay != null && _replayPaused;
 
         public bool DebugOpen => _debugOpen;
+
+        /// <summary>Where the player is: the title, the loadout screen, the briefing, or a fight.</summary>
+        public GameScreen CurrentScreen => _screen;
 
         /// <summary>The debug overlay's edit controls, for tests.</summary>
         public DebugEdits Edits => _edits;
@@ -192,7 +196,7 @@ namespace LabEscape.Client
             ShowContentNote();
             SmokeRun.IsolateTelemetryIfAsked();
             _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
-            ShowStartScreen();
+            ShowTitle();
             // A saved fight to play back at once: a file on the command line, or ?replay= in the web build.
             var file = Telemetry.Arg(Environment.GetCommandLineArgs(), "-labReplay");
             if (file != null) PlayReplayFile(file);
@@ -256,6 +260,7 @@ namespace LabEscape.Client
                 }
             };
             _hud.DebugEditClicked += DebugEdit;
+            _hud.BeginClicked += ShowStartScreen;
         }
 
         // ------------------------------------------------------------------ content hot reload
@@ -333,6 +338,12 @@ namespace LabEscape.Client
             ShowContentNote();
             // A selected preset follows its edited picks, so the fight and its telemetry match what was played.
             _preset = presetId == null ? null : next.Presets.FirstOrDefault(p => p.Id == presetId);
+            if (Flow == null && _screen == GameScreen.Title)
+            {
+                ShowTitle();
+                _hud.Toast("Content reloaded.", ContentToastSeconds);
+                return;
+            }
             if (Flow == null)
             {
                 ShowStartScreen();
@@ -529,9 +540,19 @@ namespace LabEscape.Client
             return _scored;
         }
 
+        /// <summary>The first screen. Begin goes on to the loadout screen.</summary>
+        public void ShowTitle()
+        {
+            TearDownFight();
+            _screen = GameScreen.Title;
+            _hud.ShowTitle(_c!.DefaultRoom.Name, ScreenText.TitleLines(_c), ScreenText.TitleBlurb, ScreenText.TitleFooter(_c));
+        }
+
+        /// <summary>The loadout screen, where a fight is chosen and saved fights are watched again.</summary>
         public void ShowStartScreen()
         {
             TearDownFight();
+            _screen = GameScreen.Loadout;
             _hud.ShowStart(_c!.DefaultRoom.Name, _c.Presets, _c, Telemetry.Recent(TelemetrySink.Root, SavedFightsShown));
         }
 
@@ -654,6 +675,7 @@ namespace LabEscape.Client
                 if (_tester != null) meta.Tester = _tester;
             }
             _starts++;
+            _screen = GameScreen.Fight;
             _replay = replay;
             _replayNext = 0;
             _replayWait = ReplayGap;
@@ -865,6 +887,7 @@ namespace LabEscape.Client
             // A long hitch is not played back as one huge step, which would throw every spring across the room.
             var real = FixedStep ?? Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             TickWatch(real);
+            _hud.TickScreens(real);
             if (Flow == null)
             {
                 ReadStartKeys();
@@ -916,9 +939,20 @@ namespace LabEscape.Client
 
         private void ReadStartKeys()
         {
-            if (_c == null || !_hud.StartVisible) return;
+            if (_c == null) return;
             if (Input.GetKeyDown(KeyCode.BackQuote)) SetDebugOpen(!_debugOpen);
             if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
+            if (_screen == GameScreen.Title)
+            {
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) ShowStartScreen();
+                return;
+            }
+            if (_screen != GameScreen.Loadout) return;
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                ShowTitle();
+                return;
+            }
             for (var i = 0; i < _c.Presets.Count && i < ActionKeys.Length; i++)
             {
                 if (Input.GetKeyDown(ActionKeys[i]))

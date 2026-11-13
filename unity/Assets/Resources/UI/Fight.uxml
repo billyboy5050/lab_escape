@@ -167,6 +167,23 @@
 
         <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />
 
+        <ui:VisualElement name="title" class="fill overlay hidden">
+            <ui:VisualElement class="title-card">
+                <ui:VisualElement class="row title-kicker-row"><ui:VisualElement class="led red" /><ui:Label class="title-kicker display" text="CONTAINMENT BREACH" /></ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:Label class="title-logo display" text="LAB " />
+                    <ui:Label class="title-logo accent display" text="ESCAPE" />
+                </ui:VisualElement>
+                <ui:Label name="title-room" class="title-sub display" />
+                <ui:VisualElement name="title-terminal" class="terminal" />
+                <ui:VisualElement class="row title-actions">
+                    <ui:Button name="title-begin" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Begin" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
+                    <ui:Label name="title-blurb" class="muted title-blurb" />
+                </ui:VisualElement>
+                <ui:Label name="title-foot" class="title-foot faint mono" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <ui:VisualElement name="start" class="fill overlay">
             <ui:VisualElement class="card">
                 <ui:Label name="start-title" class="card-title display" />

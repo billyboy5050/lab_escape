@@ -97,6 +97,11 @@ namespace LabEscape.Client
 
         private readonly VisualElement _root;
         private readonly VisualElement _boardArea;
+        private readonly VisualElement _title, _titleTerminal;
+        private readonly Label _titleRoom, _titleBlurb, _titleFoot;
+        private readonly List<Label> _titleLabels = new List<Label>();
+        private Typewriter? _titleType;
+        private float _titleClock;
         private readonly VisualElement _hpCells, _hpPills, _apCells, _moveCells, _actionRow, _infoBody, _minions, _start, _presets, _end, _logModal;
         private readonly VisualElement _alarm, _hurt, _vignette, _opener, _endCard, _endRule, _endFigures, _recentBox, _recent, _endDownloads;
         private readonly Label _endSaved;
@@ -142,6 +147,9 @@ namespace LabEscape.Client
         public event Action<bool>? NextClicked;
         /// <summary>One of the debug overlay's toggles was flipped: ids, spawns, hazards, flamer or log.</summary>
         public event Action<string>? DebugToggleClicked;
+
+        /// <summary>The title screen's Begin was pressed.</summary>
+        public event Action? BeginClicked;
 
         /// <summary>The unit to edit was stepped (-1 or 1), or the kind to spawn (1 or -1 through <see cref="DebugSpawnCycled"/>).</summary>
         public event Action<int>? DebugUnitCycled, DebugSpawnCycled;
@@ -285,6 +293,12 @@ namespace LabEscape.Client
             _editForceWave = B("edit-force-wave", () => DebugEditClicked?.Invoke("forceWave"));
             _editHoldWave = B("edit-hold-wave", () => DebugEditClicked?.Invoke("holdWave"));
             _editRestart = B("edit-restart", () => DebugEditClicked?.Invoke("restart"));
+            _title = E("title");
+            _titleTerminal = E("title-terminal");
+            _titleRoom = L("title-room");
+            _titleBlurb = L("title-blurb");
+            _titleFoot = L("title-foot");
+            B("title-begin", () => BeginClicked?.Invoke());
         }
 
         private static void Frame(VisualElement panel)
@@ -378,6 +392,77 @@ namespace LabEscape.Client
         /// <summary>Tells the camera which part of the screen the panels leave for the board.</summary>
         public void SetFreeAreaOn(IsoCamera cam) => cam.SetFreeArea(FreeScreenArea());
 
+        public bool TitleVisible => !_title.ClassListContains("hidden");
+
+        /// <summary>
+        /// The first screen: who you are and why you are running. The terminal prints its lines a character at a time, as the web
+        /// client's does; <see cref="TickScreens"/> keeps it going, and <see cref="FinishTitleTyping"/> prints the rest.
+        /// </summary>
+        public void ShowTitle(string room, IReadOnlyList<string> lines, string blurb, string footer)
+        {
+            HideScreens();
+            _titleRoom.text = room.ToUpperInvariant();
+            _titleBlurb.text = blurb;
+            _titleFoot.text = footer;
+            _titleType = new Typewriter(lines, ScreenText.TitleCharsPerSecond, ScreenText.TitleDelay);
+            _titleClock = 0f;
+            _titleTerminal.Clear();
+            _titleLabels.Clear();
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var label = Ui.Text("", i >= ScreenText.TitleStatusLines ? "terminal-line mono alert" : "terminal-line mono");
+                _titleLabels.Add(label);
+                _titleTerminal.Add(label);
+            }
+            PaintTitle();
+            Ui.Show(_title, true);
+        }
+
+        /// <summary>Keeps the screens that animate going: the title's terminal.</summary>
+        public void TickScreens(float dt)
+        {
+            if (!TitleVisible || _titleType == null) return;
+            _titleClock += dt;
+            _titleType.Tick(dt);
+            PaintTitle();
+        }
+
+        /// <summary>Prints the whole title terminal at once.</summary>
+        public void FinishTitleTyping()
+        {
+            _titleType?.Finish();
+            PaintTitle();
+        }
+
+        /// <summary>What the title's terminal shows now, one line to a line, without its cursor: for tests.</summary>
+        public IReadOnlyList<string> TitleTerminal() => _titleType?.Shown() ?? new List<string>();
+
+        public bool TitleTypingDone => _titleType == null || _titleType.Done;
+
+        private void PaintTitle()
+        {
+            if (_titleType == null) return;
+            var shown = _titleType.Shown();
+            var typing = _titleType.TypingLine();
+            // A cursor on the line being printed, or after the last once everything is, blinking twice a second.
+            var cursorOn = ((int)(_titleClock * 2f) & 1) == 0;
+            var cursorAt = typing >= 0 ? typing : shown.Count - 1;
+            for (var i = 0; i < _titleLabels.Count; i++)
+            {
+                var text = shown[i];
+                var visible = text.Length > 0 || (i == 0 && typing == 0);
+                _titleLabels[i].text = text + (i == cursorAt && cursorOn && visible ? "_" : "");
+                Ui.Show(_titleLabels[i], visible);
+            }
+        }
+
+        /// <summary>Every screen before a fight is put away, so the one asked for is the only one.</summary>
+        private void HideScreens()
+        {
+            Ui.Show(_title, false);
+            Ui.Show(_start, false);
+        }
+
         public void ShowStart(string title, IEnumerable<PresetDef> presets, Content c, IReadOnlyList<Telemetry.SavedFight>? saved = null)
         {
             _recent.Clear();
@@ -402,6 +487,7 @@ namespace LabEscape.Client
             DisableEdits();
             Ui.Show(_debugReplay, false);
             _startTitle.text = title;
+            Ui.Show(_title, false);
             _presets.Clear();
             var i = 1;
             foreach (var p in presets)
@@ -437,7 +523,7 @@ namespace LabEscape.Client
             Ui.Show(_start, true);
         }
 
-        public void HideStart() => Ui.Show(_start, false);
+        public void HideStart() => HideScreens();
 
         public bool StartVisible => !_start.ClassListContains("hidden");
 
