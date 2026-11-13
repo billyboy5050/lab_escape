@@ -27,6 +27,7 @@ namespace LabEscape.Client
         /// </summary>
         public void Freeze(float seconds)
         {
+            if (Motion.Reduced) return;
             if (_sinceBlow > BurstGap) _burst = 0f;
             _sinceBlow = 0f;
             if (seconds <= _burst) return;
@@ -37,6 +38,7 @@ namespace LabEscape.Client
         /// <summary>Runs the board at `factor` of its speed for this many real seconds, easing back over the last third.</summary>
         public void Slow(float factor, float seconds)
         {
+            if (Motion.Reduced) return;
             _slow = factor;
             _slowFor = _slowLeft = seconds;
         }
@@ -52,6 +54,8 @@ namespace LabEscape.Client
         /// <summary>Turns a step of real time into the board's time.</summary>
         public float Step(float dt)
         {
+            // Turned on part-way through a stop or a slow-down, the board goes back to real time at once.
+            if (Motion.Reduced) Reset();
             // The gap between blows is counted while the board runs, not while it is stopped.
             if (_freeze <= 0f && _sinceBlow < float.MaxValue) _sinceBlow += dt;
             if (_freeze > 0f)

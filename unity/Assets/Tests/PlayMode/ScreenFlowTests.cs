@@ -20,6 +20,7 @@ namespace LabEscape.Client.Tests
         {
             _telemetry = Path.Combine(Path.GetTempPath(), "lab-escape-telemetry-" + System.Guid.NewGuid().ToString("N"));
             TelemetrySink.Isolate(_telemetry);
+            Motion.Reduced = false;
         }
 
         /// <summary>The director outlives a test, so the debug overlay is closed and the start screen put back.</summary>

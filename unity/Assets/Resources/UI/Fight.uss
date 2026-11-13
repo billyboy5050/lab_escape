@@ -500,3 +500,6 @@
 .kv-row { flex-direction: row; margin-bottom: 3px; }
 .kv-key { width: 150px; font-size: 13px; color: var(--ink-3); padding: 0; flex-shrink: 0; }
 .kv-value { flex-grow: 1; flex-shrink: 1; flex-basis: 0; font-size: 13px; color: var(--ink); white-space: normal; padding: 0; }
+.title-settings { align-items: center; margin-top: 16px; }
+.title-settings-label { font-size: 11px; padding: 0; margin-right: 10px; }
+.title-settings .btn { margin-right: 8px; }

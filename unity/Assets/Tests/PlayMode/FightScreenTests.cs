@@ -21,6 +21,7 @@ namespace LabEscape.Client.Tests
         {
             _telemetry = Path.Combine(Path.GetTempPath(), "lab-escape-telemetry-" + System.Guid.NewGuid().ToString("N"));
             TelemetrySink.Isolate(_telemetry);
+            Motion.Reduced = false;
         }
 
         [TearDown]

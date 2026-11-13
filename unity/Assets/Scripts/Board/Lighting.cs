@@ -35,6 +35,9 @@ namespace LabEscape.Client
 
         public static void SetAmbient(Color c) => Shader.SetGlobalColor(AmbientId, c);
 
+        /// <summary>The ambient light as it was last set: for tests.</summary>
+        public static Color Ambient => Shader.GetGlobalColor(AmbientId);
+
         /// <summary>The lights for this frame, brightest first; the first four are used.</summary>
         public static void SetPoints(List<(Vector3 At, float Radius, Color Colour)>? lights)
         {
@@ -70,11 +73,19 @@ namespace LabEscape.Client
         /// <summary>The lights come on as a tube does: two false starts, then they hold.</summary>
         public void Strike()
         {
+            if (Motion.Reduced)
+            {
+                Steady();
+                return;
+            }
             _strike = 0f;
             Lighting.SetAmbient(Color.white * Brightness(0f));
         }
 
-        public void SoundAlarm() => _alarm = AlarmSeconds;
+        public void SoundAlarm()
+        {
+            if (!Motion.Reduced) _alarm = AlarmSeconds;
+        }
 
         /// <summary>Straight to full, steady light.</summary>
         public void Steady()
@@ -97,6 +108,12 @@ namespace LabEscape.Client
         public void Tick(float dt)
         {
             if (_strike < 0f && _alarm <= 0f) return;
+            // Turned on part-way through a flicker or a pulse, the lights settle at once.
+            if (Motion.Reduced)
+            {
+                Steady();
+                return;
+            }
             var light = Color.white;
             if (_strike >= 0f)
             {

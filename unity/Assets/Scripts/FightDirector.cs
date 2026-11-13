@@ -201,6 +201,8 @@ namespace LabEscape.Client
             ShowContentNote();
             SmokeRun.IsolateTelemetryIfAsked();
             _picker = NewPicker(_c!);
+            Motion.Reduced = Motion.Load(TelemetrySink.Prefs);
+            _hud.SetMotionState(Motion.Reduced);
             _tester = Telemetry.ChooseTester(Telemetry.Arg(Environment.GetCommandLineArgs(), "-labTester") ?? Telemetry.QueryParam(Application.absoluteURL, "tester"), TelemetrySink.Prefs);
             ShowTitle();
             // A saved fight to play back at once: a file on the command line, or ?replay= in the web build.
@@ -215,6 +217,23 @@ namespace LabEscape.Client
         private void LateUpdate() => _sound?.Flush(Time.unscaledTime);
 
         public void ToggleSound() => _sound.SetMuted(!_sound.Muted);
+
+        /// <summary>Turns the reduce-motion setting on or off, and remembers it.</summary>
+        public void SetReducedMotion(bool on)
+        {
+            Motion.Reduced = on;
+            Motion.Save(TelemetrySink.Prefs, on);
+            _hud.SetMotionState(on);
+            // What was already shaking settles at once.
+            if (on) _cam.Still();
+        }
+
+        public void ToggleReducedMotion()
+        {
+            SetReducedMotion(!Motion.Reduced);
+            _sound.Ask(Sfx.Ui);
+            _hud.Toast(Motion.Reduced ? "Reduce motion on." : "Reduce motion off.");
+        }
 
         public bool Muted => _sound.Muted;
 
@@ -273,6 +292,7 @@ namespace LabEscape.Client
             };
             _hud.DebugEditClicked += DebugEdit;
             _hud.BeginClicked += ShowStartScreen;
+            _hud.MotionClicked += ToggleReducedMotion;
             _hud.DeployClicked += Deploy;
             _hud.BriefingBackClicked += ShowStartScreen;
             _hud.ReportClicked += OpenReport;
@@ -957,6 +977,7 @@ namespace LabEscape.Client
             if (Flow == null)
             {
                 ReadStartKeys();
+                _hud.SetTitleSoundState(_sound.Muted);
                 return;
             }
             ReadPointer();
@@ -1003,11 +1024,16 @@ namespace LabEscape.Client
             _model?.Clear();
         }
 
+        /// <summary>Control, Command or Alt is down: the key is the system's (see <see cref="KeyRules"/>).</summary>
+        private static bool ModifierHeld() =>
+            KeyRules.Modified(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl), Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand), Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt));
+
         private void ReadStartKeys()
         {
-            if (_c == null) return;
+            if (_c == null || ModifierHeld()) return;
             if (Input.GetKeyDown(KeyCode.BackQuote)) SetDebugOpen(!_debugOpen);
             if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
+            if (Input.GetKeyDown(KeyCode.C)) ToggleReducedMotion();
             if (_screen == GameScreen.Title)
             {
                 if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) ShowStartScreen();
@@ -1072,7 +1098,7 @@ namespace LabEscape.Client
         private void ReadKeys()
         {
             // Modified keys are the system's: Cmd+Q quits, Cmd+1 switches window.
-            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand) || Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) return;
+            if (ModifierHeld()) return;
 
             var pan = Vector2.zero;
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) pan.y -= 1f;
@@ -1096,6 +1122,7 @@ namespace LabEscape.Client
                 return;
             }
             if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
+            if (Input.GetKeyDown(KeyCode.C)) ToggleReducedMotion();
             if (Input.GetKeyDown(KeyCode.BackQuote)) SetDebugOpen(!_debugOpen);
             if (Input.GetKeyDown(KeyCode.P)) SetReplayPaused(!_replayPaused);
             if (Input.GetKeyDown(KeyCode.N)) Next(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
@@ -1105,7 +1132,7 @@ namespace LabEscape.Client
                 return;
             }
             if (_hud.LogOpen || _hud.ReportVisible) return;
-            if (Input.GetKeyDown(KeyCode.Z)) TryUndo("Nothing to undo: AP spent or nothing moved");
+            if (Input.GetKeyDown(KeyCode.Z) && KeyRules.Undoes(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))) TryUndo("Nothing to undo: AP spent or nothing moved");
             if (Input.GetKeyDown(KeyCode.Space)) Flow!.Skip();
             if (Input.GetKeyDown(KeyCode.F)) Flow!.SetSpeed(Flow.Speed == FightSpeed.Normal ? FightSpeed.Fast : Flow.Speed == FightSpeed.Fast ? FightSpeed.Skip : FightSpeed.Normal);
             if (Input.GetKeyDown(KeyCode.I)) _showIntents = !_showIntents;

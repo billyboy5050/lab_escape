@@ -135,6 +135,7 @@
                         </ui:VisualElement>
                         <ui:Button name="intents" class="btn" focusable="false"><ui:Label class="btn-text" text="Intents" /><ui:Label class="kbd mono" text="I" /></ui:Button>
                         <ui:Button name="sound" class="btn" focusable="false"><ui:Label class="btn-text" text="Sound" /><ui:Label class="kbd mono" text="M" /></ui:Button>
+                        <ui:Button name="motion" class="btn" focusable="false"><ui:Label class="btn-text" text="Reduce motion" /><ui:Label class="kbd mono" text="C" /></ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -179,6 +180,11 @@
                 <ui:VisualElement class="row title-actions">
                     <ui:Button name="title-begin" class="btn primary big" focusable="false"><ui:Label class="btn-text" text="Begin" /><ui:Label class="kbd mono" text="Enter" /></ui:Button>
                     <ui:Label name="title-blurb" class="muted title-blurb" />
+                </ui:VisualElement>
+                <ui:VisualElement class="row title-settings">
+                    <ui:Label class="faint mono title-settings-label" text="SETTINGS" />
+                    <ui:Button name="title-sound" class="btn small" focusable="false"><ui:Label class="btn-text" text="Sound" /><ui:Label class="kbd mono" text="M" /></ui:Button>
+                    <ui:Button name="title-motion" class="btn small" focusable="false"><ui:Label class="btn-text" text="Reduce motion" /><ui:Label class="kbd mono" text="C" /></ui:Button>
                 </ui:VisualElement>
                 <ui:Label name="title-foot" class="title-foot faint mono" />
             </ui:VisualElement>
