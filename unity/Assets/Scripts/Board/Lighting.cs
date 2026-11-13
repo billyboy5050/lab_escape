@@ -108,6 +108,12 @@ namespace LabEscape.Client
         public void Tick(float dt)
         {
             if (_strike < 0f && _alarm <= 0f) return;
+            // Turned on part-way through a flicker or a pulse, the lights settle at once.
+            if (Motion.Reduced)
+            {
+                Steady();
+                return;
+            }
             var light = Color.white;
             if (_strike >= 0f)
             {

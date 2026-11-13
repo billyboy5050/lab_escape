@@ -54,6 +54,8 @@ namespace LabEscape.Client
         /// <summary>Turns a step of real time into the board's time.</summary>
         public float Step(float dt)
         {
+            // Turned on part-way through a stop or a slow-down, the board goes back to real time at once.
+            if (Motion.Reduced) Reset();
             // The gap between blows is counted while the board runs, not while it is stopped.
             if (_freeze <= 0f && _sinceBlow < float.MaxValue) _sinceBlow += dt;
             if (_freeze > 0f)

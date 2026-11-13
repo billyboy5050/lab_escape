@@ -194,6 +194,37 @@ namespace LabEscape.Client.Tests
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator TurningItOnPartWayThroughAFlickerOrAJoltSettlesThemAtOnce()
+        {
+            yield return WaitForDirector();
+            var d = FightDirector.Instance!;
+            var p = d.Content!.Presets.First();
+            d.StartFight(new Loadout(p.Abilities, p.Upgrades), new FightSettings(), p.Id);
+            yield return null;
+            var ambience = d.Board!.Ambience;
+
+            // The lights are in the middle of the tube's false starts, and an alarm is pulsing.
+            ambience.Strike();
+            ambience.Tick(0.1f);
+            ambience.SoundAlarm();
+            Assert.That(Lighting.Ambient.r, Is.LessThan(0.5f), "dark in the first false start");
+            d.Hud.JoltHp();
+
+            d.SetReducedMotion(true);
+            ambience.Tick(0.016f);
+            Assert.That(Lighting.Ambient.r, Is.EqualTo(1f).Within(0.001f), "the lights are steady at the next frame");
+            Assert.That(Lighting.Ambient.g, Is.EqualTo(1f).Within(0.001f), "with no alarm pulse");
+            ambience.Tick(0.4f);
+            Assert.That(Lighting.Ambient.g, Is.EqualTo(1f).Within(0.001f), "and they stay so");
+
+            d.Hud.Tick(0.016f, d.Flow!.Shown);
+            var t = Root.Q("hp-cells").style.translate.value;
+            Assert.That(t.x.value, Is.EqualTo(0f).Within(0.001f), "the jolt is over");
+            Assert.That(t.y.value, Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator TheTerminalsPrintAtOnceWhenMotionIsReduced()
         {
             yield return WaitForDirector();

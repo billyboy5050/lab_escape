@@ -66,6 +66,20 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
+        public void TurningItOnPartWayThroughAStopOrASlowReturnsTheBoardToRealTime()
+        {
+            var clock = new BoardClock();
+            clock.Freeze(0.5f);
+            clock.Slow(0.25f, 5f);
+            Assert.That(clock.Step(0.1f), Is.EqualTo(0f).Within(1e-6f), "stopped");
+            Motion.Reduced = true;
+            Assert.That(clock.Frozen, Is.True, "the stop has not been told yet");
+            Assert.That(clock.Step(0.1f), Is.EqualTo(0.1f).Within(1e-6f), "and it ends at once");
+            Assert.That(clock.Frozen, Is.False);
+            Assert.That(clock.Step(0.1f), Is.EqualTo(0.1f).Within(1e-6f), "the slow-down too");
+        }
+
+        [Test]
         public void WithReducedMotionTheBoardNeverStopsAndNeverSlows()
         {
             Motion.Reduced = true;

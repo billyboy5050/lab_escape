@@ -1121,7 +1121,8 @@ namespace LabEscape.Client
             _endIn.Tick(dt);
             if (_hpJolt > 0f)
             {
-                _hpJolt = Mathf.Max(0f, _hpJolt - dt * 3.2f);
+                // Turned on part-way through a jolt, the HP is still at once.
+                _hpJolt = Motion.Reduced ? 0f : Mathf.Max(0f, _hpJolt - dt * 3.2f);
                 var j = _hpJolt * _hpJolt;
                 _hpCells.style.translate = new Translate(Mathf.Sin(_now * 67f) * 7f * j, Mathf.Cos(_now * 49f) * 4f * j);
                 _hpText.style.scale = new Scale(new Vector3(1f + 0.5f * j, 1f + 0.5f * j, 1f));
