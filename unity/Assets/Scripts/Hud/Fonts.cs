@@ -42,6 +42,12 @@ namespace LabEscape.Client
         private const string ShippedDisplayPath = "Fonts/BarlowCondensed-SemiBold";
         private const string ShippedMonoPath = "Fonts/DejaVuSansMono";
 
+        /// <summary>
+        /// Barlow Condensed sets about 12% wider than DIN Condensed at the same size, and Fight.uss is sized for DIN Condensed,
+        /// so Barlow is drawn this much smaller: a name such as Proximity Mine then breaks between its words as it does on a Mac.
+        /// </summary>
+        private const float ShippedDisplayScale = 0.9f;
+
         /// <summary>The face the default theme gives every element, which Unity builds into every player.</summary>
         private const string DefaultFace = "LegacyRuntime.ttf";
 
@@ -161,6 +167,12 @@ namespace LabEscape.Client
                     // A player without it keeps the theme's face with no fallback.
                 }
                 _body = Asset(builtIn);
+                if (_display != null)
+                {
+                    var face = _display.faceInfo;
+                    face.scale = ShippedDisplayScale;
+                    _display.faceInfo = face;
+                }
                 if (_mono == null) return;
                 if (_display != null) _display.fallbackFontAssetTable = new List<FontAsset> { _mono };
                 if (_body != null) _body.fallbackFontAssetTable = new List<FontAsset> { _mono };
