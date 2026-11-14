@@ -1,11 +1,19 @@
 #!/bin/sh
 # Changes reach main only through pull requests (see CLAUDE.md). Turned on by `npm install`.
 # Git passes one line per ref being pushed: <local ref> <local sha> <remote ref> <remote sha>
-while read -r local_ref local_sha remote_ref remote_sha; do
+refs=$(cat)
+printf '%s\n' "$refs" | while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$remote_ref" = "refs/heads/main" ]; then
     echo "Pushing to main is blocked. Push your branch and open a pull request:" >&2
     echo "  git push -u origin HEAD && gh pr create --draft" >&2
     exit 1
   fi
-done
-exit 0
+done || exit 1
+
+# Fonts and other binary files live in Git LFS (.gitattributes). With core.hooksPath set, `git lfs install` cannot add
+# its own hook, so this one uploads them.
+if ! command -v git-lfs >/dev/null 2>&1; then
+  echo "This repository keeps binary files in Git LFS, and git-lfs was not found. Install it (brew install git-lfs) and run 'git lfs install --skip-repo'." >&2
+  exit 2
+fi
+printf '%s\n' "$refs" | git lfs pre-push "$@"
