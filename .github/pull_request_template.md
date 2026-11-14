@@ -19,7 +19,7 @@
 - [ ] New or changed rules have tests, and the debug overlay explains new behaviour
 - [ ] No numbers hard-coded in logic
 - [ ] Content or rules changed: golden replays and reports regenerated ("Regenerating generated files" in CLAUDE.md)
-- [ ] Rule changed: spec updated and `ENGINE_VERSION` bumped
+- [ ] Rule changed: spec updated and `EngineVersion` bumped
 - [ ] Docs updated (README, implementation notes, roadmap, CLAUDE.md as needed), and anything no longer true deleted
 - [ ] `@codex review` requested on the latest push, and every finding fixed or answered and resolved
 - [ ] The branch's note in `docs/work/` is deleted, its lasting content moved into the docs
