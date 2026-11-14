@@ -1,9 +1,8 @@
 #nullable enable
 using System.Collections.Generic;
-using LabEscape.Client;
 using UnityEngine;
 
-namespace LabEscape.ArtTrial.Editor
+namespace LabEscape.Client
 {
     /// <summary>
     /// Builds a low-poly mesh from convex shapes. Every face is flat and carries its colour in its vertices, so one mesh holds a
@@ -160,10 +159,17 @@ namespace LabEscape.ArtTrial.Editor
             Ball(b, rb, colour, 7, 4);
         }
 
-        public Mesh Bake(string name)
+        /// <summary>The mesh, moved so its bounds are centred on its origin, and where that centre was: a piece that flies off a
+        /// wreck spins about its own middle.</summary>
+        public Mesh Bake(string name, out Vector3 centre)
         {
             var m = new Mesh { name = name };
             _b.Apply(m);
+            m.RecalculateBounds();
+            centre = m.bounds.center;
+            var v = m.vertices;
+            for (var i = 0; i < v.Length; i++) v[i] -= centre;
+            m.vertices = v;
             m.RecalculateBounds();
             return m;
         }

@@ -12,7 +12,7 @@ Give the owner evidence for the 3D art decision before M14. Build the Armory, th
 
 ## Status
 
-Waiting on the owner: the trial is done and its findings are below. The owner decides the art's source; then the findings that last go into the roadmap or the phase plan, and this branch is closed without merging.
+Waiting on the owner: the trial is done and its findings are below. On this branch the game draws its units with the generated models, so the owner can play a fight with them (`unity/Builds/Mac/` and `unity/Builds/Windows/` in this worktree); `-labGreyboxUnits` brings back the greybox's figures. The owner decides the art's source; then the findings that last go into the roadmap or the phase plan, and this branch is closed without merging.
 
 ## Done so far
 
@@ -20,6 +20,7 @@ Waiting on the owner: the trial is done and its findings are below. The owner de
 - Built the Armory from its room data with the packs, beside the greybox, through the game's camera (`ArtTrial.Capture`): the room, the first wave, the Intruder, and a drone, a turret and a hatchling for the machines.
 - Built the game for the web with the trial's scene beside its own (`ArtTrialBuild.Web`), its people and machines carrying the animation clips a fight would play, at three texture budgets.
 - Generated a model for each of the ten units in code (`UnitModels`, from the shapes in `Sculpt`), and shot them in a line-up beside the greybox's figures (`ArtTrialModels.Lineup`), in the greybox room and in the packs' room.
+- Put them in the game, at the owner's request: `Sculpt` and `UnitModels` moved into `unity/Assets/Scripts/Board`, and `Figures.Unit` builds the generated bodies on the greybox's base plates unless the game is started with `-labGreyboxUnits`. Each kind's meshes are built once and shared, since a mesh made in code is not freed with its objects, and each machine piece is centred on itself, so a wreck's pieces spin about their own middles. The Unity tests pass (181 EditMode, 68 PlayMode), and the tech and alien winning lines play through a Mac build to the same wins (rounds 13 and 12), with the tags, health bars and threat lines sitting on the new figures. A film of the tech line's fourth enemy phase shows a turret scattering into its legs, head and barrels.
 
 ## Findings
 
@@ -42,15 +43,16 @@ Waiting on the owner: the trial is done and its findings are below. The owner de
 
 The engine code grows by 0.24 MB in each, for animation. Before compression, the full trial adds 27.3 MB of textures (eleven normal maps are 15.4 MB of that), 4.2 MB of meshes and 1.5 MB of animation (36 clips). At the game's camera the 512-pixel build without normal maps looks almost the same: the bodies lose some muscle shading and the floors some panel detail. The MegaKit's pieces share three trim sheets, so further rooms should add mostly meshes.
 
-**Generated models answer the people.** Built in code from bevelled boxes, prisms and faceted balls, coloured through their vertices and drawn with the game's own Solid shader, the ten units keep the greybox's flat look and colours but each now says what it is: the Intruder is hooded and caped with lit goggles and a sidearm, the guard has a visored helmet and a rifle, the medic a white helmet with a cross, an injector and a case, the Flamer a gas mask, two fuel tanks and a flame gun, and the Warden is a fifth larger, with pauldrons, gauntlets and a reactor. The turret stands on a tripod with twin barrels, the drone has four rotors, and the hatchlings are six-legged critters, the spitter with an acid sac and the burster bloated with glowing pustules. They return the game's own `Model`, with the greybox's base plates, so `UnitView` could show them by swapping `Figures.Unit`; a machine is several meshes, so it still breaks apart. Each is 578 to 2,166 triangles, and since they are built when the game runs, as the greybox's are, they add nothing to the download. In the packs' room they read better than the packs' own people, since their flat colours stand out against its detailed floor. What they are not is posed per action: like the greybox's, they hold one pose, and the game moves the whole body.
+**Generated models answer the people.** Built in code from bevelled boxes, prisms and faceted balls, coloured through their vertices and drawn with the game's own Solid shader, the ten units keep the greybox's flat look and colours but each now says what it is: the Intruder is hooded and caped with lit goggles and a sidearm, the guard has a visored helmet and a rifle, the medic a white helmet with a cross, an injector and a case, the Flamer a gas mask, two fuel tanks and a flame gun, and the Warden is a fifth larger, with pauldrons, gauntlets and a reactor. The turret stands on a tripod with twin barrels, the drone has four rotors, and the hatchlings are six-legged critters, the spitter with an acid sac and the burster bloated with glowing pustules. They return the game's own `Model`, with the greybox's base plates, so the game shows them through `Figures.Unit`; a machine is several meshes, so it still breaks apart. Each is 578 to 2,166 triangles, and since they are built when the game runs, as the greybox's are, they add nothing to the download. In the packs' room they read better than the packs' own people, since their flat colours stand out against its detailed floor. What they are not is posed per action: like the greybox's, they hold one pose, and the game moves the whole body.
 
 **The pipeline.** The packs are made for URP, with a packed occlusion, roughness and metal map the built-in pipeline's Standard shader cannot read, so the trial sets roughness and metal as constants. URP would use the maps as made; that is a separate decision.
 
 ## Next steps
 
 1. The owner decides: Quaternius for the rooms and machines or not, and where the people come from, the generated models among the choices.
-2. If the generated models are kept: move `Sculpt` and `UnitModels` into `unity/Assets/Scripts/Board`, have `Figures.Unit` build them, and play a fight with them, to check that the lean, squash, fall and break-apart, the effects, the health bars and the preview ghosts all sit right on the new shapes.
-3. Move what lasts (the size budget, the hazards' markings, the people) into the roadmap or the phase plan, then close the pull request without merging and delete the branch.
+2. The owner plays a fight with the generated models, with a mouse and keyboard, and says whether to keep them.
+3. If they are kept: carry `Sculpt`, `UnitModels` and the `Figures` change to a `feat/` branch cut from `main`, without the packs' trial; add `-labGreyboxUnits` to the README and the models to the implementation notes; and decide whether the greybox's unit figures stay in the code behind the flag or go.
+4. Move what lasts (the size budget, the hazards' markings, the people) into the roadmap or the phase plan, then close the pull request without merging and delete the branch.
 
 ## Decisions
 

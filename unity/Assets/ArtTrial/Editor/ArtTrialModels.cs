@@ -50,11 +50,12 @@ namespace LabEscape.ArtTrial.Editor
                 for (var i = 0; i < n; i++)
                 {
                     var (def, team) = Units[i];
-                    var g = Figures.Unit(def, team, root);
+                    var g = Figures.Unit(def, team, root, false);
                     Place(g, Across * i + Away * 0.9f);
                     g.Paint(1f);
                     grey.Add(g.Root);
-                    var made = UnitModels.Build(def, team, root);
+                    var made = Figures.Unit(def, team, root, true);
+                    made.Paint(1f);
                     Place(made, Across * i - Away * 0.2f);
                     var tris = 0;
                     foreach (var f in made.Body.GetComponentsInChildren<MeshFilter>()) tris += f.sharedMesh.triangles.Length / 3;

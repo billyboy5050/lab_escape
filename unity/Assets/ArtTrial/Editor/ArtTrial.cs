@@ -89,14 +89,15 @@ namespace LabEscape.ArtTrial.Editor
                 }
                 List<GameObject> Generated(Transform parent) => pieces.Select(p =>
                 {
-                    var m = UnitModels.Build(p.Def, p.Team, parent);
+                    var m = Figures.Unit(p.Def, p.Team, parent, true);
+                    m.Paint(1f);
                     m.Root.transform.position = Iso.Tile(p.Tile.X, p.Tile.Y);
                     m.Body.rotation = Facing(p, player);
                     return m.Root;
                 }).ToList();
                 var figures = pieces.Select(p =>
                 {
-                    var m = Figures.Unit(p.Def, p.Team, grey.transform);
+                    var m = Figures.Unit(p.Def, p.Team, grey.transform, false);
                     m.Root.transform.position = Iso.Tile(p.Tile.X, p.Tile.Y);
                     m.Body.rotation = Facing(p, player);
                     m.Paint(1f);

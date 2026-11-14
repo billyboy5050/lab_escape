@@ -1,15 +1,15 @@
 #nullable enable
-using LabEscape.Client;
+using System.Collections.Generic;
 using LabEscape.Core;
 using UnityEngine;
 
-namespace LabEscape.ArtTrial.Editor
+namespace LabEscape.Client
 {
     /// <summary>
-    /// Generated unit models: low-poly figures built in code, as the greybox's are, so they need no files and add nothing to the
-    /// download. They return the game's own Model, with its base plate and a body, so UnitView could show them in place of
-    /// Figures.Unit. People wear their unit's colour as armour over a dark suit, and a machine is several meshes, so it still
-    /// breaks into pieces.
+    /// The units' models: low-poly figures built in code from Sculpt's shapes, as the greybox's are, so they need no files and add
+    /// nothing to the download. People wear their unit's colour as armour over a dark suit; a machine is several pieces, each
+    /// centred on itself, so it breaks apart as the greybox's did. A unit's pieces are built once for its kind and team and
+    /// shared, since a mesh made in code is not freed with the objects that show it.
     /// </summary>
     public static class UnitModels
     {
@@ -22,54 +22,54 @@ namespace LabEscape.ArtTrial.Editor
         private static readonly Color White = Palette.Hex(0xe8eeeb);
         private static readonly Color Glass = Palette.Hex(0x10171b);
 
-        public static Model Build(string def, Team team, Transform parent)
+        /// <summary>One mesh of a body, where its centre sits and how much it is scaled.</summary>
+        private readonly struct Piece
         {
-            var m = new Model(def, parent);
-            var c = Palette.UnitColor(def, team);
-            BasePlate(m, def, team, c);
-            switch (def)
+            public readonly Mesh Mesh;
+            public readonly Vector3 At;
+            public readonly float Scale;
+
+            public Piece(Mesh mesh, Vector3 at, float scale)
             {
-                case "player": Intruder(m, c); break;
-                case "guard": Guard(m, c); break;
-                case "medic": Medic(m, c); break;
-                case "flamer": Flamer(m, c); break;
-                case "warden": Warden(m, c); break;
-                case "turret": Turret(m, c); break;
-                case "drone": Drone(m, c); break;
-                case "hatchling": Hatchling(m, c); break;
-                case "spitter": Spitter(m, c); break;
-                case "burster": Burster(m, c); break;
-                default: Guard(m, c); break;
+                Mesh = mesh;
+                At = at;
+                Scale = scale;
             }
-            m.Paint(1f);
-            return m;
         }
 
-        private static void Part(Model m, Sculpt s, string name, float scale = 1f)
+        private static readonly Dictionary<(string, Team), Piece[]> Made = new Dictionary<(string, Team), Piece[]>();
+
+        /// <summary>Adds the body of a unit of kind `def` to a model whose base plate Figures.Unit has made.</summary>
+        public static void Body(Model m, string def, Team team)
         {
-            if (!s.IsEmpty) m.Add(m.Body, s.Bake(name), Vector3.zero, Vector3.one * scale, Color.white);
+            if (!Made.TryGetValue((def, team), out var pieces))
+            {
+                var list = new List<Piece>();
+                var c = Palette.UnitColor(def, team);
+                switch (def)
+                {
+                    case "player": Intruder(list, c); break;
+                    case "guard": Guard(list, c); break;
+                    case "medic": Medic(list, c); break;
+                    case "flamer": Flamer(list, c); break;
+                    case "warden": Warden(list, c); break;
+                    case "turret": Turret(list, c); break;
+                    case "drone": Drone(list, c); break;
+                    case "hatchling": Hatchling(list, c); break;
+                    case "spitter": Spitter(list, c); break;
+                    case "burster": Burster(list, c); break;
+                    default: Guard(list, c); break;
+                }
+                Made[(def, team)] = pieces = list.ToArray();
+            }
+            foreach (var p in pieces) m.Add(m.Body, p.Mesh, p.At * p.Scale, Vector3.one * p.Scale, Color.white);
         }
 
-        /// <summary>As the greybox has it: round for yours, a diamond for the lab's soldiers, a hexagon for the Warden.</summary>
-        private static void BasePlate(Model m, string def, Team team, Color colour)
+        private static void Part(List<Piece> parts, Sculpt s, string name, float scale = 1f)
         {
-            var dark = Palette.Shade(colour, 0.28f);
-            var k = Figures.IsSmall(def) ? 0.7f : 1f;
-            if (def == "warden")
-            {
-                m.Add(m.Plate, Shapes.Hexagon, Vector3.zero, new Vector3(0.84f, 0.03f, 0.84f), colour);
-                m.Add(m.Plate, Shapes.Hexagon, Vector3.zero, new Vector3(0.68f, 0.05f, 0.68f), dark);
-            }
-            else if (team == Team.Enemy)
-            {
-                m.Add(m.Plate, Shapes.Box, Vector3.zero, new Vector3(0.56f * k, 0.03f, 0.56f * k), colour);
-                m.Add(m.Plate, Shapes.Box, Vector3.zero, new Vector3(0.42f * k, 0.05f, 0.42f * k), dark);
-            }
-            else
-            {
-                m.Add(m.Plate, Shapes.Cylinder, Vector3.zero, new Vector3(0.68f * k, 0.03f, 0.68f * k), colour);
-                m.Add(m.Plate, Shapes.Cylinder, Vector3.zero, new Vector3(0.52f * k, 0.05f, 0.52f * k), dark);
-            }
+            if (s.IsEmpty) return;
+            var mesh = s.Bake(name, out var centre);
+            parts.Add(new Piece(mesh, centre, scale));
         }
 
         // ---- People ----
@@ -167,7 +167,7 @@ namespace LabEscape.ArtTrial.Editor
             s.Box(new Vector3(x, 0.512f, 0.13f), new Vector3(0.022f, 0.026f, 0.055f), Metal, 0.005f);
         }
 
-        private static void Intruder(Model m, Color c)
+        private static void Intruder(List<Piece> m, Color c)
         {
             var p = new Pose().Pistol();
             p.FootL = new Vector3(-0.08f, 0.05f, 0.05f);
@@ -197,7 +197,7 @@ namespace LabEscape.ArtTrial.Editor
             Part(m, g, "intruder gear");
         }
 
-        private static void Guard(Model m, Color c)
+        private static void Guard(List<Piece> m, Color c)
         {
             var p = new Pose().Rifle();
             var s = new Sculpt();
@@ -212,7 +212,7 @@ namespace LabEscape.ArtTrial.Editor
             Part(m, g, "guard rifle");
         }
 
-        private static void Medic(Model m, Color c)
+        private static void Medic(List<Piece> m, Color c)
         {
             var p = new Pose().Pistol();
             // The left hand carries a case.
@@ -247,7 +247,7 @@ namespace LabEscape.ArtTrial.Editor
             s.Box(centre, new Vector3(size * 0.32f, size, 0.01f), colour, 0f, rot);
         }
 
-        private static void Flamer(Model m, Color c)
+        private static void Flamer(List<Piece> m, Color c)
         {
             var p = new Pose();
             p.ElbowR = new Vector3(0.16f, 0.4f, 0.04f);
@@ -285,7 +285,7 @@ namespace LabEscape.ArtTrial.Editor
             Part(m, g, "flamer tanks");
         }
 
-        private static void Warden(Model m, Color c)
+        private static void Warden(List<Piece> m, Color c)
         {
             // A wide frame for its bulk, and the whole figure drawn a fifth larger than a person.
             const float scale = 1.2f;
@@ -329,7 +329,7 @@ namespace LabEscape.ArtTrial.Editor
 
         // ---- Machines ----
 
-        private static void Turret(Model m, Color c)
+        private static void Turret(List<Piece> m, Color c)
         {
             var legs = new Sculpt();
             var hub = new Vector3(0f, 0.2f, 0f);
@@ -361,7 +361,7 @@ namespace LabEscape.ArtTrial.Editor
             Part(m, guns, "turret guns", 1.15f);
         }
 
-        private static void Drone(Model m, Color c)
+        private static void Drone(List<Piece> m, Color c)
         {
             var y = 0.36f;
             var core = new Sculpt();
@@ -405,7 +405,7 @@ namespace LabEscape.ArtTrial.Editor
             }
         }
 
-        private static void Hatchling(Model m, Color c)
+        private static void Hatchling(List<Piece> m, Color c)
         {
             c = Palette.Lighten(c, 0.12f);
             var dark = Palette.Shade(c, 0.45f);
@@ -426,7 +426,7 @@ namespace LabEscape.ArtTrial.Editor
             Part(m, s, "hatchling", 1.25f);
         }
 
-        private static void Spitter(Model m, Color c)
+        private static void Spitter(List<Piece> m, Color c)
         {
             c = Palette.Lighten(c, 0.12f);
             var dark = Palette.Shade(c, 0.45f);
@@ -445,7 +445,7 @@ namespace LabEscape.ArtTrial.Editor
             Part(m, s, "spitter", 1.2f);
         }
 
-        private static void Burster(Model m, Color c)
+        private static void Burster(List<Piece> m, Color c)
         {
             c = Palette.Lighten(c, 0.12f);
             var dark = Palette.Shade(c, 0.45f);
