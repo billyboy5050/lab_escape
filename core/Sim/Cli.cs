@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace LabEscape.Sim
 {
-    /// <summary>Headless simulator command line: the same commands, options and report files as npm run sim.</summary>
+    /// <summary>Headless simulator command line.</summary>
     public static class Cli
     {
         private const string Help = @"Lab Escape headless simulator (C#)
@@ -84,7 +84,7 @@ Options
                 Console.WriteLine(Help);
                 return 0;
             }
-            // Paths are relative to the repository, as they are under npm run sim.
+            // Paths are relative to the repository, wherever the tool is started.
             Directory.SetCurrentDirectory(FindRoot());
             var bot = a.Value("bot") ?? Batch.GreedyKind;
             if (!Batch.BotKinds.Contains(bot)) throw new ArgumentException($"Unknown bot \"{bot}\"");
@@ -313,7 +313,7 @@ Options
                 var file = Path.Combine(dir, $"{f.Name}.json");
                 if (!File.Exists(file))
                 {
-                    Console.WriteLine($"{f.Name}: missing ({file}); run npm run golden:record");
+                    Console.WriteLine($"{f.Name}: missing ({file}); run dotnet run --project core/Sim -c Release -- golden --record");
                     failed++;
                     continue;
                 }
@@ -369,8 +369,9 @@ Options
         }
 
         /// <summary>
-        /// The proof that this simulator matches the TypeScript one: regenerates every report the repository commits (see
-        /// "Regenerating generated files" in CLAUDE.md) and compares each with the committed file, byte for byte.
+        /// Regenerates every report the repository commits (see "Regenerating generated files" in CLAUDE.md) and compares each
+        /// with the committed file, byte for byte. It proved the port against the TypeScript simulator's reports, and now
+        /// that a rule or content change came with its reports regenerated.
         /// </summary>
         private static int RunConformance(RunOptions o)
         {
