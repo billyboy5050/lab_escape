@@ -1,7 +1,7 @@
 # The Unity web build
 
 - Branch: `feat/unity-web-build`
-- Pull request: <link, once opened>
+- Pull request: https://github.com/billyboy5050/lab_escape/pull/32
 - Roadmap item: M13, "The three builds" (the web build's half), with "Symbols and faces missing in the web build" and "Web build size" under Smaller items
 - Started: 2026-11-14
 - Last updated: 2026-11-14, by Claude (Opus 5.5)
