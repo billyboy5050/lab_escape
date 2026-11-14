@@ -1,5 +1,5 @@
 #!/bin/sh
-# Changes reach main only through pull requests (see CLAUDE.md). Turned on by `npm install`.
+# Changes reach main only through pull requests (see CLAUDE.md). Any build of core/ turns them on (core/Directory.Build.targets).
 # Git passes one line per ref being pushed: <local ref> <local sha> <remote ref> <remote sha>
 refs=$(cat)
 printf '%s\n' "$refs" | while read -r local_ref local_sha remote_ref remote_sha; do

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Changes reach main only through pull requests (see CLAUDE.md). Turned on by `npm install`.
+# Changes reach main only through pull requests (see CLAUDE.md). Any build of core/ turns them on (core/Directory.Build.targets).
 # Git runs this for every ref update, so it also catches what pre-commit cannot: merges (fast-forward or not), resets,
 # rebases and `git branch -f`. The one move allowed is to exactly origin/main, which is the sync `git pull --ff-only`
 # (or a reset back to origin/main). Needs Git 2.28 or later; older versions skip it, and pre-commit and pre-push remain.
