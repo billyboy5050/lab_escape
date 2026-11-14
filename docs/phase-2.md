@@ -187,7 +187,7 @@ Each is one branch and pull request. Sizes are relative effort.
 | M24 | Ritual wing | Same | L |
 | M25 | Failure pays, closing tester round | Progress survives restarts and rejects corrupt saves; round played with all three wings | M |
 
-Rooms as data comes before the Unity client, so the client is written once for many rooms. Armory's existing map and wave files stay where they are until M13, so the web game keeps working. M18 depends on M17, because Occult is authored on the new weapon and path schema. Greybox models carry gameplay through Stage B, so game work never waits on art.
+Rooms as data comes before the Unity client, so the client is written once for many rooms. Armory's existing map and wave files stay where they are until M13, so the web game keeps working. M18 depends on M17, because Occult is authored on the new weapon and path schema. Greybox rooms and the units' generated models carry gameplay through Stage B, so game work never waits on art.
 
 M13 ports the title, briefing and result screens only as far as they work, because M15 rebuilds that flow around a run (choose a branch, choose a wing, run end), and the loadout screen only as the picker for Sandbox mode. Its effort goes to what Stage B builds on: the debug overlay, telemetry, hot reload and the three builds. A web build has no disk to save telemetry to, so it offers each fight's files as a download, as the web client's result screen did.
 
@@ -212,7 +212,7 @@ After one run, testers can explain the loop, name the three branches and say wha
 ## Risks
 
 - Stage A is five milestones with nothing new for players. The M12 checkpoint was where to stop if the 3D version did not feel right; it passed on 2026-11-12.
-- 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can produce only greybox. The first tester round needs about half the models (the player, its minions and the Weapons wing's enemies) and one room kit, so M21 cannot finish until that art exists.
+- 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can make low-poly models in code, as the units' models have been since 2026-11-14, but not textured art. The first tester round needs about half the models (the player, its minions and the Weapons wing's enemies) and one room kit, so M21 cannot finish until that art exists.
 - No outsider plays a run before M22. Until then the run, the kit rework and Occult rest on the owner's reading of what testers said, with no recorded play behind it.
 - **This repository is public.** Paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository before M20.
 - A 3D web build risks download size and slow previews. Both were checked at M13, on 2026-11-09 and 2026-11-14, and are fine ([the Unity client](implementation-notes.md#the-unity-client)).
@@ -223,7 +223,7 @@ After one run, testers can explain the loop, name the three branches and say wha
 
 ## What the owner needs to do
 
-- **Before M14:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored. Art is first used at M20, but commissioning or choosing it takes time that agents cannot shorten, so deciding before Stage B starts lets it be made while Stage B is built in greybox.
+- **Before M14:** decide how to source 3D art (bought packs, commission or generated) and where it will be stored. The units were settled on 2026-11-14 as models made in code; the rooms are still open (roadmap). Art is first used at M20, but commissioning or choosing it takes time that agents cannot shorten, so deciding before Stage B starts lets it be made while Stage B is built in greybox.
 
 ## What the owner has authorised
 
