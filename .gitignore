@@ -13,3 +13,7 @@ reports/**/*.csv
 
 # Agent worktrees: whole copies of the repository on other branches.
 /.claude/worktrees/
+
+# The art trial's packs: CC0, but large and only for the trial (docs/work/chore-art-trial-quaternius.md).
+/unity/Assets/ArtTrial/Packs/
+/unity/Assets/ArtTrial/Packs.meta

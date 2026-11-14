@@ -85,7 +85,10 @@ namespace LabEscape.Client
         public void Destroy() => Object.Destroy(Root);
     }
 
-    /// <summary>The greybox models. Silhouettes differ by unit, and the base plate says whose side a unit is on, so nothing rests on colour alone.</summary>
+    /// <summary>
+    /// The board's models: units (the generated ones in UnitModels, or the greybox's), objects and blocks. Silhouettes differ by
+    /// unit, and the base plate says whose side a unit is on, so nothing rests on colour alone.
+    /// </summary>
     public static class Figures
     {
         private sealed class Kit
@@ -135,11 +138,24 @@ namespace LabEscape.Client
             }
         }
 
-        public static Model Unit(string def, Team team, Transform parent)
+        /// <summary>
+        /// Whether units are drawn with the generated models (UnitModels) or the greybox's figures, which -labGreyboxUnits brings
+        /// back for comparison. Both stand on the same base plates.
+        /// </summary>
+        public static readonly bool GeneratedUnits = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-labGreyboxUnits") < 0;
+
+        public static Model Unit(string def, Team team, Transform parent) => Unit(def, team, parent, GeneratedUnits);
+
+        public static Model Unit(string def, Team team, Transform parent, bool generated)
         {
             var m = new Model(def, parent);
             var c = Palette.UnitColor(def, team);
             BasePlate(m, def, team, c);
+            if (generated)
+            {
+                UnitModels.Body(m, def, team);
+                return m;
+            }
             var light = Palette.Lighten(c, 0.35f);
             var dark = Palette.Shade(c, 0.45f);
             var steel = Palette.Steel;
