@@ -50,6 +50,8 @@ Reduce motion (the button in the fight's controls and on the title, or **C**) st
 
 A fight opens with the lights striking, the room's name and the first wave falling in. **Space** skips that like any other animation.
 
+Units are low-poly models made in code, each on a base whose shape says its side: round for yours, a diamond for the lab's soldiers, a hexagon for the Warden. Start a build with `-labGreyboxUnits` to see the greybox figures they replaced.
+
 The board's edges are lettered A to H and numbered 1 to 8, as the log names tiles. Point at a unit, a tile or an action button and the Scanner describes it; for an action that is its rule and, if it cannot be used now, why.
 
 Every finished fight is saved for the playtest report, and the loadout screen offers recent ones to watch again, with no briefing: see [Telemetry and replays](#telemetry-and-replays). While one plays back, **P** pauses it between commands and plays it on, and **N** plays its next command while it is paused.
@@ -184,7 +186,7 @@ CI (`.github/workflows/ci.yml`) runs `dotnet test core/Tests` and the simulator'
 
 ## Unity client
 
-`unity/` is the game. It plays the Armory fight in greybox on a fixed isometric camera, with previews, intents and a HUD, on the C# rules core.
+`unity/` is the game. It plays the Armory fight in a greybox room, with low-poly units made in code, on a fixed isometric camera, with previews, intents and a HUD, on the C# rules core.
 
 Needs Unity 6000.3.28f1 (6.3 LTS), with Windows Build Support (Mono) for the Windows build and Web Build Support for the web build. In Unity Hub, Installs, Install Editor, 6.3 LTS, and tick both modules; a Mac editor builds for the Mac with no module. In Unity Hub choose Add, pick the `unity` folder and open it, then press Play: every scene starts the game.
 
