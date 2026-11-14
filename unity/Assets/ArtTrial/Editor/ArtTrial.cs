@@ -76,36 +76,61 @@ namespace LabEscape.ArtTrial.Editor
                 Lighting.SetRoom(new Vector3(w * 0.5f, 0f, -h * 0.5f), Mathf.Sqrt(w * w + h * h) * 0.5f);
                 var grey = new GameObject("Greybox");
                 new RoomView(room, grey.transform);
-                foreach (var p in pieces)
+                // Each set of units is shot whole and in two close-ups: the player's corner, where the Intruder, the drone, the
+                // turret and the hatchling stand, and the first wave.
+                void ShootSet(string name)
+                {
+                    Frame(cam, min, max);
+                    Shoot(cam, Path.Combine(outDir, $"{name}.png"));
+                    Frame(cam, new Vector3(-0.2f, -0.1f, -8.2f), new Vector3(4.6f, 1f, -4.6f));
+                    Shoot(cam, Path.Combine(outDir, $"{name}-close.png"));
+                    Frame(cam, new Vector3(0.6f, -0.1f, -4.2f), new Vector3(8.2f, 1.2f, 0.2f));
+                    Shoot(cam, Path.Combine(outDir, $"{name}-guards.png"));
+                }
+                List<GameObject> Generated(Transform parent) => pieces.Select(p =>
+                {
+                    var m = UnitModels.Build(p.Def, p.Team, parent);
+                    m.Root.transform.position = Iso.Tile(p.Tile.X, p.Tile.Y);
+                    m.Body.rotation = Facing(p, player);
+                    return m.Root;
+                }).ToList();
+                var figures = pieces.Select(p =>
                 {
                     var m = Figures.Unit(p.Def, p.Team, grey.transform);
                     m.Root.transform.position = Iso.Tile(p.Tile.X, p.Tile.Y);
                     m.Body.rotation = Facing(p, player);
                     m.Paint(1f);
-                }
-                Frame(cam, min, max);
-                Shoot(cam, Path.Combine(outDir, "greybox.png"));
+                    return m.Root;
+                }).ToList();
+                ShootSet("greybox");
+
+                // The greybox room with the generated models (UnitModels) in place of its figures.
+                foreach (var f in figures) UnityEngine.Object.DestroyImmediate(f);
+                Generated(grey.transform);
+                ShootSet("generated");
                 UnityEngine.Object.DestroyImmediate(grey);
 
                 // The same room and units from the packs.
                 var art = new GameObject("Art");
                 BuildRoom(room, art.transform);
-                foreach (var p in pieces) BuildUnit(p, player, art.transform);
+                var artUnits = new GameObject("Units").transform;
+                artUnits.SetParent(art.transform, false);
+                foreach (var p in pieces) BuildUnit(p, player, artUnits);
                 Lights(w, h, art.transform);
-                Shoot(cam, Path.Combine(outDir, "quaternius.png"));
-
-                // Close: the player's corner, where the Intruder, the drone, the turret and the hatchling stand.
-                Frame(cam, new Vector3(-0.2f, -0.1f, -8.2f), new Vector3(4.6f, 1f, -4.6f));
-                Shoot(cam, Path.Combine(outDir, "quaternius-close.png"));
-                Frame(cam, new Vector3(0.6f, -0.1f, -4.2f), new Vector3(8.2f, 1.2f, 0.2f));
-                Shoot(cam, Path.Combine(outDir, "quaternius-guards.png"));
+                ShootSet("quaternius");
 
                 // The free bodies as they come, in their own skin and underwear.
                 foreach (var (go, body, tone) in People) Materials.Skin(go, body, tone);
                 Frame(cam, new Vector3(1.6f, -0.1f, -4.2f), new Vector3(6.4f, 1.2f, -1.6f));
                 Shoot(cam, Path.Combine(outDir, "quaternius-bare.png"));
 
+                // The scene the trial's web build carries is saved here, before the generated models replace the packs' units.
                 EditorSceneManager.SaveScene(scene, ScenePath);
+
+                // The packs' room with the generated models in it.
+                UnityEngine.Object.DestroyImmediate(artUnits.gameObject);
+                Generated(art.transform);
+                ShootSet("mixed");
                 Debug.Log($"[ArtTrial] Captured into {outDir}");
                 if (Application.isBatchMode) EditorApplication.Exit(0);
             }
@@ -116,7 +141,7 @@ namespace LabEscape.ArtTrial.Editor
             }
         }
 
-        private static string OutDir()
+        internal static string OutDir()
         {
             var args = Environment.GetCommandLineArgs();
             var i = Array.IndexOf(args, "-artTrialOut");
@@ -421,7 +446,7 @@ namespace LabEscape.ArtTrial.Editor
             l.intensity = intensity;
         }
 
-        private static Camera MakeCamera()
+        internal static Camera MakeCamera()
         {
             var cam = new GameObject("Camera").AddComponent<Camera>();
             cam.orthographic = true;
@@ -435,7 +460,7 @@ namespace LabEscape.ArtTrial.Editor
         }
 
         /// <summary>Keeps a world box in view, as the game's camera frames the room.</summary>
-        private static void Frame(Camera cam, Vector3 min, Vector3 max)
+        internal static void Frame(Camera cam, Vector3 min, Vector3 max)
         {
             var t = cam.transform;
             float minR = float.MaxValue, maxR = float.MinValue, minU = float.MaxValue, maxU = float.MinValue;
@@ -457,7 +482,7 @@ namespace LabEscape.ArtTrial.Editor
             t.position = onScreen + t.forward * (depth - 60f);
         }
 
-        private static void Shoot(Camera cam, string path)
+        internal static void Shoot(Camera cam, string path)
         {
             var rt = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 8 };
             cam.targetTexture = rt;

@@ -1,4 +1,4 @@
-# Trial the Quaternius art packs
+# Trial the Quaternius art packs, and generated unit models
 
 - Branch: `chore/art-trial-quaternius`
 - Pull request: https://github.com/billyboy5050/lab_escape/pull/34
@@ -8,7 +8,7 @@
 
 ## Goal
 
-Give the owner evidence for the 3D art decision before M14. Build the Armory, the Intruder and a Guard from the free tiers of Quaternius's CC0 packs (Modular Sci-Fi MegaKit, Sci-Fi Essentials Kit, Universal Base Characters, Universal Animation Library), look at them through the game's camera beside the greybox, and measure what they add to the web download. This is an experiment, not for merging: the packs stay out of git, and the findings go into the roadmap once the owner decides.
+Give the owner evidence for the 3D art decision before M14. Build the Armory, the Intruder and a Guard from the free tiers of Quaternius's CC0 packs (Modular Sci-Fi MegaKit, Sci-Fi Essentials Kit, Universal Base Characters, Universal Animation Library), look at them through the game's camera beside the greybox, and measure what they add to the web download. On 2026-11-14 the owner also asked for an attempt at making the units' models: the trial now builds low-poly models in code, as the greybox's are, and shoots them in the greybox room and in the packs' room. This is an experiment, not for merging: the packs stay out of git, and the findings go into the roadmap once the owner decides.
 
 ## Status
 
@@ -19,6 +19,7 @@ Waiting on the owner: the trial is done and its findings are below. The owner de
 - Downloaded the four free tiers through itch.io's free-download flow (342 MB of zips), each CC0 by its own licence file, and listed what they hold (see Notes).
 - Built the Armory from its room data with the packs, beside the greybox, through the game's camera (`ArtTrial.Capture`): the room, the first wave, the Intruder, and a drone, a turret and a hatchling for the machines.
 - Built the game for the web with the trial's scene beside its own (`ArtTrialBuild.Web`), its people and machines carrying the animation clips a fight would play, at three texture budgets.
+- Generated a model for each of the ten units in code (`UnitModels`, from the shapes in `Sculpt`), and shot them in a line-up beside the greybox's figures (`ArtTrialModels.Lineup`), in the greybox room and in the packs' room.
 
 ## Findings
 
@@ -41,12 +42,15 @@ Waiting on the owner: the trial is done and its findings are below. The owner de
 
 The engine code grows by 0.24 MB in each, for animation. Before compression, the full trial adds 27.3 MB of textures (eleven normal maps are 15.4 MB of that), 4.2 MB of meshes and 1.5 MB of animation (36 clips). At the game's camera the 512-pixel build without normal maps looks almost the same: the bodies lose some muscle shading and the floors some panel detail. The MegaKit's pieces share three trim sheets, so further rooms should add mostly meshes.
 
+**Generated models answer the people.** Built in code from bevelled boxes, prisms and faceted balls, coloured through their vertices and drawn with the game's own Solid shader, the ten units keep the greybox's flat look and colours but each now says what it is: the Intruder is hooded and caped with lit goggles and a sidearm, the guard has a visored helmet and a rifle, the medic a white helmet with a cross, an injector and a case, the Flamer a gas mask, two fuel tanks and a flame gun, and the Warden is a fifth larger, with pauldrons, gauntlets and a reactor. The turret stands on a tripod with twin barrels, the drone has four rotors, and the hatchlings are six-legged critters, the spitter with an acid sac and the burster bloated with glowing pustules. They return the game's own `Model`, with the greybox's base plates, so `UnitView` could show them by swapping `Figures.Unit`; a machine is several meshes, so it still breaks apart. Each is 578 to 2,166 triangles, and since they are built when the game runs, as the greybox's are, they add nothing to the download. In the packs' room they read better than the packs' own people, since their flat colours stand out against its detailed floor. What they are not is posed per action: like the greybox's, they hold one pose, and the game moves the whole body.
+
 **The pipeline.** The packs are made for URP, with a packed occlusion, roughness and metal map the built-in pipeline's Standard shader cannot read, so the trial sets roughness and metal as constants. URP would use the maps as made; that is a separate decision.
 
 ## Next steps
 
-1. The owner decides: Quaternius for the rooms and machines or not, and where the people come from.
-2. Move what lasts (the size budget, the hazards' markings, the people) into the roadmap or the phase plan, then close the pull request without merging and delete the branch.
+1. The owner decides: Quaternius for the rooms and machines or not, and where the people come from, the generated models among the choices.
+2. If the generated models are kept: move `Sculpt` and `UnitModels` into `unity/Assets/Scripts/Board`, have `Figures.Unit` build them, and play a fight with them, to check that the lean, squash, fall and break-apart, the effects, the health bars and the preview ghosts all sit right on the new shapes.
+3. Move what lasts (the size budget, the hazards' markings, the people) into the roadmap or the phase plan, then close the pull request without merging and delete the branch.
 
 ## Decisions
 
@@ -55,7 +59,7 @@ The engine code grows by 0.24 MB in each, for animation. Before compression, the
 
 ## Open questions
 
-- For the owner: Quaternius for the rooms and machines? Where the people come from: another source's characters (KayKit's sci-fi characters are in its paid Mystery Series), commissioned ones, or the greybox's figures kept beside art rooms? Whether to buy the Pro or Source tiers: the trial needed nothing beyond the free ones for the room.
+- For the owner: Quaternius for the rooms and machines? Where the people come from: the generated models, another source's characters (KayKit's sci-fi characters are in its paid Mystery Series), commissioned ones, or the greybox's figures kept beside art rooms? Whether to buy the Pro or Source tiers: the trial needed nothing beyond the free ones for the room.
 
 ## Notes for whoever picks this up
 
@@ -64,3 +68,4 @@ The engine code grows by 0.24 MB in each, for animation. Before compression, the
 - The trial copies these into `unity/Assets/ArtTrial/Packs/` (ignored by git): from the MegaKit the four platforms, `Door_Frame_Square_Blocked`, `ShortWall_Metal2_Straight`, `WallBand_Straight`, `WallBand_Corner_Square_Inner`, `TopSimple_Straight`, `BottomMetal_Straight`, both columns, `Prop_Vent_Big`, `Prop_Crate3`, `Prop_Computer` and `Prop_Light_Wide`; from Essentials the three enemies, `Prop_Mine`, `Gun_Rifle` and `Gun_Pistol`; from the characters both bodies, two hairs and the eyebrows; and `UAL1_Standard.fbx`. Each pack's `Textures` folder goes with it.
 - The MegaKit zip unpacks its `Textures` folder read-only. Unity cannot write `.meta` files there and loops in its first scan forever, at full CPU and with nothing in the log after package registration. Run `chmod -R u+w unity/Assets/ArtTrial/Packs` after copying the packs in.
 - To rerun: `ArtTrial.Capture` (batch mode with graphics, so not `-nographics`; `-artTrialOut <folder>` for the screenshots, `-artTrialNoNormals` for the lean look), then `ArtTrialBuild.Web` (`-artTrialMaxTexture 512`, `-artTrialBuildOut <folder>`), then set the project back to the Mac with `-buildTarget StandaloneOSX`.
+- The generated models need no packs: `ArtTrialModels.Lineup` (batch mode with graphics, `-artTrialOut <folder>`) shoots them in a line-up and logs each one's triangles. `ArtTrial.Capture` shoots them in both rooms, as `generated*.png` and `mixed*.png`.
