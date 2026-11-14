@@ -7,7 +7,7 @@ namespace LabEscape.Client
 {
     /// <summary>
     /// The loadout screen's choices: the abilities and upgrades picked, the preset they came from, and whether wave 3 is held
-    /// back. It follows the web client's `LoadoutScreen.tsx` and has no Unity code, so tests drive it directly. What may be picked
+    /// back. It follows the retired web client's loadout screen and has no Unity code, so tests drive it directly. What may be picked
     /// and what is a problem come from the engine (`Engine.LoadoutProblems`, `ContentLoader.UpgradeAllowed`); this decides nothing.
     /// </summary>
     public sealed class LoadoutPicker

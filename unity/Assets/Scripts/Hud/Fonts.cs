@@ -9,10 +9,10 @@ using UnityEngine.UIElements;
 namespace LabEscape.Client
 {
     /// <summary>
-    /// The web client's two faces: a condensed face for titles, labels and banners, and a monospace for keys, numbers and the
-    /// logs. An element asks for one with the class `display` or `mono`. They are taken from the system as the web client takes
-    /// them (`--display` and `--mono` in src/client/styles.css). Where the system has none of a list, the game uses the face it
-    /// ships in Resources/Fonts: Barlow Condensed SemiBold for display, and DejaVu Sans Mono, which Menlo is built from, for mono.
+    /// The game's two faces: a condensed face for titles, labels and banners, and a monospace for keys, numbers and the logs. An
+    /// element asks for one with the class `display` or `mono`. They are taken from the system, as the retired web client took
+    /// them. Where the system has none of a list, the game uses the face it ships in Resources/Fonts: Barlow Condensed SemiBold
+    /// for display, and DejaVu Sans Mono, which Menlo is built from, for mono.
     /// A machine with no system fonts at all, such as the web build, also has nothing to draw the symbols the interface writes
     /// (→, –, ⚠ and the rest) when a face lacks them, so there every face falls back to DejaVu Sans Mono, which has them all,
     /// and the text with no face of its own keeps Unity's default face with the same fallback.

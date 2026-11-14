@@ -5,8 +5,7 @@ namespace LabEscape.Core
 {
     /// <summary>
     /// Fields the rules code reads without a fallback, by definition id, as dotted paths. A content edit that drops one is
-    /// rejected on load, so a hot reload keeps the old values instead of crashing the first time the rule runs. Keep these
-    /// in step with src/content/required.ts until M13 retires it.
+    /// rejected on load, so a hot reload keeps the old values instead of crashing the first time the rule runs.
     /// </summary>
     public static class RequiredFields
     {

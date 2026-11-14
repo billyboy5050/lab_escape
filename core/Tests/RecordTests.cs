@@ -10,7 +10,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/record.test.ts.</summary>
     public class RecordTests
     {
         private static JObject Good()

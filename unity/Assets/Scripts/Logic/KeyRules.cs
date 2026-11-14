@@ -2,7 +2,7 @@
 namespace LabEscape.Client
 {
     /// <summary>
-    /// Which key presses the game takes and which it leaves alone, as the web client's `actionKeys.ts` decides them. It has no
+    /// Which key presses the game takes and which it leaves alone, as the retired web client decided them. It has no
     /// Unity code: the director reads the keyboard and asks.
     /// </summary>
     public static class KeyRules

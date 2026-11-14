@@ -5,7 +5,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/enemies.test.ts.</summary>
     public class EnemiesTests
     {
         [Test]

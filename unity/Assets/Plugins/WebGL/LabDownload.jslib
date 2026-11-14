@@ -1,5 +1,5 @@
-// The web build's downloads: a fight's telemetry handed to the browser as a file to save, as the web client's download buttons
-// do (src/client/telemetry.ts). The web player has no disk of its own.
+// The web build's downloads: a fight's telemetry handed to the browser as a file to save, as the retired web client's download
+// buttons did. The web player has no disk of its own.
 mergeInto(LibraryManager.library, {
   LabDownload: function (namePtr, textPtr, typePtr) {
     var name = UTF8ToString(namePtr);

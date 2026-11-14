@@ -9,7 +9,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from the batch runs in tests/golden.test.ts, and tests/options.test.ts.</summary>
     public class BatchTests
     {
         /// <summary>Everything a row holds, for comparing two batches.</summary>
@@ -98,7 +97,7 @@ namespace LabEscape.Core.Tests
         public void TheGeneratorDrawsTheSameSequenceAsTheTypeScriptOne()
         {
             var rng = new Rng(12345);
-            // From new Rng(12345).nextU32() in src/sim/rng.ts.
+            // What the TypeScript simulator's generator drew, so a seed in a committed report still names the same fight.
             Assert.That(new[] { rng.NextU32(), rng.NextU32(), rng.NextU32() }, Is.EqualTo(new uint[] { 4207900869, 1317490944, 2079646450 }));
         }
 

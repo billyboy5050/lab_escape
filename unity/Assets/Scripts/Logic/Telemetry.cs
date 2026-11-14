@@ -24,9 +24,9 @@ namespace LabEscape.Client
     }
 
     /// <summary>
-    /// A fight's telemetry, as the web client keeps it (src/client/telemetry.ts): the replay, the summary and the event stream,
-    /// in a folder named for the time, the tester and the outcome, so the playtest report (`npm run sim -- telemetry`) reads
-    /// Unity's fights and the web client's alike. No Unity code: where the files go is TelemetrySink's business.
+    /// A fight's telemetry, as the retired web client kept it: the replay, the summary and the event stream, in a folder named
+    /// for the time, the tester and the outcome, so the simulator's playtest report (`telemetry`) reads Unity's fights and the
+    /// web client's alike. No Unity code: where the files go is TelemetrySink's business.
     /// </summary>
     public static class Telemetry
     {

@@ -701,7 +701,7 @@ The rules engine is a deterministic library that knows nothing about rendering, 
 
 **Engine and language**
 
-The spec only requires that the core can run headless for tests and simulations, load JSON, and use integer math. The prototype uses a TypeScript core that runs headless in Node, with a React web client built with Vite.
+The spec only requires that the core can run headless for tests and simulations, load JSON, and use integer math. The prototype used a TypeScript core that ran headless in Node, with a React web client built with Vite. Since M13 of the [full-game phase](phase-2.md) the core is plain C# that runs headless under .NET, and the client is Unity.
 
 **State model**
 
@@ -939,7 +939,7 @@ The first draft left these Open for the implementation session. The implementati
 
 | Decision | Taken | Switch |
 | --- | --- | --- |
-| Engine, language and platform | TypeScript rules core that runs headless in Node, and a React web client built with Vite | |
+| Engine, language and platform | Unity, with the rules core in plain C# that runs headless under .NET, for Mac and Windows plus a web build for testers (since 2026-11-14; the MVP was built and playtested with a TypeScript rules core in Node and a React web client) | |
 | Input scheme and keyboard shortcuts | Mouse first, with a keyboard shortcut for every control (see the README); on touch, tap to preview and tap again to commit | |
 | Art direction | Flat shapes. Units are told apart by shape and letter as well as colour (circles and squares are the player's side, diamonds and the hexagon are enemies), with the Okabe-Ito palette and light and dark themes | |
 | Whether an empty room brings the next wave early | No: a fixed schedule | `earlyWaveWhenEmpty` |
@@ -1006,3 +1006,4 @@ Two notes on the evidence behind these changes:
 | 2026-10-20 | No rule changed. The client moved from placeholder shapes toward the final look the owner chose, an industrial sci-fi lab: illustrated units on bases whose shape shows their side, a drawn room, combat effects, a HUD styled as the lab's security terminal, a title screen, a briefing before each fight and synthesized sound effects with a mute key. A primed hazard still shows only its visual cue, with no sound. | Playtesters found the game promising but did not engage with it because of its presentation. |
 | 2026-10-22 | No rule changed. The board can also be drawn in an isometric three-quarter view, chosen with a toggle (a Top/Iso control, the V key, or `?view=` in the URL); top-down stays the default. In the isometric view terrain, objects and units are drawn back to front, a pillar or wall that would hide a unit, an object or the hovered tile fades, and bars, chips and intent tags are drawn above everything. Colour is still paired with a shape, an icon or a word, and a hazard still shows only its cue. The replay's metadata records the view a fight was played in. | The owner liked concept art of the room in isometric view and asked to try it in play. It is opt-in because the first-time player round has not run yet, and a change of presentation would confound comparisons between rounds. |
 | 2026-11-08 | No rule changed. The owner closed playtesting as successful and M7 as done, on outside testers' verbal feedback. M7's acceptance criterion of recorded first-time metrics, and the success criteria that depend on human play, were not measured, because the testers' recordings have not been received (see the [implementation notes](implementation-notes.md#what-the-outside-testers-said-2026-11-08)). The owner also changed two entries under Decisions taken, which apply once the [full-game phase](phase-2.md) delivers them: engine, language and platform become Unity with the rules in plain C#, for Mac and Windows plus a web build for testers; the art direction becomes 3D with a fixed isometric camera. The TypeScript and React prototype stays in use until then. | Testers found the game fun but could not picture the full loop, and the owner judged that enough to move on to building the full game. |
+| 2026-11-14 | No rule changed. The engine entry under Decisions taken, which the owner changed on 2026-11-08, now applies: M13 retired the TypeScript prototype, and the rules run in the C# core under the Unity client and the simulator. | The C# was proven to match the TypeScript, all three Unity builds run, and the owner approved deleting the TypeScript so that rules from M14 on are written once. |

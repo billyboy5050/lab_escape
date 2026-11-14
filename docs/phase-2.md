@@ -29,6 +29,7 @@ Outside testers found the game fun but want to see more before saying they would
 | When testers first play a run | After the Weapons wing, before the other two wings are built (decided 2026-11-09) |
 | Unity tests in CI | No: the EditMode and PlayMode tests and the builds run on a developer's machine (decided 2026-11-12) |
 | M12 checkpoint: does the Unity fight feel at least as good as the web version? | Yes: the owner played it on 2026-11-12 and found it "a much more enjoyable experience" |
+| What M13 deletes | All the TypeScript: the web client, engine, simulator and tests, so that rules from M14 on are written once, in C# (decided 2026-11-14) |
 
 ## The move to Unity
 
@@ -51,7 +52,7 @@ unity/              the game: camera, board, HUD, audio
 The library keeps to the C# and .NET level that the chosen Unity LTS supports, so the same source compiles in both places.
 
 - **Proving the port.** The content hash must match, the golden event logs must be identical, and the same seeds must reproduce the committed simulator reports. That compares thousands of bot fights against the TypeScript engine.
-- **Freeze during the port.** No rule or content value changes until M13, so the port never chases a moving target. TypeScript stays authoritative until the C# passes, and the web game stays playable for anyone testing meanwhile.
+- **Freeze during the port.** No rule or content value changes until M13, so the port never chases a moving target. TypeScript stays authoritative until the C# passes, and the web game stays playable for anyone testing meanwhile. The freeze ended when M13 retired the TypeScript on 2026-11-14.
 - **Determinism traps in C#.** 22 places rely on JavaScript's insertion-ordered maps and sets, and `Dictionary` gives no such promise. `structuredClone` needs explicit clones, and `Math.imul` needs unchecked integer maths. The hash must also sort keys as JavaScript does, by UTF-16 code unit.
 - **Text-first Unity.** Unity scenes and prefabs merge badly and are hard to review. Keep scenes few, build rooms from data, and write the interface in UI Toolkit's text formats, so changes stay reviewable.
 - **Fixed isometric camera.** Orthographic, no rotation, with pan and zoom for big rooms. Walls fade when they would hide something, as the isometric board does now. HP bars and intent chips draw above everything, and a unit's side is still shown by base shape as well as colour.
@@ -188,7 +189,7 @@ Each is one branch and pull request. Sizes are relative effort.
 
 Rooms as data comes before the Unity client, so the client is written once for many rooms. Armory's existing map and wave files stay where they are until M13, so the web game keeps working. M18 depends on M17, because Occult is authored on the new weapon and path schema. Greybox models carry gameplay through Stage B, so game work never waits on art.
 
-M13 ports the title, briefing and result screens only as far as they work, because M15 rebuilds that flow around a run (choose a branch, choose a wing, run end), and the loadout screen only as the picker for Sandbox mode. Its effort goes to what Stage B builds on: the debug overlay, telemetry, hot reload and the three builds. A web build has no disk to save telemetry to, so it offers each fight's files as a download, as the web client's result screen does.
+M13 ports the title, briefing and result screens only as far as they work, because M15 rebuilds that flow around a run (choose a branch, choose a wing, run end), and the loadout screen only as the picker for Sandbox mode. Its effort goes to what Stage B builds on: the debug overlay, telemetry, hot reload and the three builds. A web build has no disk to save telemetry to, so it offers each fight's files as a download, as the web client's result screen did.
 
 The first tester round (M22) comes after one wing and before the other two. The phase exists to answer a question only testers can answer, and the two later wings are most of its new content: 8 enemies and 10 of the 14 new rooms. Testers did not engage with the game's placeholder look before the restyle of 2026-10-20, so the wing they play has to look finished, which is why M21 includes its art. The closing round (M25) repeats the measures on the whole game.
 
@@ -214,7 +215,7 @@ After one run, testers can explain the loop, name the three branches and say wha
 - 3D art is the largest new cost: roughly 25 models and 3 room kits. Agents can produce only greybox. The first tester round needs about half the models (the player, its minions and the Weapons wing's enemies) and one room kit, so M21 cannot finish until that art exists.
 - No outsider plays a run before M22. Until then the run, the kit rework and Occult rest on the owner's reading of what testers said, with no recorded play behind it.
 - **This repository is public.** Paid asset-store packs usually cannot be redistributed, so bought art needs a private home or a private repository before M20.
-- A 3D web build risks download size and slow previews. Both are checked at M13.
+- A 3D web build risks download size and slow previews. Both were checked at M13, on 2026-11-09 and 2026-11-14, and are fine ([the Unity client](implementation-notes.md#the-unity-client)).
 - Content volume: 14 new rooms, 8 new enemies and 3 signature entities. Cut signature entities first, then one room shape per wing.
 - Large rooms can drag, because moves and ranges were set for 8×8. Spawn points set the pace, and M16 measures rounds to first contact.
 - HP attrition over 5 rooms is measured from M16.
@@ -232,4 +233,8 @@ Approved on 2026-11-08 with this plan:
 - **Bot-based first values for new content only.** New rooms, enemies and rewards have no player data, so they may be set from the simulator. Existing Armory values still wait for evidence, apart from the finale variant.
 - **The rule changes named in this plan**, each recorded in the spec in its own pull request.
 
-Still to be asked at the time: deleting the web client and the TypeScript code at M13. Still open: whether Alien gets Creep, so that all three branches have six abilities.
+Approved on 2026-11-14, when M13 had run all three builds:
+
+- **Deleting the TypeScript at M13:** the web client, the engine, the simulator and their tests. The C# in `core/` becomes the only engine and simulator.
+
+Still open: whether Alien gets Creep, so that all three branches have six abilities.

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Changes reach main only through pull requests (see CLAUDE.md). Turned on by `npm install`.
+# Changes reach main only through pull requests (see CLAUDE.md). Any build of core/ turns them on (core/Directory.Build.targets).
 branch=$(git symbolic-ref --short -q HEAD)
 if [ "$branch" = "main" ]; then
   echo "Commits on main are blocked. Work on a branch and open a pull request:" >&2

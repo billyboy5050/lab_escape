@@ -6,7 +6,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/tech.test.ts.</summary>
     public class TechTests
     {
         private static GameState PinAll(GameState s)

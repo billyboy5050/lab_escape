@@ -1,0 +1,10 @@
+<Project>
+  <!--
+    Points git at the repository's hooks in .githooks/, which keep main moving only through pull requests (CLAUDE.md).
+    Every build of core/ does it, so `dotnet test core/Tests` turns them on in a fresh clone or worktree. It is skipped
+    outside a git checkout, and a machine without git only gets a warning.
+  -->
+  <Target Name="LabEscapeGitHooks" BeforeTargets="Build" Condition="'$(MSBuildProjectName)' == 'LabEscape.Core' And Exists('$(MSBuildThisFileDirectory)../.git')">
+    <Exec Command="git config core.hooksPath .githooks" WorkingDirectory="$(MSBuildThisFileDirectory).." ContinueOnError="true" StandardOutputImportance="low" />
+  </Target>
+</Project>

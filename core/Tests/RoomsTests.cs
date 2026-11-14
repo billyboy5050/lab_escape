@@ -10,7 +10,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/rooms.test.ts.</summary>
     public class RoomsTests
     {
         private static readonly JArray Rooms = (JArray)JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", "rooms.json")));
@@ -76,7 +75,7 @@ namespace LabEscape.Core.Tests
         }
 
         [Test]
-        public void TheContentHashOfRoomsMatchesTheOneTheTypeScriptRecorded()
+        public void TheContentHashOfRoomsMatchesTheOneTheGoldenReplayRecorded()
         {
             var golden = JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", "room-hall.json")));
             Assert.That(R.Hash, Is.EqualTo(golden["record"]!["contentHash"]!.Value<string>()));

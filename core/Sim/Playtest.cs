@@ -60,7 +60,7 @@ namespace LabEscape.Sim
         /// </summary>
         public static TelemetryLoad LoadTelemetry(Content c, string dir, bool includeUnlabelled = false, IReadOnlyCollection<string>? excludeTesters = null)
         {
-            if (!Directory.Exists(dir)) throw new DirectoryNotFoundException($"No telemetry folder at {dir}. Play some fights with npm run dev first.");
+            if (!Directory.Exists(dir)) throw new DirectoryNotFoundException($"No telemetry folder at {dir}. Play some fights in the Unity editor first, or name the folder a build saved them in.");
             var output = new TelemetryLoad();
             var names = new DirectoryInfo(dir).GetDirectories().Where(d => d.LinkTarget == null).Select(d => d.Name);
             foreach (var name in Sequences.StableSorted(names, LocaleOrder.Compare))

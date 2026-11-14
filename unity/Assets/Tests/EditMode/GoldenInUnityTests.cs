@@ -9,8 +9,8 @@ using NUnit.Framework;
 namespace LabEscape.Client.Tests
 {
     /// <summary>
-    /// The rules core compiled by Unity, on Unity's runtime, must play the fights the TypeScript engine recorded exactly as the .NET
-    /// build of the same source does. A difference here would be a runtime difference that dotnet test cannot see.
+    /// The rules core compiled by Unity, on Unity's runtime, must play the golden fights exactly as the .NET build of the same
+    /// source does. A difference here would be a runtime difference that dotnet test cannot see.
     /// </summary>
     public class GoldenInUnityTests
     {
@@ -48,7 +48,7 @@ namespace LabEscape.Client.Tests
         }
 
         [Test]
-        public void ContentHashMatchesTheHashRecordedByTypeScript()
+        public void ContentHashMatchesTheHashTheGoldenReplayRecorded()
         {
             var c = GameContent.Load();
             var golden = JObject.Parse(File.ReadAllText(GameContent.RepoPath("golden", "hybrid.json")));

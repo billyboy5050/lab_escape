@@ -7,7 +7,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/determinism.test.ts.</summary>
     public class DeterminismTests
     {
         /// <summary>States drawn by playing a random bot for a random number of commands, the same way the TypeScript test does.</summary>

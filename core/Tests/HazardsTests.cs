@@ -6,7 +6,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/hazards.test.ts.</summary>
     public class HazardsTests
     {
         private static Dictionary<string, PrimeDecision> Decisions(GameState s)

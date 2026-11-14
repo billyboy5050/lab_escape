@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>The C# counterpart of tests/helpers.ts.</summary>
+    /// <summary>The content, loadouts and set-ups the tests share.</summary>
     public static class Helpers
     {
         /// <summary>The repository's top folder, found from where the tests run.</summary>

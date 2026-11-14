@@ -6,7 +6,7 @@ using LabEscape.Core;
 
 namespace LabEscape.Client
 {
-    /// <summary>The web client's sounds (src/client/sfx.ts), plus a landing.</summary>
+    /// <summary>The retired web client's sounds, plus a landing.</summary>
     public enum Sfx
     {
         Shot, EnemyShot, GunFire, Acid, Zap, Blast, Flame, Gas, Hit, Hurt, Block, Death, Heal, Deploy, Wave, Place, Hatch, Charge,

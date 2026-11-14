@@ -6,7 +6,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/combat.test.ts.</summary>
     public class CombatTests
     {
         private static ScenarioSpec WardenSpec() => new ScenarioSpec { Player = "B8", Units = { U("warden", "B5") } };

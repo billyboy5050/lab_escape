@@ -3,7 +3,6 @@ using NUnit.Framework;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/stats.test.ts.</summary>
     public class StatsTests
     {
         [Test]

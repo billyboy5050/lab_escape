@@ -5,7 +5,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/simultaneous-deaths.test.ts.</summary>
     public class SimultaneousDeathsTests
     {
         [Test]

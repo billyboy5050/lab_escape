@@ -6,7 +6,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/upgrades.test.ts.</summary>
     public class UpgradesTests
     {
         private static List<string> Ups(params string[] ids) => ids.ToList();

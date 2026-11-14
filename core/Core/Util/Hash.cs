@@ -10,8 +10,8 @@ using Newtonsoft.Json.Linq;
 namespace LabEscape.Core
 {
     /// <summary>
-    /// Deterministic, platform-independent hashing for content files and golden replays. The output must match
-    /// src/util/hash.ts character for character, because a content hash is shared between the two engines.
+    /// Deterministic, platform-independent hashing for content files and golden replays. The output must stay what the
+    /// TypeScript prototype gave, character for character, because every replay, report and saved fight carries a hash.
     /// </summary>
     public static class Hash
     {

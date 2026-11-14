@@ -7,7 +7,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/intercom.test.ts.</summary>
     public class IntercomTests
     {
         [Test]

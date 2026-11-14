@@ -7,7 +7,7 @@ namespace LabEscape.Client
     /// <summary>The screens a player moves through before and after a fight. Fight is the board with its panels.</summary>
     public enum GameScreen { Title, Loadout, Briefing, Fight }
 
-    /// <summary>The words on the title screen, which the web client writes in `TitleScreen.tsx`, and how fast its terminal prints them.</summary>
+    /// <summary>The words on the title screen, as the retired web client wrote them, and how fast its terminal prints them.</summary>
     public static class ScreenText
     {
         /// <summary>Characters printed a second, and the wait before the first, as the web client's title terminal.</summary>

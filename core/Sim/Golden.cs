@@ -34,7 +34,7 @@ namespace LabEscape.Sim
 
         /// <summary>The preset that fights the golden rooms: it uses all three kits.</summary>
         public const string RoomPreset = "hybrid";
-        private const string Note = "Scripted regression fight. Re-record on purpose when content values or rules change: npm run golden:record";
+        private const string Note = "Scripted regression fight. Re-record on purpose when content values or rules change: dotnet run --project core/Sim -c Release -- golden --record";
 
         public static string HashEvents(IEnumerable<GameEvent> events) => Hash.HashJson(new JArray(events.Select(e => JsonIn.Parse(e.ToJson()))));
         public static string HashState(GameState state) => Hash.HashJson(JsonIn.Parse(state.ToJson()));
@@ -90,7 +90,7 @@ namespace LabEscape.Sim
             }
             catch (ReplayMismatch e)
             {
-                return new GoldenCheck { Preset = preset, Problem = $"{e.Message}. Re-record with: npm run golden:record" };
+                return new GoldenCheck { Preset = preset, Problem = $"{e.Message}. Re-record with: dotnet run --project core/Sim -c Release -- golden --record" };
             }
             ReplayResult rep;
             try

@@ -6,7 +6,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/report.test.ts.</summary>
     public class ReportTests
     {
         private static FightRow Row(long seed, DamageTally playerDamage, double friendlyFireShare, FightOutcome outcome = FightOutcome.Win, string? error = null)
