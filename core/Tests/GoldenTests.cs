@@ -9,7 +9,7 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>The port's central proof: the fights recorded by the TypeScript engine replay identically here.</summary>
+    /// <summary>The golden fights replay identically: first recorded by the TypeScript engine, this was the port's central proof.</summary>
     public class GoldenTests
     {
         private static readonly List<GoldenFight> AllFights = Golden.Fights(ContentLoader.FilesFromDirectory(Path.Combine(RepoRoot, "content")), JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", "rooms.json"))));
@@ -46,7 +46,7 @@ namespace LabEscape.Core.Tests
         {
             var record = GoldenFile(name)["record"]!;
             Assert.That(record["engineVersion"]!.Value<string>(), Is.EqualTo(GameStates.EngineVersion));
-            Assert.That(ContentOf(name).Hash, Is.EqualTo(record["contentHash"]!.Value<string>()), "the C# content hash must equal the hash the TypeScript engine recorded");
+            Assert.That(ContentOf(name).Hash, Is.EqualTo(record["contentHash"]!.Value<string>()), "the content hash must equal the hash the golden replay recorded");
         }
 
         [TestCaseSource(nameof(Fights))]

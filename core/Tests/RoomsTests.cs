@@ -75,7 +75,7 @@ namespace LabEscape.Core.Tests
         }
 
         [Test]
-        public void TheContentHashOfRoomsMatchesTheOneTheTypeScriptRecorded()
+        public void TheContentHashOfRoomsMatchesTheOneTheGoldenReplayRecorded()
         {
             var golden = JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", "room-hall.json")));
             Assert.That(R.Hash, Is.EqualTo(golden["record"]!["contentHash"]!.Value<string>()));

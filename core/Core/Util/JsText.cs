@@ -8,9 +8,9 @@ using System.Text;
 namespace LabEscape.Core
 {
     /// <summary>
-    /// Text exactly as JavaScript produces it. The content hash and the golden event logs are compared byte for byte
-    /// against output from the TypeScript engine, so number formatting, string escaping and trimming have to match
-    /// JSON.stringify and String.prototype.trim rather than their nearest .NET equivalents.
+    /// Text exactly as JavaScript produces it. The content hash, the golden event logs and the reports were first written by
+    /// the TypeScript prototype and are compared byte for byte, so number formatting, string escaping and trimming have to
+    /// match JSON.stringify and String.prototype.trim rather than their nearest .NET equivalents.
     /// </summary>
     public static class JsText
     {
