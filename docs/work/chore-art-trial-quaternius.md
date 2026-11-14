@@ -12,16 +12,20 @@ Give the owner evidence for the 3D art decision before M14. Build the Armory, th
 
 ## Status
 
-In progress: the packs are downloaded and listed; the trial scene is next.
+In progress: the packs are in `unity/Assets/ArtTrial/Packs/` and import cleanly; the editor scripts in `unity/Assets/ArtTrial/Editor/` compile. Running the inspection and the capture is next.
 
 ## Done so far
 
 - Downloaded the four free tiers through itch.io's free-download flow (342 MB of zips), each CC0 by its own licence file.
 - Listed what the free tiers hold (see Notes).
+- Copied the models the trial needs into `unity/Assets/ArtTrial/Packs/` and wrote the trial's editor scripts: `ArtTrial.Capture` builds the greybox and the Quaternius version of the Armory and saves screenshots through the game's camera angle, `ArtTrialInspect.Inspect` logs what the importer made of the packs.
 
 ## Next steps
 
-1. Copy the models the trial needs into `unity/Assets/ArtTrial/Packs/` (ignored by git) and write an editor script that builds the Armory from the room's data with them, poses the Intruder and a Guard with the animation library, and saves a screenshot through the game's camera angle.
+1. Run `ArtTrialInspect.Inspect` and fix the materials, poses, rotations and scales to what it shows.
+2. Run `ArtTrial.Capture` (the README's batch-mode command with `-executeMethod LabEscape.ArtTrial.Editor.ArtTrial.Capture -artTrialOut <folder>`, without `-nographics`) and compare the screenshots with the greybox.
+3. Make a web build with the trial scene and compare its size with the current 11,423,459 bytes.
+4. Write up the findings for the owner.
 
 ## Decisions
 
@@ -37,3 +41,4 @@ In progress: the packs are downloaded and listed; the trial scene is next.
 - Packs: https://quaternius.itch.io/modular-sci-fi-megakit, https://quaternius.itch.io/sci-fi-essentials-kit, https://quaternius.itch.io/universal-base-characters, https://quaternius.itch.io/universal-animation-library. Each page's "Download Now", then "No thanks, just take me to the downloads", gives the free Standard zip.
 - Free tiers: the MegaKit has 84 walls, 37 floors and doors, 28 props (three vents among them), 8 columns, 29 decals and 3 aliens with an idle only. Sci-Fi Essentials has three rigged, animated enemies (EyeDrone, QuadShell, Trilobite), guns, a mine and props. Universal Base Characters has only the two Superhero bodies, with hair. The animation library has 43 clips, among them idle, walk, pistol aim, shoot and reload, two hits and a death.
 - The MegaKit's textures are trim sheets with a packed ORM map, made for URP; the project uses the built-in pipeline, so the trial sets roughness and metal as constants.
+- The MegaKit zip unpacks its `Textures` folder read-only. Unity cannot write `.meta` files there and loops in its first scan forever, at full CPU and with nothing in the log after package registration. Run `chmod -R u+w unity/Assets/ArtTrial/Packs` after copying the packs in.
