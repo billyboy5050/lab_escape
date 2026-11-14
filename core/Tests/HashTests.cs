@@ -5,7 +5,7 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>The expected values below were produced by src/util/hash.ts, so these tests compare the two implementations.</summary>
+    /// <summary>The expected values below were produced by the TypeScript prototype's hash, which the C# must keep giving.</summary>
     public class HashTests
     {
         [TestCase("", "0bdcb81aee8d83", "10047792def104", "00d08b1d38333f")]

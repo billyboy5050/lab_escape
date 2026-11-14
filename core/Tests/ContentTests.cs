@@ -8,7 +8,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/content.test.ts.</summary>
     public class ContentTests
     {
         private static ContentFiles Edited(Action<ContentFiles> fn)

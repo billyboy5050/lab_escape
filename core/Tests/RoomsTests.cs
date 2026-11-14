@@ -10,7 +10,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/rooms.test.ts.</summary>
     public class RoomsTests
     {
         private static readonly JArray Rooms = (JArray)JsonIn.Parse(File.ReadAllText(Path.Combine(RepoRoot, "golden", "rooms.json")));

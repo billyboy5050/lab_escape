@@ -6,7 +6,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/los.test.ts.</summary>
     public class LosTests
     {
         private static readonly Board Board = C.DefaultRoom.Board;

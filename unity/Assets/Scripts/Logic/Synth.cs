@@ -9,7 +9,7 @@ namespace LabEscape.Client
     public enum Filter { Lowpass, Highpass, Bandpass }
 
     /// <summary>
-    /// One voice of a sound, as the web client's synth has them (src/client/sfx.ts): a tone whose pitch sweeps from F0 to F1, or
+    /// One voice of a sound, as the retired web client's synth had them: a tone whose pitch sweeps from F0 to F1, or
     /// noise through a filter whose cutoff sweeps from F0 to F1. Both rise to Volume in a few milliseconds and die away over
     /// Duration, starting Delay seconds in.
     /// </summary>

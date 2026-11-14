@@ -6,7 +6,7 @@ using LabEscape.Core;
 namespace LabEscape.Client
 {
     /// <summary>
-    /// The words on the briefing screen, which the web client writes in `BriefingScreen.tsx`. It says what the rules sheet says and
+    /// The words on the briefing screen, as the retired web client wrote them. It says what the rules sheet says and
     /// nothing the game hides: not when the waves come, and not what the defences cover. Every number is read from the content.
     /// </summary>
     public static class BriefingText

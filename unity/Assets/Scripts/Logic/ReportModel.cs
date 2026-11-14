@@ -26,7 +26,7 @@ namespace LabEscape.Client
     }
 
     /// <summary>
-    /// The incident report a fight ends with, as the web client's result screen has it (`ResultScreen.tsx`): the verdict, the
+    /// The incident report a fight ends with, as the retired web client's result screen had it: the verdict, the
     /// damage taken and dealt by source, and the fight's facts. It has no Unity code and reads everything from the summary the
     /// telemetry already makes, so it agrees with the files saved.
     /// </summary>

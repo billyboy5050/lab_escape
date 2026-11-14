@@ -7,7 +7,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/telemetry.test.ts.</summary>
     public class TelemetryTests
     {
         private static Loadout Kit() => LoadoutOf("sidearm", "proximity_mine");
@@ -222,7 +221,7 @@ namespace LabEscape.Core.Tests
             Assert.That(Summaries.Summarize(r.Events, r.State).AbilitiesUsed.ContainsKey("pick_up_mine"), Is.False);
         }
 
-        // Ported from tests/tester-labels.test.ts. The rest of that file tests the web client.
+        // Tester labels in the folder names.
 
         [Test]
         public void CleanTesterKeepsAPlainIdAndTrimsIt() => Assert.That(Labels.CleanTester(" P3 "), Is.EqualTo("P3"));

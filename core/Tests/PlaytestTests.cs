@@ -10,7 +10,6 @@ using static LabEscape.Core.Tests.Helpers;
 
 namespace LabEscape.Core.Tests
 {
-    /// <summary>Ported from tests/playtest.test.ts.</summary>
     public class PlaytestTests
     {
         private static PlaytestFight F(string name = "f", string? tester = "P1", double? attempt = 1, string? preset = "hybrid", FightResult outcome = FightResult.Lose, int rounds = 5, double ff = 0.15, int damage = 6, SourceCategory? cause = SourceCategory.Enemy, int hazardFires = 2, double[]? swarm = null, bool complete = true)
