@@ -10,11 +10,19 @@ namespace LabEscape.ArtTrial.Editor
     /// <summary>
     /// The art trial's web build: the game's own scene with the trial's scene beside it, so the download carries the trial's models,
     /// textures and animations as a game would. Run ArtTrial.Capture first, which saves that scene. In batch mode:
-    /// -executeMethod LabEscape.ArtTrial.Editor.ArtTrialBuild.Web, which builds into Builds/ArtTrialWeb.
+    /// -executeMethod LabEscape.ArtTrial.Editor.ArtTrialBuild.Web, which builds into Builds/ArtTrialWeb, or the folder given by
+    /// -artTrialBuildOut. -artTrialMaxTexture 512 holds the packs' textures to 512 pixels instead of 1024.
     /// </summary>
     public static class ArtTrialBuild
     {
-        private const int MaxTexture = 1024;
+        private static int MaxTexture => int.TryParse(Arg("-artTrialMaxTexture"), out var n) ? n : 1024;
+
+        private static string? Arg(string name)
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            var i = System.Array.IndexOf(args, name);
+            return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+        }
 
         [MenuItem("Lab Escape/Art Trial/Build Web")]
         public static void Web()
@@ -29,7 +37,7 @@ namespace LabEscape.ArtTrial.Editor
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { "Assets/Scenes/Fight.unity", ArtTrial.ScenePath },
-                locationPathName = "Builds/ArtTrialWeb",
+                locationPathName = Arg("-artTrialBuildOut") ?? "Builds/ArtTrialWeb",
                 target = BuildTarget.WebGL,
                 options = BuildOptions.None,
             });
@@ -48,18 +56,19 @@ namespace LabEscape.ArtTrial.Editor
         }
 
         /// <summary>
-        /// Holds the packs' textures to 1024 pixels, as a web build would carry them, with normal maps marked. PackImport does this on
-        /// import, but textures imported before the scripts compiled missed it.
+        /// Holds the packs' textures to MaxTexture pixels, with normal maps marked. PackImport caps them at 1024 on import, but
+        /// textures imported before the scripts compiled missed it.
         /// </summary>
         private static void CapTextures()
         {
+            var max = MaxTexture;
             foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { ArtTrial.Packs }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 if (!(AssetImporter.GetAtPath(path) is TextureImporter t)) continue;
                 var normal = path.Contains("_Normal");
-                if (t.maxTextureSize == MaxTexture && (!normal || t.textureType == TextureImporterType.NormalMap)) continue;
-                t.maxTextureSize = MaxTexture;
+                if (t.maxTextureSize == max && (!normal || t.textureType == TextureImporterType.NormalMap)) continue;
+                t.maxTextureSize = max;
                 if (normal) t.textureType = TextureImporterType.NormalMap;
                 t.SaveAndReimport();
             }

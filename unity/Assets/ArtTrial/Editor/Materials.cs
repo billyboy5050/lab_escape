@@ -16,6 +16,9 @@ namespace LabEscape.ArtTrial.Editor
     {
         private const string Folder = ArtTrial.Packs + "/Materials";
         private static readonly Color KitTone = new Color(0.44f, 0.47f, 0.5f);
+
+        /// <summary>False with -artTrialNoNormals, for the lean variant: normal maps are most of the packs' texture weight.</summary>
+        private static readonly bool UseNormals = !System.Environment.GetCommandLineArgs().Contains("-artTrialNoNormals");
         private static readonly Dictionary<string, Material> Made = new Dictionary<string, Material>();
 
         /// <summary>A flat colour, for the slab and the base plates.</summary>
@@ -47,7 +50,7 @@ namespace LabEscape.ArtTrial.Editor
             {
                 m = new Material(Shader.Find("Standard")) { name = key, color = colour * 0.85f };
                 var normal = Load($"{ArtTrial.Packs}/Characters/Textures/Normals Unity - Godot/T_Superhero_{sex}_Normal.png");
-                if (normal != null)
+                if (normal != null && UseNormals)
                 {
                     m.SetTexture("_BumpMap", normal);
                     m.EnableKeyword("_NORMALMAP");
@@ -80,7 +83,7 @@ namespace LabEscape.ArtTrial.Editor
                 m = new Material(Shader.Find("Standard")) { name = key };
                 m.mainTexture = Load($"{tex}/{baseName}.png");
                 var normal = Load($"{tex}/Normals Unity - Godot/T_Superhero_{sex}_Normal.png") ?? Load($"{tex}/T_Superhero_{sex}_Normal.png");
-                if (normal != null)
+                if (normal != null && UseNormals)
                 {
                     m.SetTexture("_BumpMap", normal);
                     m.EnableKeyword("_NORMALMAP");
@@ -115,7 +118,7 @@ namespace LabEscape.ArtTrial.Editor
             var cut = albedo != null ? albedo.name.IndexOf("_BaseColor", System.StringComparison.Ordinal) : -1;
             if (cut > 2) stem = albedo!.name.Substring(2, cut - 2);
             var normal = Find(pack, stem, "Normal");
-            if (normal != null)
+            if (normal != null && UseNormals)
             {
                 m.SetTexture("_BumpMap", normal);
                 m.EnableKeyword("_NORMALMAP");

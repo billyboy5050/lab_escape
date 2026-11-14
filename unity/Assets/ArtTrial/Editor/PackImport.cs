@@ -13,7 +13,8 @@ namespace LabEscape.ArtTrial.Editor
         {
             if (!assetPath.StartsWith(ArtTrial.Packs)) return;
             var t = (TextureImporter)assetImporter;
-            t.maxTextureSize = 1024; // ArtTrialBuild.MaxTexture, which also catches textures imported before this compiled
+            // Only ever lowered, so a smaller cap set by ArtTrialBuild survives the reimport a build's platform switch causes.
+            if (t.maxTextureSize > 1024) t.maxTextureSize = 1024;
             if (assetPath.Contains("_Normal")) t.textureType = TextureImporterType.NormalMap;
         }
     }
