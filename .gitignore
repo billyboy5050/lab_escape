@@ -1,6 +1,4 @@
-node_modules/
-dist/
-# Dev-server output only; src/telemetry/ is source.
+# Fights the Unity editor saves for the playtest report.
 /telemetry/
 # The owner's copy of the round-1 fights, restamped so the playtest report accepts them.
 /telemetry-0.1.0-restamped/

@@ -10,19 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
-      - run: npm ci
-      # Typecheck and static build.
-      - run: npm run build
-      # Includes the golden replays, so an unintended rule change fails here.
-      - run: npm test
-      # The C# rules core, telemetry and simulator.
+      # The rules core, telemetry and simulator. Includes the golden replays, so an unintended rule change fails here.
       - run: dotnet test core/Tests
-      # The C# simulator must reproduce every committed report, byte for byte, until M13 retires the TypeScript.
+      # The simulator must reproduce every committed report, byte for byte, so a rule or content change needs them regenerated.
       - run: dotnet run --project core/Sim -c Release -- conformance

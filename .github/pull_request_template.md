@@ -4,7 +4,7 @@
 
 ## How it was verified
 
-<!-- Tests added or run, simulator figures before and after, what was checked in the browser. -->
+<!-- Tests added or run, simulator figures before and after, what was played in the Unity editor or a build. -->
 
 ## Decisions for the owner
 
@@ -14,12 +14,12 @@
 
 <!-- Strike through or delete lines that do not apply. See "Definition of done" in CLAUDE.md. -->
 
-- [ ] `npm run build` and `npm test` pass
+- [ ] `dotnet test core/Tests` and the simulator's `conformance` check pass
+- [ ] `unity/` changed: the Unity tests pass, and the fight was played in the editor or a Mac build with a mouse and keyboard
 - [ ] New or changed rules have tests, and the debug overlay explains new behaviour
 - [ ] No numbers hard-coded in logic
 - [ ] Content or rules changed: golden replays and reports regenerated ("Regenerating generated files" in CLAUDE.md)
 - [ ] Rule changed: spec updated and `ENGINE_VERSION` bumped
-- [ ] UI changed: checked in the browser, light and dark themes, keyboard shortcuts
 - [ ] Docs updated (README, implementation notes, roadmap, CLAUDE.md as needed), and anything no longer true deleted
 - [ ] `@codex review` requested on the latest push, and every finding fixed or answered and resolved
 - [ ] The branch's note in `docs/work/` is deleted, its lasting content moved into the docs
