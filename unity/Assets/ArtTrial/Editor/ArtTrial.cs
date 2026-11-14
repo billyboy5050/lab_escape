@@ -29,7 +29,7 @@ namespace LabEscape.ArtTrial.Editor
         private const float Kit = 0.25f;
 
         /// <summary>People and machines a little larger than the kit's scale, as tactics games draw them, so they read on a tile.</summary>
-        private const float PersonScale = 0.36f;
+        private const float PersonScale = 0.45f;
 
         private const int Width = 1920;
         private const int Height = 1200;
@@ -53,6 +53,8 @@ namespace LabEscape.ArtTrial.Editor
                 var outDir = OutDir();
                 Directory.CreateDirectory(outDir);
                 var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                People.Clear();
+                Controllers.Clear();
                 var c = GameContent.Load();
                 var room = c.DefaultRoom;
                 var board = room.Board;
@@ -97,6 +99,11 @@ namespace LabEscape.ArtTrial.Editor
                 Shoot(cam, Path.Combine(outDir, "quaternius-close.png"));
                 Frame(cam, new Vector3(0.6f, -0.1f, -4.2f), new Vector3(8.2f, 1.2f, 0.2f));
                 Shoot(cam, Path.Combine(outDir, "quaternius-guards.png"));
+
+                // The free bodies as they come, in their own skin and underwear.
+                foreach (var (go, body, tone) in People) Materials.Skin(go, body, tone);
+                Frame(cam, new Vector3(1.6f, -0.1f, -4.2f), new Vector3(6.4f, 1.2f, -1.6f));
+                Shoot(cam, Path.Combine(outDir, "quaternius-bare.png"));
 
                 EditorSceneManager.SaveScene(scene, ScenePath);
                 Debug.Log($"[ArtTrial] Captured into {outDir}");
@@ -189,18 +196,51 @@ namespace LabEscape.ArtTrial.Editor
                 }
             }
 
-            // The two far walls: the kit's wall faces along the board's back edges, lower band and top.
+            // The two far walls, as the greybox has them: the kit's wall faces along the board's back edges, a band with a top on it.
             for (var x = 0; x < board.Width; x++)
             {
-                Place(MegaKit("WallBand_Straight"), parent, Iso.Tile(x, 0), Kit, 90f);
-                Place(MegaKit("TopSimple_Straight"), parent, Iso.Tile(x, 0), Kit, 90f);
+                var band = Wall(MegaKit("WallBand_Straight"), parent, new Vector3(x + 0.5f, 0f, 0f), Vector3.back);
+                Wall(MegaKit("TopSimple_Straight"), parent, new Vector3(x + 0.5f, BoundsOf(band).max.y, 0f), Vector3.back);
             }
             for (var y = 0; y < board.Height; y++)
             {
-                Place(MegaKit("WallBand_Straight"), parent, Iso.Tile(0, y), Kit);
-                Place(MegaKit("TopSimple_Straight"), parent, Iso.Tile(0, y), Kit);
+                var band = Wall(MegaKit("WallBand_Straight"), parent, new Vector3(0f, 0f, -(y + 0.5f)), Vector3.right);
+                Wall(MegaKit("TopSimple_Straight"), parent, new Vector3(0f, BoundsOf(band).max.y, -(y + 0.5f)), Vector3.right);
             }
-            Place(MegaKit("Prop_Computer"), parent, new Vector3(5.5f, 0f, -0.15f), Kit, 0f);
+        }
+
+        /// <summary>
+        /// Stands a wall piece on `foot`, just outside the board's edge, with its face toward `facing`. The kit's pivots and facings
+        /// vary, so the piece is turned by its mesh's mean normal and moved by its bounds.
+        /// </summary>
+        private static GameObject Wall(string path, Transform parent, Vector3 foot, Vector3 facing)
+        {
+            var go = Place(path, parent, foot, Kit);
+            var n = Vector3.zero;
+            foreach (var mf in go.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null) continue;
+                foreach (var v in mf.sharedMesh.normals) n += mf.transform.TransformDirection(v);
+            }
+            n.y = 0f;
+            if (n.sqrMagnitude > 1e-6f)
+            {
+                go.transform.rotation = Quaternion.AngleAxis(Vector3.SignedAngle(n, facing, Vector3.up), Vector3.up) * go.transform.rotation;
+            }
+            var b = BoundsOf(go);
+            var depth = Mathf.Abs(Vector3.Dot(b.size, facing));
+            var shift = foot - b.center - facing * (depth * 0.5f);
+            shift.y = foot.y - b.min.y;
+            go.transform.position += shift;
+            return go;
+        }
+
+        private static Bounds BoundsOf(GameObject go)
+        {
+            var rs = go.GetComponentsInChildren<Renderer>(true);
+            var b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            return b;
         }
 
         // ---- The units ----
@@ -213,24 +253,62 @@ namespace LabEscape.ArtTrial.Editor
             switch (p.Def)
             {
                 case "player":
-                    Person(p, "Superhero_Male_FullBody", "Light", "Pistol_Aim_Neutral", at, face, parent);
+                    Person(p, "Superhero_Male_FullBody", "Light", "Hair_SimpleParted", "Pistol_Aim_Neutral", at, face, parent);
                     break;
                 case "guard":
-                    Person(p, "Superhero_Male_FullBody", "Dark", "Pistol_Idle_Loop", at, face, parent);
+                    Person(p, "Superhero_Male_FullBody", "Dark", "Hair_Buzzed", "Pistol_Idle_Loop", at, face, parent);
                     break;
                 case "medic":
-                    Person(p, "Superhero_Female_FullBody", "Dark", "Idle_Loop", at, face, parent);
+                    Person(p, "Superhero_Female_FullBody", "Dark", "Hair_SimpleParted", "Idle_Loop", at, face, parent);
                     break;
                 case "drone":
-                    Pose(Place(Essentials("Enemy_EyeDrone"), parent, at + Vector3.up * 0.5f, 0.42f, face), "Idle", 0.3f);
+                    Machine(Place(Essentials("Enemy_EyeDrone"), parent, at + Vector3.up * 0.5f, 0.42f, face));
                     break;
                 case "turret":
-                    Pose(Place(Essentials("Enemy_QuadShell"), parent, at, 0.3f, face), "Idle", 0.3f);
+                    Machine(Place(Essentials("Enemy_QuadShell"), parent, at, 0.3f, face));
                     break;
                 case "hatchling":
-                    Pose(Place(Essentials("Enemy_Trilobite"), parent, at, 0.25f, face), "Idle", 0.3f);
+                    Machine(Place(Essentials("Enemy_Trilobite"), parent, at, 0.18f, face));
                     break;
             }
+        }
+
+        /// <summary>One of the kit's creatures, posed in its idle, with an animator holding all its own clips.</summary>
+        private static void Machine(GameObject go)
+        {
+            Pose(go, "Idle", 0.3f);
+            var path = AssetDatabase.GetAssetPath(PrefabUtility.GetCorrespondingObjectFromSource(go));
+            Animate(go, Path.GetFileNameWithoutExtension(path), Clips(path));
+        }
+
+        /// <summary>The clips a person would play in a fight, so the web build carries what a game would.</summary>
+        private static readonly string[] PersonClips =
+        {
+            "Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Pistol_Idle_Loop", "Pistol_Aim_Neutral", "Pistol_Shoot", "Pistol_Reload",
+            "Hit_Chest", "Hit_Head", "Death01", "Spell_Simple_Shoot", "Interact", "Roll",
+        };
+
+        private static readonly Dictionary<string, UnityEditor.Animations.AnimatorController> Controllers =
+            new Dictionary<string, UnityEditor.Animations.AnimatorController>();
+
+        private static AnimationClip[] Clips(string modelPath) =>
+            AssetDatabase.LoadAllAssetsAtPath(modelPath).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview")).ToArray();
+
+        /// <summary>Gives a model an animator whose controller holds `clips`, made once per capture among the packs.</summary>
+        private static void Animate(GameObject go, string name, AnimationClip[] clips)
+        {
+            if (!Controllers.TryGetValue(name, out var controller))
+            {
+                var path = $"{Packs}/Materials/{name}.controller";
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                AssetDatabase.DeleteAsset(path);
+                controller = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(path);
+                foreach (var clip in clips) controller.AddMotion(clip);
+                Controllers[name] = controller;
+            }
+            var animator = go.GetComponent<Animator>();
+            if (animator == null) animator = go.AddComponent<Animator>();
+            animator.runtimeAnimatorController = controller;
         }
 
         /// <summary>The base plate the game puts under every unit: round for the player's side, a diamond (a square here) for the lab's.</summary>
@@ -246,11 +324,56 @@ namespace LabEscape.ArtTrial.Editor
             go.GetComponent<Renderer>().sharedMaterial = Materials.Plain(Palette.UnitColor(p.Def, p.Team), 0.6f);
         }
 
-        private static void Person(Piece p, string body, string skin, string clip, Vector3 at, float yaw, Transform parent)
+        /// <summary>The people built, so the last shot can show them in the free bodies' own skin.</summary>
+        private static readonly List<(GameObject Go, string Body, string Tone)> People = new List<(GameObject, string, string)>();
+
+        /// <summary>
+        /// A person: the free tier's base body in a suit of the unit's team colour, since the free tier has no clothes, with hair and
+        /// a pose from the animation library.
+        /// </summary>
+        private static void Person(Piece p, string body, string skin, string hair, string clip, Vector3 at, float yaw, Transform parent)
         {
             var go = Place($"{Packs}/Characters/{body}.fbx", parent, at, PersonScale, yaw);
-            Materials.Skin(go, body, skin);
+            Materials.Suit(go, body, Palette.UnitColor(p.Def, p.Team));
+            Wear(go, $"{Packs}/Characters/{hair}.fbx");
             Pose(go, clip, 0.4f);
+            if (clip.StartsWith("Pistol")) Arm(go, Quaternion.Euler(0f, yaw, 0f) * Vector3.forward, parent);
+            var library = Clips($"{Packs}/Animations/UAL1_Standard.fbx");
+            Animate(go, "Person", PersonClips.Select(n => library.FirstOrDefault(c => c.name.EndsWith("|" + n))).OfType<AnimationClip>().ToArray());
+            People.Add((go, body, skin));
+        }
+
+        /// <summary>Puts the kit's pistol in the posed right hand, its barrel along the way the person faces.</summary>
+        private static void Arm(GameObject body, Vector3 facing, Transform parent)
+        {
+            var hand = body.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "hand_r");
+            if (hand == null)
+            {
+                Debug.LogWarning($"[ArtTrial] No hand_r on {body.name}");
+                return;
+            }
+            // The gun's barrel runs along its model's -x axis.
+            var gun = Place(Essentials("Gun_Pistol"), parent, hand.position, PersonScale);
+            gun.transform.rotation = Quaternion.LookRotation(facing, Vector3.up) * Quaternion.Euler(0f, 90f, 0f);
+            gun.transform.SetParent(hand, true);
+        }
+
+        /// <summary>Puts a part made for the same rig, such as hair, on a body by binding its meshes to the body's bones.</summary>
+        private static void Wear(GameObject body, string path)
+        {
+            var bones = body.GetComponentsInChildren<Transform>(true).GroupBy(t => t.name).ToDictionary(g => g.Key, g => g.First());
+            var asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (asset == null) throw new FileNotFoundException("Missing model", path);
+            var part = (GameObject)PrefabUtility.InstantiatePrefab(asset, body.transform);
+            part.transform.localPosition = Vector3.zero;
+            part.transform.localRotation = Quaternion.identity;
+            part.transform.localScale = Vector3.one;
+            Materials.Fix(part);
+            foreach (var smr in part.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                smr.bones = smr.bones.Select(b => b != null && bones.TryGetValue(b.name, out var t) ? t : b).ToArray();
+                if (smr.rootBone != null && bones.TryGetValue(smr.rootBone.name, out var root)) smr.rootBone = root;
+            }
         }
 
         /// <summary>Puts a model in a pose: a clip of the Universal Animation Library for people, the model's own clip for the rest.</summary>
@@ -280,11 +403,11 @@ namespace LabEscape.ArtTrial.Editor
             key.type = LightType.Directional;
             key.transform.rotation = Quaternion.Euler(52f, 150f, 0f);
             key.color = new Color(1f, 0.95f, 0.88f);
-            key.intensity = 1.1f;
+            key.intensity = 0.9f;
             key.shadows = LightShadows.Soft;
-            key.shadowStrength = 0.7f;
-            AddPoint("Teal glow", new Vector3(1.2f, 1.6f, -1.2f), new Color(0.35f, 0.85f, 0.8f), 6f, 1.2f, parent);
-            AddPoint("Room lamp", new Vector3(w * 0.5f, 3f, -h * 0.5f), new Color(1f, 0.9f, 0.75f), 9f, 0.9f, parent);
+            key.shadowStrength = 0.6f;
+            // A teal wash from the back corner, as the greybox's lighting has.
+            AddPoint("Teal glow", new Vector3(0.6f, 1.4f, -0.6f), new Color(0.35f, 0.85f, 0.8f), 5f, 0.6f, parent);
         }
 
         private static void AddPoint(string name, Vector3 at, Color colour, float range, float intensity, Transform parent)
